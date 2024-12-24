@@ -6,12 +6,10 @@ class FA_Activator {
     public static function activate() {
         global $wpdb;
 
-        // 1) Set up table name
         $table_name = $wpdb->prefix . 'homework_submissions';
         $charset_collate = $wpdb->get_charset_collate();
 
-        // 2) Prepare the SQL statement
-        // NOTE: dbDelta requires the lines to be uppercase for CREATE TABLE and all keys, etc.
+        // Prepare the SQL statement
         $sql = "CREATE TABLE IF NOT EXISTS $table_name (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id BIGINT(20) UNSIGNED NOT NULL,
@@ -20,16 +18,13 @@ class FA_Activator {
             submission_date DATETIME NOT NULL,
             status VARCHAR(20) DEFAULT 'pending' NOT NULL,
             grade FLOAT DEFAULT 0 NOT NULL,
-            -- If you want to store file URLs or attachments, you can add a column here
             PRIMARY KEY (id)
         ) $charset_collate;";
 
-
-
-        // 3) Load the dbDelta function
+        // Load the dbDelta function
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
-        // 4) Run dbDelta
+        // Run dbDelta
         dbDelta( $sql );
 
         $table2 = $wpdb->prefix . 'course_progress';
@@ -43,5 +38,16 @@ class FA_Activator {
         ) $charset_collate;";
         dbDelta($sql2);
 
+        // Create chat messages table
+        $table3 = $wpdb->prefix . 'chat_messages';
+        $sql3 = "CREATE TABLE IF NOT EXISTS $table3 (
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            sender_id BIGINT(20) UNSIGNED NOT NULL,
+            receiver_id BIGINT(20) UNSIGNED NOT NULL,
+            message TEXT NOT NULL,
+            date_sent DATETIME NOT NULL,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+        dbDelta($sql3);
     }
 }
