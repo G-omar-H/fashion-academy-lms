@@ -17,68 +17,201 @@ class FA_Frontend {
     public function render_homework_form() {
         // Ensure user is logged in
         if ( ! is_user_logged_in() ) {
-            return '<p>You must be logged in to submit homework.</p>';
+            return '<p>' . __('You must be logged in to submit homework.', 'fashion-academy-lms') . '</p>';
         }
-
-        // If this page is a lesson, let's retrieve the lesson ID & course ID
-        // If you're placing this shortcode on the "Lesson" post type view:
+    
+        // If this page is a lesson, retrieve the lesson ID & course ID
         $lesson_id = get_the_ID();
-        // We stored the course ID in lesson meta as 'lesson_course_id'
         $course_id = get_post_meta($lesson_id, 'lesson_course_id', true);
-
-        // Build the form HTML
+    
+        // Fetch any existing submissions by the user for this lesson
+        global $wpdb;
+        $submission_table = $wpdb->prefix . 'homework_submissions';
+        $existing_submission = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $submission_table WHERE user_id = %d AND lesson_id = %d ORDER BY submission_date DESC LIMIT 1",
+                get_current_user_id(),
+                $lesson_id
+            )
+        );
+    
+        // If a submission exists, fetch uploaded files and notes
+        $uploaded_files = $existing_submission ? get_post_meta($existing_submission->id, 'uploaded_files', true) : array();
+        $notes          = $existing_submission ? get_post_meta($existing_submission->id, 'notes', true) : '';
+    
+        // Build the form HTML with file preview and removal option
         ob_start();
         ?>
-        <form method="post" enctype="multipart/form-data" class="fa-homework-form">
+        <form method="post" enctype="multipart/form-data" class="fa-homework-form" id="fa-homework-form">
+            <?php wp_nonce_field('fa_homework_submission', 'fa_homework_nonce'); ?>
             <input type="hidden" name="fa_action" value="submit_homework" />
             <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id); ?>" />
             <input type="hidden" name="course_id" value="<?php echo esc_attr($course_id); ?>" />
-
+    
             <p>
-                <label for="homework_files">Upload your homework (images, PDFs, etc.):</label><br>
-                <input type="file" name="homework_files[]" multiple="multiple" />
+                <label for="homework_files"><?php _e('Upload your homework (images, PDFs, etc.):', 'fashion-academy-lms'); ?></label><br>
+                <input type="file" name="homework_files[]" id="homework_files" multiple="multiple" accept=".jpg,.jpeg,.png,.pdf" />
             </p>
-
+    
+            <div id="file_preview">
+                <?php if ( ! empty($uploaded_files) && is_array($uploaded_files) ) : ?>
+                    <?php foreach ($uploaded_files as $index => $file_url) : ?>
+                        <div class="fa-file-preview">
+                            <span><?php echo esc_html(basename($file_url)); ?></span>
+                            <button type="button" class="fa-remove-file" data-index="<?php echo esc_attr($index); ?>">Remove</button>
+                            <input type="hidden" name="existing_files[]" value="<?php echo esc_attr($file_url); ?>" />
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+    
             <p>
-                <label for="homework_notes">Any notes or comments:</label><br>
-                <textarea name="homework_notes" id="homework_notes" rows="4" cols="50"></textarea>
+                <label for="homework_notes"><?php _e('Any notes or comments:', 'fashion-academy-lms'); ?></label><br>
+                <textarea name="homework_notes" id="homework_notes" rows="4" cols="50"><?php echo esc_textarea($notes); ?></textarea>
             </p>
-
+    
             <p>
-                <input type="submit" value="Submit Homework" />
+                <input type="submit" value="<?php _e('Submit Homework', 'fashion-academy-lms'); ?>" />
             </p>
         </form>
+    
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const fileInput = document.getElementById('homework_files');
+                const filePreview = document.getElementById('file_preview');
+    
+                // Handle new file selections
+                fileInput.addEventListener('change', function() {
+                    const files = Array.from(this.files);
+                    files.forEach((file, index) => {
+                        const fileDiv = document.createElement('div');
+                        fileDiv.className = 'fa-file-preview';
+    
+                        const fileName = document.createElement('span');
+                        fileName.textContent = file.name;
+                        fileDiv.appendChild(fileName);
+    
+                        const removeButton = document.createElement('button');
+                        removeButton.type = 'button';
+                        removeButton.className = 'fa-remove-file';
+                        removeButton.textContent = 'Remove';
+                        removeButton.dataset.index = 'new_' + index;
+                        removeButton.addEventListener('click', function() {
+                            // Remove the file from the input
+                            const dt = new DataTransfer();
+                            const updatedFiles = Array.from(fileInput.files).filter((_, i) => i !== index);
+                            updatedFiles.forEach(f => dt.items.add(f));
+                            fileInput.files = dt.files;
+                            // Remove the preview
+                            fileDiv.remove();
+                        });
+                        fileDiv.appendChild(removeButton);
+    
+                        filePreview.appendChild(fileDiv);
+                    });
+    
+                    // Clear the file input to allow re-selection of the same file if needed
+                    fileInput.value = '';
+                });
+    
+                // Handle removal of existing files
+                filePreview.addEventListener('click', function(e) {
+                    if (e.target && e.target.classList.contains('fa-remove-file')) {
+                        const index = e.target.dataset.index;
+                        // Remove the corresponding hidden input
+                        const hiddenInput = document.querySelector(`input[name="existing_files[]"][value="${e.target.previousElementSibling.value}"]`);
+                        if (hiddenInput) {
+                            hiddenInput.remove();
+                        }
+                        // Remove the preview div
+                        e.target.parentElement.remove();
+                    }
+                });
+            });
+        </script>
+    
+        <style>
+            .fa-file-preview {
+                display: flex;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+    
+            .fa-file-preview span {
+                flex: 1;
+            }
+    
+            .fa-remove-file {
+                padding: 2px 5px;
+                background-color: #dc3545;
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                border-radius: 3px;
+                margin-left: 10px;
+                font-size: 0.9em;
+            }
+    
+            .fa-remove-file:hover {
+                background-color: #c82333;
+            }
+        </style>
         <?php
         return ob_get_clean();
     }
+    
+    
 
     /**
      * 2) Handle form submission (runs on 'init')
      */
     public function handle_homework_submission() {
         if ( isset($_POST['fa_action']) && $_POST['fa_action'] === 'submit_homework' ) {
-
-            // Must be logged in
+    
+            // Verify nonce for security
+            if ( ! isset($_POST['fa_homework_nonce']) || ! wp_verify_nonce($_POST['fa_homework_nonce'], 'fa_homework_submission') ) {
+                wp_die(__('Security check failed.', 'fashion-academy-lms'));
+            }
+    
+            // Ensure the user is logged in
             if ( ! is_user_logged_in() ) return;
-
-            // Basic nonce check (optional but recommended)
-            // We'll skip nonce for brevity, but in production you'd use wp_verify_nonce
-
+    
             $user_id   = get_current_user_id();
             $lesson_id = !empty($_POST['lesson_id']) ? (int)$_POST['lesson_id'] : 0;
             $course_id = !empty($_POST['course_id']) ? (int)$_POST['course_id'] : 0;
             $notes     = !empty($_POST['homework_notes']) ? sanitize_textarea_field($_POST['homework_notes']) : '';
-
-            // Make sure we have a lesson & course
+    
+            // Validate lesson and course IDs
             if ( ! $lesson_id || ! $course_id ) return;
-
-            // Handle file uploads (if any)
+    
+            // Handle existing files (from previous submissions)
+            $existing_files = isset($_POST['existing_files']) ? array_map('esc_url_raw', $_POST['existing_files']) : array();
+    
+            // Handle new file uploads
             $uploaded_files = array();
-            if ( !empty($_FILES['homework_files']['name'][0]) ) {
-                require_once(ABSPATH . 'wp-admin/includes/file.php');
-
+            if ( ! empty($_FILES['homework_files']['name'][0]) ) {
+                require_once( ABSPATH . 'wp-admin/includes/file.php' );
+    
+                $allowed_types = array('image/jpeg', 'image/png', 'application/pdf');
+                $max_size = 5 * 1024 * 1024; // 5 MB per file
+    
                 $file_count = count($_FILES['homework_files']['name']);
                 for ($i = 0; $i < $file_count; $i++) {
+                    // Check for upload errors
+                    if ($_FILES['homework_files']['error'][$i] !== UPLOAD_ERR_OK) {
+                        continue; // Skip this file
+                    }
+    
+                    // Validate file type
+                    if ( ! in_array($_FILES['homework_files']['type'][$i], $allowed_types) ) {
+                        continue; // Skip invalid file types
+                    }
+    
+                    // Validate file size
+                    if ( $_FILES['homework_files']['size'][$i] > $max_size ) {
+                        continue; // Skip large files
+                    }
+    
                     $file = array(
                         'name'     => $_FILES['homework_files']['name'][$i],
                         'type'     => $_FILES['homework_files']['type'][$i],
@@ -86,60 +219,93 @@ class FA_Frontend {
                         'error'    => $_FILES['homework_files']['error'][$i],
                         'size'     => $_FILES['homework_files']['size'][$i],
                     );
-
+    
                     $upload_overrides = array( 'test_form' => false );
                     $movefile = wp_handle_upload($file, $upload_overrides);
-                    
+    
                     if ($movefile && ! isset($movefile['error'])) {
-                        // Store the file URL in our array
-                        $uploaded_files[] = $movefile['url'];
-                    } 
-                    // else you could handle errors
+                        // Store the file URL
+                        $uploaded_files[] = esc_url_raw($movefile['url']);
+                    }
+                    // Optionally, handle upload errors here
                 }
             }
-
-            // Now let's insert a row in the homework_submissions table
+    
+            // Combine existing and new files
+            $all_files = array_merge($existing_files, $uploaded_files);
+    
+            // Serialize the files array for storage
+            $serialized_files = maybe_serialize($all_files);
+    
+            // Insert or update the submission in the database
             global $wpdb;
-            $table = $wpdb->prefix . 'homework_submissions';
-
-            // We'll keep it simple and store file URLs as JSON in a new column or in notes column
-            // But let's assume we didn't add a separate column for multiple file URLs.
-            // If so, you could store them in post meta or a second table.
-            // For demonstration, let's assume we just store them as a note with links:
-
-            $files_note = '';
-            if (!empty($uploaded_files)) {
-                $files_note .= "Uploaded files:\n";
-                foreach ($uploaded_files as $url) {
-                    $files_note .= $url . "\n";
-                }
+            $submission_table = $wpdb->prefix . 'homework_submissions';
+    
+            // Check if a submission already exists for this user and lesson
+            $existing_submission = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT * FROM $submission_table WHERE user_id = %d AND lesson_id = %d ORDER BY submission_date DESC LIMIT 1",
+                    $user_id,
+                    $lesson_id
+                )
+            );
+    
+            if ( $existing_submission ) {
+                // Update the existing submission
+                $wpdb->update(
+                    $submission_table,
+                    array(
+                        'submission_date' => current_time('mysql'),
+                        'status'          => 'pending',
+                        'grade'           => 0, // Reset grade
+                        'uploaded_files'  => $serialized_files,
+                        'notes'           => $notes,
+                    ),
+                    array( 'id' => $existing_submission->id ),
+                    array(
+                        '%s',
+                        '%s',
+                        '%f',
+                        '%s',
+                        '%s',
+                    ),
+                    array( '%d' )
+                );
+    
+                $submission_id = $existing_submission->id;
+            } else {
+                // Insert a new submission
+                $wpdb->insert(
+                    $submission_table,
+                    array(
+                        'user_id'         => $user_id,
+                        'course_id'       => $course_id,
+                        'lesson_id'       => $lesson_id,
+                        'submission_date' => current_time('mysql'),
+                        'status'          => 'pending',
+                        'grade'           => 0, // default
+                        'uploaded_files'  => $serialized_files,
+                        'notes'           => $notes,
+                    ),
+                    array(
+                        '%d',
+                        '%d',
+                        '%d',
+                        '%s',
+                        '%s',
+                        '%f',
+                        '%s',
+                        '%s',
+                    )
+                );
+    
+                $submission_id = $wpdb->insert_id;
             }
-
-            $final_notes = $notes . "\n" . $files_note;
-
-            $wpdb->insert($table, array(
-                'user_id'         => $user_id,
-                'course_id'       => $course_id,
-                'lesson_id'       => $lesson_id,
-                'submission_date' => current_time('mysql'),
-                'status'          => 'pending',
-                'grade'           => 0, // default
-                // If you added a "feedback" column, you can store notes there, but let's keep it simple for now
-            ));
-
-            $insert_id = $wpdb->insert_id;
-
-            // If you want to store the final_notes somewhere:
-            //   1) Add a 'notes' TEXT column to your DB table, or
-            //   2) Store notes in a separate meta table, or
-            //   3) For demonstration, we skip it or store them in post meta with a unique key
-            //      because the current table schema doesn't have a 'notes' column.
-
-            add_post_meta($lesson_id, 'fa_submission_notes_'.$insert_id, $final_notes);
-
-            // Optionally, redirect or show a success message
+    
+            // Redirect with a success message
             wp_redirect(add_query_arg('homework_submitted', 'true', get_permalink($lesson_id)));
             exit;
         }
-    }
+    }    
+    
 }

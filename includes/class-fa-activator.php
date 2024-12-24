@@ -5,19 +5,20 @@ class FA_Activator {
 
     public static function activate() {
         global $wpdb;
-
-        $table_name = $wpdb->prefix . 'homework_submissions';
         $charset_collate = $wpdb->get_charset_collate();
 
+        $table = $wpdb->prefix . 'homework_submissions';
         // Prepare the SQL statement
-        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        $sql = "CREATE TABLE IF NOT EXISTS $table (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id BIGINT(20) UNSIGNED NOT NULL,
             course_id BIGINT(20) UNSIGNED NOT NULL,
             lesson_id BIGINT(20) UNSIGNED NOT NULL,
-            submission_date DATETIME NOT NULL,
+            submission_date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
             status VARCHAR(20) DEFAULT 'pending' NOT NULL,
             grade FLOAT DEFAULT 0 NOT NULL,
+            uploaded_files TEXT, -- To store JSON or serialized array of file URLs
+            notes TEXT,          -- To store user notes/comments
             PRIMARY KEY (id)
         ) $charset_collate;";
 

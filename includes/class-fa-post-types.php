@@ -50,7 +50,7 @@ class FA_Post_Types {
             'supports'           => array('title','editor','thumbnail','excerpt'),
         );
         register_post_type('course', $args);
-
+    
         /**
          * 2) Register the 'lesson' Custom Post Type
          */
@@ -72,18 +72,19 @@ class FA_Post_Types {
         );
         $lesson_args = array(
             'labels'             => $lesson_labels,
-            'public'             => false,  
+            'public'             => true,  // Changed from false to true
+            'publicly_queryable' => true,  // Ensure lessons can be queried publicly
             'show_ui'            => true,   
             'show_in_menu'       => true,   
-            'exclude_from_search'=> true,
+            'exclude_from_search'=> false, // Include in search if desired
             'hierarchical'       => false,
-            'rewrite'            => array('slug' => 'lessons'),
+            'rewrite'            => array('slug' => 'lessons'), // Set a URL slug
             'supports'           => array('title','editor','thumbnail'),
             'menu_icon'          => 'dashicons-welcome-learn-more',
         );
         register_post_type('lesson', $lesson_args);
     }
-
+    
 
 public function add_course_link_metabox() {
     add_meta_box(
