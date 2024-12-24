@@ -1,8 +1,17 @@
 <?php
+
 /*
 Plugin Name: Fashion Academy LMS
-...
+Plugin URI:  https://fashion-academy.ma
+Description: Custom LMS features for Fashion Academy
+Version:     1.0
+Author:      OGhazi
+Author URI:  https://TheCyberQuery.com
+License:     GPL2
+Text Domain: fashion-academy-lms
 */
+
+
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // 1. Includes
