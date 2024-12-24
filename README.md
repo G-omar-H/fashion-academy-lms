@@ -24,37 +24,37 @@ Welcome to the Fashion Academy LMS Plugin! This WordPress plugin is designed to 
 3. Monitor student progress and manage enrollments.
 
 ## Project Structure
-
 The project structure is organized as follows:
 
 ```
 fashion-academy-lms/
-├── assets/
-│   ├── css/
-│   ├── js/
-│   └── images/
+├── fashion-academy-lms.php // Main plugin file
+├── admin/
+│   └── class-fa-admin.php // Admin menus, backend logic
+├── public/
+│   └── class-fa-frontend.php // Frontend display logic
 ├── includes/
-│   ├── admin/
-│   ├── frontend/
-│   └── common/
-├── languages/
-├── templates/
-├── tests/
-├── README.md
-├── fashion-academy-lms.php
-└── uninstall.php
+│   ├── class-fa-post-types.php // Defines custom post types
+│   ├── class-fa-activator.php // Runs on plugin activation (DB table creation)
+│   └── ...
+├── assets/
+│   ├── css/ // Styles for admin or frontend
+│   └── js/ // JavaScript for admin or frontend
+└── README.md
 ```
 
-- **assets/**: Contains CSS, JavaScript, and image files.
-- **includes/**: Contains PHP files for the core functionality of the plugin.
-    - **admin/**: Admin-specific functionality.
-    - **frontend/**: Frontend-specific functionality.
-    - **common/**: Shared functionality between admin and frontend.
-- **languages/**: Contains translation files.
-- **templates/**: Contains template files for the plugin.
-- **tests/**: Contains test files.
 - **fashion-academy-lms.php**: Main plugin file.
-- **uninstall.php**: Handles plugin uninstallation.
+- **admin/**: Contains admin-specific functionality.
+    - **class-fa-admin.php**: Admin menus, backend logic.
+- **public/**: Contains frontend-specific functionality.
+    - **class-fa-frontend.php**: Frontend display logic.
+- **includes/**: Contains core functionality of the plugin.
+    - **class-fa-post-types.php**: Defines custom post types.
+    - **class-fa-activator.php**: Runs on plugin activation (DB table creation).
+- **assets/**: Contains CSS and JavaScript files.
+    - **css/**: Styles for admin or frontend.
+    - **js/**: JavaScript for admin or frontend.
+- **README.md**: Project documentation.
 
 ## Contributing
 
