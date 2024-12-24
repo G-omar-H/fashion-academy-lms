@@ -72,6 +72,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contact
 
-For any questions or support, please contact us at support@fashionacademy.com.
+For any questions or support, please contact us at support@fashionacademy.ma.
 
 Thank you for using the Fashion Academy LMS Plugin!
