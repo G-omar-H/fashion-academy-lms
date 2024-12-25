@@ -34,4 +34,5 @@ function fa_lms_init() {
     
     // Frontend Shortcodes, etc.
     new FA_Frontend();
+
 }
