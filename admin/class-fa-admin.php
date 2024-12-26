@@ -192,7 +192,7 @@ class FA_Admin {
         $submission = $wpdb->get_row( $wpdb->prepare("SELECT * FROM $submission_table WHERE id = %d", $submission_id) );
 
         // Unserialize the uploaded_files
-        $uploaded_files = maybe_unserialize($submission->uploaded_files);
+        $uploaded_files = json_decode($submission->uploaded_files, true);
         $notes          = $submission->notes;
 
         // Fetch user info

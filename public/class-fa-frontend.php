@@ -37,7 +37,7 @@ class FA_Frontend {
         );
 
         // If a submission exists, fetch uploaded files and notes directly from the table
-        $uploaded_files = $existing_submission ? maybe_unserialize($existing_submission->uploaded_files) : array();
+        $uploaded_files = $existing_submission ? json_decode($existing_submission->uploaded_files, true) : array();
         $notes          = $existing_submission ? esc_textarea($existing_submission->notes) : '';
 
         // Build the form HTML with file preview and removal option
@@ -77,59 +77,82 @@ class FA_Frontend {
         </form>
 
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 const fileInput = document.getElementById('homework_files');
                 const filePreview = document.getElementById('file_preview');
 
+                // Initialize a DataTransfer object to manage the files
+                const dt = new DataTransfer();
+
                 // Handle new file selections
-                fileInput.addEventListener('change', function() {
+                fileInput.addEventListener('change', function () {
                     const files = Array.from(this.files);
-                    files.forEach((file, index) => {
-                        const fileDiv = document.createElement('div');
-                        fileDiv.className = 'fa-file-preview';
 
-                        const fileName = document.createElement('span');
-                        fileName.textContent = file.name;
-                        fileDiv.appendChild(fileName);
+                    files.forEach((file) => {
+                        // Check for duplicates in the DataTransfer
+                        const duplicate = Array.from(dt.files).some(
+                            (f) =>
+                                f.name === file.name &&
+                                f.size === file.size &&
+                                f.lastModified === file.lastModified
+                        );
 
-                        const removeButton = document.createElement('button');
-                        removeButton.type = 'button';
-                        removeButton.className = 'fa-remove-file';
-                        removeButton.textContent = 'Remove';
-                        removeButton.dataset.index = 'new_' + index;
-                        removeButton.addEventListener('click', function() {
-                            // Remove the file from the input
-                            const dt = new DataTransfer();
-                            const updatedFiles = Array.from(fileInput.files).filter((_, i) => i !== index);
-                            updatedFiles.forEach(f => dt.items.add(f));
-                            fileInput.files = dt.files;
-                            // Remove the preview
-                            fileDiv.remove();
-                        });
-                        fileDiv.appendChild(removeButton);
+                        if (!duplicate) {
+                            // Add the file to the DataTransfer
+                            dt.items.add(file);
 
-                        filePreview.appendChild(fileDiv);
+                            // Append the preview
+                            const fileDiv = document.createElement('div');
+                            fileDiv.className = 'fa-file-preview';
+
+                            const fileName = document.createElement('span');
+                            fileName.textContent = file.name;
+                            fileDiv.appendChild(fileName);
+
+                            const removeButton = document.createElement('button');
+                            removeButton.type = 'button';
+                            removeButton.className = 'fa-remove-file';
+                            removeButton.textContent = 'Remove';
+
+                            // Attach event listener to remove files
+                            removeButton.addEventListener('click', function () {
+                                const fileIndex = Array.from(dt.files).findIndex(
+                                    (f) =>
+                                        f.name === file.name &&
+                                        f.size === file.size &&
+                                        f.lastModified === file.lastModified
+                                );
+
+                                if (fileIndex > -1) {
+                                    dt.items.remove(fileIndex); // Remove from DataTransfer
+                                    fileInput.files = dt.files; // Update input's FileList
+                                    fileDiv.remove(); // Remove preview
+                                }
+                            });
+
+                            fileDiv.appendChild(removeButton);
+                            filePreview.appendChild(fileDiv);
+                        }
                     });
 
-                    // Clear the file input to allow re-selection of the same file if needed
-                    fileInput.value = '';
+                    // Sync DataTransfer with file input
+                    fileInput.files = dt.files;
+
+                    // Clear the file input value to allow re-selecting the same file
+                    this.value = '';
                 });
 
-                // Handle removal of existing files
-                filePreview.addEventListener('click', function(e) {
-                    if (e.target && e.target.classList.contains('fa-remove-file')) {
-                        const index = e.target.dataset.index;
-                        // Remove the corresponding hidden input
-                        const hiddenInput = document.querySelector(`input[name="existing_files[]"][value="${e.target.previousElementSibling.value}"]`);
-                        if (hiddenInput) {
-                            hiddenInput.remove();
-                        }
-                        // Remove the preview div
-                        e.target.parentElement.remove();
-                    }
-                });
+                // Ensure files are properly synced before form submission
+                const form = document.getElementById('fa-homework-form');
+                if (form) {
+                    form.addEventListener('submit', function () {
+                        fileInput.files = dt.files; // Update file input with DataTransfer files
+                    });
+                }
             });
         </script>
+
+
 
         <style>
             .fa-file-preview {
@@ -156,10 +179,24 @@ class FA_Frontend {
             .fa-remove-file:hover {
                 background-color: #c82333;
             }
+            .fa-success-message {
+                padding: 10px;
+                background-color: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+                border-radius: 4px;
+                margin-bottom: 15px;
+            }
         </style>
         <?php
+
+        if ( isset($_GET['homework_submitted']) && $_GET['homework_submitted'] === 'true' ) {
+            echo '<p class="fa-success-message">' . __('Your homework has been submitted successfully!', 'fashion-academy-lms') . '</p>';
+        }
+
         return ob_get_clean();
     }
+
 
 
 
@@ -170,8 +207,8 @@ class FA_Frontend {
     public function handle_homework_submission() {
         if ( isset($_POST['fa_action']) && $_POST['fa_action'] === 'submit_homework' ) {
 
-            // Log the $_FILES array
-            error_log("$_FILES Homework Files: " . print_r($_FILES['homework_files'], true));
+            // Log the $_FILES array for debugging
+            fa_plugin_log("Homework Files: " . print_r($_FILES['homework_files'], true));
 
             // Verify nonce for security
             if ( ! isset($_POST['fa_homework_nonce']) || ! wp_verify_nonce($_POST['fa_homework_nonce'], 'fa_homework_submission') ) {
@@ -188,6 +225,7 @@ class FA_Frontend {
 
             // Validate lesson and course IDs
             if ( ! $lesson_id || ! $course_id ) {
+                fa_plugin_log("Invalid submission data: lesson_id = $lesson_id, course_id = $course_id");
                 wp_die(__('Invalid submission data.', 'fashion-academy-lms'));
             }
 
@@ -196,6 +234,44 @@ class FA_Frontend {
 
             // Handle new file uploads
             $uploaded_files = array();
+            if (empty($_FILES['homework_files']['name'][0])) {
+                fa_plugin_log("No files were uploaded or the file input is empty.");
+            } else {
+                fa_plugin_log("Files received: " . print_r($_FILES['homework_files'], true));
+            }
+
+            if (isset($_FILES['homework_files']['error'][0])) {
+                switch ($_FILES['homework_files']['error'][0]) {
+                    case UPLOAD_ERR_OK:
+                        fa_plugin_log("File uploaded successfully.");
+                        break;
+                    case UPLOAD_ERR_NO_FILE:
+                        fa_plugin_log("No file was uploaded.");
+                        break;
+                    case UPLOAD_ERR_INI_SIZE:
+                        fa_plugin_log("File exceeds the upload_max_filesize directive in php.ini.");
+                        break;
+                    case UPLOAD_ERR_FORM_SIZE:
+                        fa_plugin_log("File exceeds the MAX_FILE_SIZE directive in the HTML form.");
+                        break;
+                    case UPLOAD_ERR_PARTIAL:
+                        fa_plugin_log("File was only partially uploaded.");
+                        break;
+                    case UPLOAD_ERR_NO_TMP_DIR:
+                        fa_plugin_log("Missing temporary folder.");
+                        break;
+                    case UPLOAD_ERR_CANT_WRITE:
+                        fa_plugin_log("Failed to write file to disk.");
+                        break;
+                    case UPLOAD_ERR_EXTENSION:
+                        fa_plugin_log("A PHP extension stopped the file upload.");
+                        break;
+                    default:
+                        fa_plugin_log("Unknown upload error.");
+                        break;
+                }
+            }
+
             if ( ! empty($_FILES['homework_files']['name'][0]) ) {
                 require_once( ABSPATH . 'wp-admin/includes/file.php' );
 
@@ -206,19 +282,19 @@ class FA_Frontend {
                 for ($i = 0; $i < $file_count; $i++) {
                     // Check for upload errors
                     if ($_FILES['homework_files']['error'][$i] !== UPLOAD_ERR_OK) {
-                        error_log("File upload error for file index $i: " . $_FILES['homework_files']['error'][$i]);
+                        fa_plugin_log("File upload error for file index $i: " . $_FILES['homework_files']['error'][$i]);
                         continue; // Skip this file
                     }
 
                     // Validate file type
                     if ( ! in_array($_FILES['homework_files']['type'][$i], $allowed_types) ) {
-                        error_log("Invalid file type for file: " . $_FILES['homework_files']['name'][$i]);
+                        fa_plugin_log("Invalid file type for file: " . $_FILES['homework_files']['name'][$i]);
                         continue; // Skip invalid file types
                     }
 
                     // Validate file size
                     if ( $_FILES['homework_files']['size'][$i] > $max_size ) {
-                        error_log("File size exceeded for file: " . $_FILES['homework_files']['name'][$i]);
+                        fa_plugin_log("File size exceeded for file: " . $_FILES['homework_files']['name'][$i]);
                         continue; // Skip large files
                     }
 
@@ -236,8 +312,9 @@ class FA_Frontend {
                     if ($movefile && ! isset($movefile['error'])) {
                         // Store the file URL
                         $uploaded_files[] = esc_url_raw($movefile['url']);
+                        fa_plugin_log("File uploaded successfully: " . $movefile['url']);
                     } else {
-                        error_log("File upload failed for file: " . $_FILES['homework_files']['name'][$i] . " Error: " . $movefile['error']);
+                        fa_plugin_log("File upload failed for file: " . $_FILES['homework_files']['name'][$i] . " Error: " . $movefile['error']);
                     }
                 }
             }
@@ -245,11 +322,11 @@ class FA_Frontend {
             // Combine existing and new files
             $all_files = array_merge($existing_files, $uploaded_files);
 
-            // Serialize the files array for storage
-            $serialized_files = maybe_serialize($all_files);
+            // Encode the files array as JSON for storage
+            $json_files = wp_json_encode($all_files);
 
-            // Log the serialized data for debugging
-            error_log("Serialized Uploaded Files: " . $serialized_files);
+            // Log the JSON data for debugging
+            fa_plugin_log("JSON Uploaded Files: " . $json_files);
 
             // Insert or update the submission in the database
             global $wpdb;
@@ -272,7 +349,7 @@ class FA_Frontend {
                         'submission_date' => current_time('mysql'),
                         'status'          => 'pending',
                         'grade'           => 0, // Reset grade
-                        'uploaded_files'  => $serialized_files,
+                        'uploaded_files'  => $json_files,
                         'notes'           => $notes,
                     ),
                     array( 'id' => $existing_submission->id ),
@@ -287,11 +364,12 @@ class FA_Frontend {
                 );
 
                 if ( false === $update_result ) {
-                    error_log("Failed to update submission ID {$existing_submission->id}");
+                    fa_plugin_log("Failed to update submission ID {$existing_submission->id}");
                     wp_die(__('Failed to update your submission. Please try again.', 'fashion-academy-lms'));
                 }
 
                 $submission_id = $existing_submission->id;
+                fa_plugin_log("Updated submission ID: {$submission_id}");
             } else {
                 // Insert a new submission
                 $insert_result = $wpdb->insert(
@@ -303,7 +381,7 @@ class FA_Frontend {
                         'submission_date' => current_time('mysql'),
                         'status'          => 'pending',
                         'grade'           => 0, // default
-                        'uploaded_files'  => $serialized_files,
+                        'uploaded_files'  => $json_files,
                         'notes'           => $notes,
                     ),
                     array(
@@ -319,21 +397,23 @@ class FA_Frontend {
                 );
 
                 if ( false === $insert_result ) {
-                    error_log("Failed to insert new submission for user ID $user_id, lesson ID $lesson_id");
+                    fa_plugin_log("Failed to insert new submission for user ID $user_id, lesson ID $lesson_id");
                     wp_die(__('Failed to submit your homework. Please try again.', 'fashion-academy-lms'));
                 }
 
                 $submission_id = $wpdb->insert_id;
+                fa_plugin_log("Inserted new submission ID: {$submission_id}");
             }
 
             // Optional: Log successful submission
-            error_log("Homework submission successful. Submission ID: $submission_id");
+            fa_plugin_log("Homework submission successful. Submission ID: $submission_id");
 
             // Redirect with a success message
             wp_redirect(add_query_arg('homework_submitted', 'true', get_permalink($lesson_id)));
             exit;
         }
     }
+
 
 }
 

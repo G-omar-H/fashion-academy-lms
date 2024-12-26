@@ -14,6 +14,22 @@ Text Domain: fashion-academy-lms
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// Custom logging functionality for this plugin
+function fa_plugin_log( $message ) {
+    $log_file = plugin_dir_path( __FILE__ ) . 'fashion-academy-debug.log';
+    $timestamp = date( 'Y-m-d H:i:s' );
+    $log_message = "[$timestamp] $message" . PHP_EOL;
+    file_put_contents( $log_file, $log_message, FILE_APPEND | LOCK_EX );
+}
+
+function fa_error_handler( $errno, $errstr, $errfile, $errline ) {
+    if ( strpos( $errfile, plugin_dir_path( __FILE__ ) ) === 0 ) {
+        fa_plugin_log( "Error [$errno]: $errstr in $errfile on line $errline" );
+    }
+    return false; // Continue with the default error handler
+}
+set_error_handler( 'fa_error_handler' );
+
 // 1. Includes
 require_once plugin_dir_path(__FILE__) . 'includes/class-fa-post-types.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-fa-activator.php';
@@ -21,10 +37,17 @@ require_once plugin_dir_path(__FILE__) . 'admin/class-fa-admin.php';
 require_once plugin_dir_path(__FILE__) . 'public/class-fa-frontend.php';
 
 // 2. Activation Hook - create DB tables, etc.
-register_activation_hook( __FILE__, array( 'FA_Activator', 'activate' ) );
+register_activation_hook( __FILE__, 'fa_lms_activation_hook' );
+function fa_lms_activation_hook() {
+    FA_Activator::activate();
+    fa_plugin_log( 'Plugin activated successfully.' );
+}
 
 // 3. Initialize Classes after plugins are loaded
 add_action( 'plugins_loaded', 'fa_lms_init' );
+add_action( 'init', function() {
+    fa_plugin_log( 'FA_LMS plugin initialized.' );
+} );
 function fa_lms_init() {
     // Custom Post Types
     new FA_Post_Types();
