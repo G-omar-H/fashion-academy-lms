@@ -1,0 +1,80 @@
+
+# Node.js dependencies
+/node_modules/
+/npm-debug.log*
+/yarn-error.log
+/package-lock.json
+/pnpm-lock.yaml
+
+# Build output directories
+/dist/
+/build/
+/out/
+
+# Webpack specific build files
+*.cache
+*.temp
+.cache-loader/
+.next/
+.nuxt/
+.vite/
+
+# TypeScript
+*.tsbuildinfo
+
+# Test coverage
+/coverage/
+
+# Logs
+/logs
+*.log
+*.log.*
+
+# WordPress specific
+/wp-content/uploads/
+/wp-content/upgrade/
+/wp-config.php
+
+# Ignore custom localizations and configs
+/.env
+/.env.local
+/.env.*.local
+/.idea/
+/*.local
+
+# Composer-related files
+/vendor/
+/composer.lock
+
+# Laravel Mix or similar usage (if applicable)
+/public/mix-manifest.json
+/public/hot
+
+# Linaria CSS output
+.eslintrc.js
+/linaria-cache/
+
+# Miscellaneous OS or editor-specific files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.bak
+*.tmp~
+
+
+# Jest related
+/jest/**/*.snap
+
+# Babel Loader generated cache
+.babel_cache.json
+
+# Qodana result files
+qodana.sarif
+
+# Qodana analysis result directory
+/qodana/
+
+# Ignore Build Direct in Jit files prod development etc API documentation
