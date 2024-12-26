@@ -10,7 +10,7 @@ class FA_Admin {
 
 
     public function add_admin_pages() {
-        // Main "Fashion Academy" menu (if not already created)
+        // Main "Fashion Academy" menu
         add_menu_page(
             __('Fashion Academy', 'fashion-academy-lms'),
             __('Fashion Academy', 'fashion-academy-lms'),
@@ -20,16 +20,20 @@ class FA_Admin {
             'dashicons-welcome-learn-more',
             3
         );
-    
+
         // Submissions page
         add_submenu_page(
-            'fa-dashboard',               // Parent slug
-            __('Submissions', 'fashion-academy-lms'), // Page title
-            __('Submissions', 'fashion-academy-lms'), // Menu title
-            'manage_options',             // Capability
-            'fa-submissions',             // Menu slug
-            array($this, 'render_submissions_page')   // Callback
+            'fa-dashboard',
+            __('Submissions', 'fashion-academy-lms'),
+            __('Submissions', 'fashion-academy-lms'),
+            'manage_options',
+            'fa-submissions',
+            array($this, 'render_submissions_page')
         );
+    }
+
+    public function render_dashboard() {
+        echo '<div class="wrap"><h1>' . __('Fashion Academy Dashboard', 'fashion-academy-lms') . '</h1></div>';
     }
 
     public function render_submissions_page() {
@@ -136,17 +140,20 @@ class FA_Admin {
         }
 
         // Log the fetched submission data for debugging
-        error_log("Rendering submission ID: {$submission_id}");
-        error_log("Serialized Uploaded Files: " . $submission->uploaded_files);
-        error_log("Notes: " . $submission->notes);
+        fa_plugin_log("Rendering submission ID: {$submission_id}");
+        fa_plugin_log("Serialized Uploaded Files: " . $submission->uploaded_files);
+        fa_plugin_log("Notes: " . $submission->notes);
 
         // Handle form submission to update grade/status
         if ( isset($_POST['fa_grade_submission']) ) {
             $new_grade  = floatval($_POST['grade']);
             $new_status = 'graded';
 
-            // If grade >= 75, mark as passed
-            if ( $new_grade >= 75 ) {
+            // Define passing threshold
+            $passing_grade = 75;
+
+            // If grade >= passing_grade, mark as passed
+            if ( $new_grade >= $passing_grade ) {
                 $new_status = 'passed';
             }
 
@@ -166,7 +173,7 @@ class FA_Admin {
             );
 
             if ( false === $update_result ) {
-                error_log("Failed to update submission ID {$submission_id}");
+                fa_plugin_log("Failed to update submission ID {$submission_id}");
                 wp_die(__('Failed to update the submission. Please try again.', 'fashion-academy-lms'));
             }
 
@@ -187,6 +194,7 @@ class FA_Admin {
             ) );
             exit;
         }
+
 
         // Re-fetch the submission after potential updates
         $submission = $wpdb->get_row( $wpdb->prepare("SELECT * FROM $submission_table WHERE id = %d", $submission_id) );
@@ -252,4 +260,124 @@ class FA_Admin {
 
         echo '</div>';
     }
+
+    /**
+     * Unlock the next lesson for the user based on the current lesson
+     *
+     * @param int $user_id
+     * @param int $current_lesson_id
+     */
+    public function unlock_next_lesson($user_id, $current_lesson_id) {
+        global $wpdb;
+        $progress_table = $wpdb->prefix . 'course_progress';
+
+        // Fetch the current lesson's order and course ID
+        $current_lesson = get_post($current_lesson_id);
+        if (!$current_lesson) {
+            fa_plugin_log("Current lesson ID $current_lesson_id not found.");
+            return;
+        }
+
+        $current_order = get_post_meta($current_lesson_id, 'lesson_order', true);
+        $course_id = get_post_meta($current_lesson_id, 'lesson_course_id', true);
+
+        if (!$course_id || !$current_order) {
+            fa_plugin_log("Missing course ID or lesson order for lesson ID $current_lesson_id.");
+            return;
+        }
+
+        // Fetch the next lesson based on order
+        $next_lesson = get_posts(array(
+            'post_type'      => 'lesson',
+            'posts_per_page' => 1,
+            'meta_key'       => 'lesson_order',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'ASC',
+            'meta_query'     => array(
+                array(
+                    'key'     => 'lesson_course_id',
+                    'value'   => $course_id,
+                    'compare' => '='
+                ),
+                array(
+                    'key'     => 'lesson_order',
+                    'value'   => intval($current_order) + 1,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC'
+                )
+            )
+        ));
+
+        if (empty($next_lesson)) {
+            fa_plugin_log("No next lesson found for course ID $course_id after lesson order $current_order.");
+            return;
+        }
+
+        $next_lesson_id = $next_lesson[0]->ID;
+
+        // Check if progress already exists
+        $existing_progress = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM $progress_table WHERE user_id = %d AND lesson_id = %d",
+                $user_id,
+                $next_lesson_id
+            )
+        );
+
+        if ($existing_progress) {
+            // Update the existing progress status
+            $wpdb->update(
+                $progress_table,
+                array(
+                    'progress_status' => 'incomplete' // or 'unlocked'
+                ),
+                array(
+                    'id' => $existing_progress->id
+                ),
+                array(
+                    '%s'
+                ),
+                array(
+                    '%d'
+                )
+            );
+            fa_plugin_log("Updated progress for user ID $user_id to unlock lesson ID $next_lesson_id.");
+        } else {
+            // Insert new progress record
+            $wpdb->insert(
+                $progress_table,
+                array(
+                    'user_id'         => $user_id,
+                    'course_id'       => $course_id,
+                    'lesson_id'       => $next_lesson_id,
+                    'progress_status' => 'incomplete' // or 'unlocked'
+                ),
+                array(
+                    '%d',
+                    '%d',
+                    '%d',
+                    '%s'
+                )
+            );
+            fa_plugin_log("Inserted progress for user ID $user_id to unlock lesson ID $next_lesson_id.");
+        }
+
+        // Optional: Notify the user via email
+        $user_info = get_userdata($user_id);
+        if ($user_info && !empty($user_info->user_email)) {
+            $next_lesson_title = get_the_title($next_lesson_id);
+            $next_lesson_url = get_permalink($next_lesson_id);
+
+            $subject = __('New Lesson Unlocked!', 'fashion-academy-lms');
+            $message = sprintf(
+                __('Congratulations! You have unlocked the next lesson: %s. You can access it here: %s', 'fashion-academy-lms'),
+                $next_lesson_title,
+                $next_lesson_url
+            );
+
+            wp_mail($user_info->user_email, $subject, $message);
+            fa_plugin_log("Notification email sent to user ID $user_id for lesson ID $next_lesson_id.");
+        }
+    }
 }
+?>

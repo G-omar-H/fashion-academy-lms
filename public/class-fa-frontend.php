@@ -9,6 +9,9 @@ class FA_Frontend {
 
         // Process form submissions
         add_action('init', array($this, 'handle_homework_submission'));
+
+        // Restrict lesson access
+        add_action('template_redirect', array($this, 'restrict_lesson_access'));
     }
 
 
@@ -196,10 +199,6 @@ class FA_Frontend {
 
         return ob_get_clean();
     }
-
-
-
-
 
     /**
      * 2) Handle form submission (runs on 'init')
@@ -414,6 +413,99 @@ class FA_Frontend {
         }
     }
 
+    /**
+     * Restrict access to lessons based on user's progress
+     */
+    public function restrict_lesson_access() {
+        if ( ! is_singular('lesson') ) {
+            return; // Only restrict single lesson pages
+        }
 
+        if ( ! is_user_logged_in() ) {
+            // Redirect non-logged-in users to login page
+            wp_redirect(wp_login_url(get_permalink()));
+            exit;
+        }
+
+        global $post, $wpdb;
+        $user_id = get_current_user_id();
+        $lesson_id = $post->ID;
+
+        // Fetch course ID from lesson meta
+        $course_id = get_post_meta($lesson_id, 'lesson_course_id', true);
+
+        if ( !$course_id ) {
+            // If no course ID is associated, allow access
+            return;
+        }
+
+        // Fetch lesson order
+        $current_order = get_post_meta($lesson_id, 'lesson_order', true);
+        if (!$current_order) {
+            // If no lesson order is set, allow access
+            return;
+        }
+
+        // Fetch all lessons in the course up to the current one
+        $required_lessons = get_posts(array(
+            'post_type'      => 'lesson',
+            'posts_per_page' => -1,
+            'meta_key'       => 'lesson_order',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'ASC',
+            'meta_query'     => array(
+                array(
+                    'key'     => 'lesson_course_id',
+                    'value'   => $course_id,
+                    'compare' => '='
+                ),
+                array(
+                    'key'     => 'lesson_order',
+                    'value'   => intval($current_order) - 1,
+                    'compare' => '<=',
+                    'type'    => 'NUMERIC'
+                )
+            )
+        ));
+
+        // Check if all required lessons are marked as 'passed' in course_progress
+        foreach ($required_lessons as $lesson) {
+            $progress = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT progress_status FROM {$wpdb->prefix}course_progress WHERE user_id = %d AND lesson_id = %d",
+                    $user_id,
+                    $lesson->ID
+                )
+            );
+
+            if ( $progress !== 'passed' ) {
+                // If any required lesson is not passed, restrict access
+                // Set a transient to display a notice after redirection
+                set_transient('fa_restricted_lesson_notice_' . $user_id, true, 30);
+                wp_redirect(get_permalink($course_id)); // Redirect to course overview
+                exit;
+            }
+        }
+
+        // Display notice if set
+        add_action('wp_footer', array($this, 'display_restricted_lesson_notice'));
+    }
+
+    /**
+     * Display a notice to the user about restricted access
+     */
+    public function display_restricted_lesson_notice() {
+        if ( ! is_user_logged_in() ) {
+            return;
+        }
+
+        $user_id = get_current_user_id();
+        if ( get_transient('fa_restricted_lesson_notice_' . $user_id) ) {
+            echo '<div class="notice notice-error is-dismissible fa-restricted-lesson-notice">
+                    <p>' . __('You must complete the previous lessons to access this one.', 'fashion-academy-lms') . '</p>
+                  </div>';
+            delete_transient('fa_restricted_lesson_notice_' . $user_id);
+        }
+    }
 }
-
+?>

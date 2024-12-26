@@ -52,3 +52,4 @@ class FA_Activator {
         dbDelta($sql3);
     }
 }
+?>

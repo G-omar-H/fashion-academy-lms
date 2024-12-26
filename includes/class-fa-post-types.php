@@ -3,14 +3,24 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class FA_Post_Types {
 
+
     public function __construct() {
         add_action('init', array($this, 'register_post_types'));
         add_action('add_meta_boxes', array($this, 'add_course_link_metabox'));
+        add_action('add_meta_boxes', array($this, 'add_lesson_order_metabox')); // Add this line
         add_action('save_post_lesson', array($this, 'save_lesson_course_link'));
-    
+        add_action('save_post_lesson', array($this, 'save_lesson_order')); // Add this line
+
+        // Hook the auto_assign_lesson_order function
+        add_action('save_post', array($this, 'auto_assign_lesson_order'), 20, 3);
+
         // Add custom column in admin list
         add_filter('manage_edit-lesson_columns', array($this, 'add_course_column'));
         add_action('manage_lesson_posts_custom_column', array($this, 'render_course_column'), 10, 2);
+
+        // Add custom column for lesson order
+        add_filter('manage_edit-lesson_columns', array($this, 'add_lesson_order_column')); // Add this line
+        add_action('manage_lesson_posts_custom_column', array($this, 'render_lesson_order_column'), 10, 2); // Add this line
     }
     
 
@@ -145,5 +155,145 @@ public function render_course_column($column, $post_id) {
         }
     }
 }
-    
+
+    /**
+     * Add Lesson Order Meta Box
+     */
+    public function add_lesson_order_metabox() {
+        add_meta_box(
+            'fa_lesson_order_metabox',
+            __('Lesson Order', 'fashion-academy-lms'),
+            array($this, 'render_lesson_order_metabox'),
+            'lesson',
+            'side',
+            'default'
+        );
+    }
+
+    /**
+     * Render Lesson Order Meta Box
+     */
+    public function render_lesson_order_metabox($post) {
+        // Add a nonce field for security
+        wp_nonce_field('fa_save_lesson_order', 'fa_lesson_order_nonce');
+
+        // Retrieve existing value from the database
+        $lesson_order = get_post_meta($post->ID, 'lesson_order', true);
+        ?>
+        <label for="fa_lesson_order"><?php _e('Order of Lesson within the Course:', 'fashion-academy-lms'); ?></label>
+        <input type="number" name="fa_lesson_order" id="fa_lesson_order" value="<?php echo esc_attr($lesson_order); ?>" min="1" style="width: 100%;" />
+        <?php
+    }
+
+    /**
+     * Save Lesson Order Meta Box Data
+     */
+    public function save_lesson_order($post_id) {
+        // Check if our nonce is set.
+        if ( ! isset($_POST['fa_lesson_order_nonce']) ) {
+            return;
+        }
+
+        // Verify that the nonce is valid.
+        if ( ! wp_verify_nonce($_POST['fa_lesson_order_nonce'], 'fa_save_lesson_order') ) {
+            return;
+        }
+
+        // If this is an autosave, our form has not been submitted, so we don't want to do anything.
+        if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        // Check the user's permissions.
+        if ( isset($_POST['post_type']) && 'lesson' == $_POST['post_type'] ) {
+            if ( ! current_user_can('edit_post', $post_id) ) {
+                return;
+            }
+        } else {
+            return;
+        }
+
+        // Sanitize and save the data
+        if ( isset($_POST['fa_lesson_order']) ) {
+            $lesson_order = intval($_POST['fa_lesson_order']);
+            update_post_meta($post_id, 'lesson_order', $lesson_order);
+        }
+    }
+
+    /**
+     * Automatically Assign Lesson Order Upon Lesson Creation
+     * (Optional: Uncomment if you prefer automatic assignment)
+     */
+    public function auto_assign_lesson_order($post_id, $post, $update) {
+        // Avoid auto-incrementing on updates
+        if ($update) {
+            return;
+        }
+
+        // Ensure it's a 'lesson' post type
+        if ($post->post_type != 'lesson') {
+            return;
+        }
+
+        // Get the course ID
+        $course_id = get_post_meta($post_id, 'lesson_course_id', true);
+
+        if (!$course_id) {
+            return;
+        }
+
+        // Get the highest current lesson_order in the course
+        $existing_lessons = get_posts(array(
+            'post_type'      => 'lesson',
+            'posts_per_page' => 1,
+            'meta_key'       => 'lesson_order',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'DESC',
+            'meta_query'     => array(
+                array(
+                    'key'     => 'lesson_course_id',
+                    'value'   => $course_id,
+                    'compare' => '='
+                )
+            )
+        ));
+
+        if (!empty($existing_lessons)) {
+            $last_order = intval(get_post_meta($existing_lessons[0]->ID, 'lesson_order', true));
+            $new_order = $last_order + 1;
+        } else {
+            $new_order = 1;
+        }
+
+        // Update the lesson_order meta field
+        update_post_meta($post_id, 'lesson_order', $new_order);
+    }
+
+    /**
+     * Add Lesson Order Column to Admin List
+     */
+    public function add_lesson_order_column($columns) {
+        $columns['lesson_order'] = __('Order', 'fashion-academy-lms');
+        return $columns;
+    }
+
+    /**
+     * Render Lesson Order Column in Admin List
+     */
+    public function render_lesson_order_column($column, $post_id) {
+        if($column === 'lesson_order') {
+            $lesson_order = get_post_meta($post_id, 'lesson_order', true);
+            echo esc_html($lesson_order ? $lesson_order : __('N/A', 'fashion-academy-lms'));
+        }
+    }
+
+    /**
+     * Add Lesson Order Column alongside Course Column
+     */
+    public function add_lesson_order_column_to_courses($columns) {
+        // This function is already covered by 'add_lesson_order_column'
+    }
+
+    // Existing methods for course columns...
 }
+?>
