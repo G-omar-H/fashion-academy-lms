@@ -189,23 +189,17 @@ public function render_course_column($column, $post_id) {
      * Save Lesson Order Meta Box Data
      */
     public function save_lesson_order($post_id) {
-        // Check if our nonce is set.
+        // Security checks & nonce verification
         if ( ! isset($_POST['fa_lesson_order_nonce']) ) {
             return;
         }
-
-        // Verify that the nonce is valid.
         if ( ! wp_verify_nonce($_POST['fa_lesson_order_nonce'], 'fa_save_lesson_order') ) {
             return;
         }
-
-        // If this is an autosave, our form has not been submitted, so we don't want to do anything.
         if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) {
             return;
         }
-
-        // Check the user's permissions.
-        if ( isset($_POST['post_type']) && 'lesson' == $_POST['post_type'] ) {
+        if ( isset($_POST['post_type']) && 'lesson' === $_POST['post_type'] ) {
             if ( ! current_user_can('edit_post', $post_id) ) {
                 return;
             }
@@ -213,55 +207,70 @@ public function render_course_column($column, $post_id) {
             return;
         }
 
-        // Sanitize and save the data
+        // If admin manually sets a lesson order
         if ( isset($_POST['fa_lesson_order']) ) {
-            $lesson_order = intval($_POST['fa_lesson_order']);
-            update_post_meta($post_id, 'lesson_order', $lesson_order);
-        }
-
-        if (isset($_POST['fa_lesson_order'])) {
             $lesson_order = (int) $_POST['fa_lesson_order'];
-            $course_id    = get_post_meta($post_id, 'lesson_course_id', true);
-
-            // Check for duplicates
-            if ($course_id && $lesson_order > 0) {
-                $existing_lesson = get_posts(array(
-                    'post_type'  => 'lesson',
-                    'meta_query' => array(
-                        'relation' => 'AND',
-                        array(
-                            'key'     => 'lesson_course_id',
-                            'value'   => $course_id,
-                            'compare' => '='
-                        ),
-                        array(
-                            'key'     => 'lesson_order',
-                            'value'   => $lesson_order,
-                            'compare' => '='
-                        )
-                    )
-                ));
-
-                // If found a conflict (and not the same post), you might auto-increment or show an error
-                if (!empty($existing_lesson) && $existing_lesson[0]->ID != $post_id) {
-                    // Example: auto-increment
-                    $lesson_order++;
-                }
-            }
-
             update_post_meta($post_id, 'lesson_order', $lesson_order);
+
+            // If user typed 0 or negative, you might force it to 1 or show an error
+            // if ($lesson_order <= 0) {
+            //     // e.g. force it to 1 or show error
+            // }
+
+            // Now check for duplicates
+            $course_id = get_post_meta($post_id, 'lesson_course_id', true);
+            if ($course_id && $lesson_order > 0) {
+                $this->ensure_unique_order($post_id, $course_id, $lesson_order);
+            }
         }
     }
+
+    /**
+     * If the admin manually sets a duplicate order, auto-increment or handle the conflict.
+     */
+    private function ensure_unique_order($post_id, $course_id, $lesson_order) {
+        $duplicates = get_posts(array(
+            'post_type' => 'lesson',
+            'meta_query' => array(
+                'relation' => 'AND',
+                array('key' => 'lesson_course_id', 'value' => $course_id),
+                array('key' => 'lesson_order', 'value' => $lesson_order),
+            ),
+            'exclude' => array($post_id),
+            'fields'  => 'ids'
+        ));
+
+        if (! empty($duplicates)) {
+            // We found a duplicate => Block publication
+            fa_plugin_log("Lesson #$post_id tried to set order=$lesson_order in course #$course_id, but that order is taken. Blocking publish.");
+
+            wp_die(
+                sprintf(
+                    __('Error: The order number %d in course %d is already used by another lesson. Please choose a unique order.', 'fashion-academy-lms'),
+                    $lesson_order,
+                    $course_id
+                ),
+                __('Duplicate Lesson Order', 'fashion-academy-lms'),
+                array('back_link' => true)
+            );
+        }
+    }
+
+
 
     /**
      * Automatically Assign Lesson Order Upon Lesson Creation
      * (Optional: Uncomment if you prefer automatic assignment)
      */
     public function auto_assign_lesson_order($post_id, $post, $update) {
-        // Avoid auto-incrementing on updates
-        if ($update) {
-            return;
-        }
+        // if ($update) {
+        //    return;
+        // }
+
+        // If the post_date_gmt is not the default, it's not brand new
+        //if ($post->post_date_gmt != '0000-00-00 00:00:00') {
+        //    return;
+        //}
 
         if ($post->post_type !== 'lesson') {
             return;
@@ -269,10 +278,20 @@ public function render_course_column($column, $post_id) {
 
         $course_id = get_post_meta($post_id, 'lesson_course_id', true);
         if (!$course_id) {
-            return; // No course assigned -> can't assign order
+            return;
         }
 
-        // Query the current highest order
+        $existing_order = get_post_meta($post_id, 'lesson_order', true);
+        if (empty($existing_order)) {
+            $this->assign_next_available_order($post_id, $course_id);
+        }
+    }
+
+    /**
+     * Helper method to assign the next available order in the same course.
+     */
+    private function assign_next_available_order($post_id, $course_id) {
+        // Find the highest lesson_order so far in this course
         $existing_lessons = get_posts(array(
             'post_type'      => 'lesson',
             'posts_per_page' => 1,
@@ -293,11 +312,12 @@ public function render_course_column($column, $post_id) {
             $last_order = (int) get_post_meta($existing_lessons[0]->ID, 'lesson_order', true);
         }
 
-        // The new lesson will have the last order + 1
         $new_order = $last_order + 1;
-
         update_post_meta($post_id, 'lesson_order', $new_order);
+
+        fa_plugin_log("Auto-assigned lesson_order=$new_order to lesson #$post_id in course #$course_id (first creation).");
     }
+
 
     /**
      * Add Lesson Order Column to Admin List

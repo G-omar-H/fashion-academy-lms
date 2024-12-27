@@ -45,9 +45,15 @@ function fa_lms_activation_hook() {
 
 // 3. Initialize Classes after plugins are loaded
 add_action( 'plugins_loaded', 'fa_lms_init' );
+
 add_action( 'init', function() {
-    fa_plugin_log( 'FA_LMS plugin initialized.' );
+    // Check if the log has already been written for this request
+    if ( ! defined( 'FA_LMS_LOGGED' ) ) {
+        define( 'FA_LMS_LOGGED', true );
+        fa_plugin_log( 'FA_LMS plugin initialized.' );
+    }
 } );
+
 function fa_lms_init() {
     // Custom Post Types
     new FA_Post_Types();
