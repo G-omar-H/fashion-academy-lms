@@ -21,6 +21,8 @@ class FA_Post_Types {
         // Add custom column for lesson order
         add_filter('manage_edit-lesson_columns', array($this, 'add_lesson_order_column')); // Add this line
         add_action('manage_lesson_posts_custom_column', array($this, 'render_lesson_order_column'), 10, 2); // Add this line
+
+        add_shortcode('fa_custom_register', 'fa_render_registration_form');
     }
     
 

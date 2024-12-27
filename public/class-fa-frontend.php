@@ -7,12 +7,190 @@ class FA_Frontend {
         // Register the shortcode
         add_shortcode('fa_homework_form', array($this, 'render_homework_form'));
 
+        // Register shortcodes
+        add_shortcode('fa_custom_register', array($this, 'render_registration_form'));
+        add_shortcode('fa_custom_login', array($this, 'render_login_form'));
+
+        // Process form submissions
+        add_action('init', array($this, 'process_registration_form'));
+        add_action('init', array($this, 'process_login_form'));
+
+        // Add a new shortcode for the student dashboard
+        add_shortcode('fa_student_dashboard', array($this, 'render_student_dashboard'));
+
         // Process form submissions
         add_action('init', array($this, 'handle_homework_submission'));
 
         // Restrict lesson access
         add_action('template_redirect', array($this, 'restrict_lesson_access'));
+
+
     }
+
+
+    // --------------------------------------------
+    // 1) Render the Registration Form [fa_custom_register]
+    // --------------------------------------------
+    public function render_registration_form() {
+        // If user is already logged in, just show a message or redirect
+        if ( is_user_logged_in() ) {
+            return '<p>' . __('أنت مسجل دخول بالفعل', 'fashion-academy-lms') . '</p>';
+        }
+
+        ob_start();
+        ?>
+        <form method="post" id="fa-register-form">
+            <p>
+                <label for="reg_name"><?php _e('اسم المستخدم', 'fashion-academy-lms'); ?></label><br/>
+                <input type="text" name="reg_name" id="reg_name" required />
+            </p>
+            <p>
+                <label for="reg_email"><?php _e('البريد الإلكتروني', 'fashion-academy-lms'); ?></label><br/>
+                <input type="email" name="reg_email" id="reg_email" required />
+            </p>
+            <p>
+                <label for="reg_password"><?php _e('كلمة المرور', 'fashion-academy-lms'); ?></label><br/>
+                <input type="password" name="reg_password" id="reg_password" required />
+            </p>
+
+            <!-- Hidden input for detecting form submission -->
+            <input type="hidden" name="fa_registration_action" value="fa_register_user" />
+            <?php wp_nonce_field('fa_register_nonce', 'fa_register_nonce_field'); ?>
+
+            <p>
+                <input type="submit" value="<?php esc_attr_e('تسجيل حساب', 'fashion-academy-lms'); ?>" />
+            </p>
+        </form>
+        <?php
+        return ob_get_clean();
+    }
+
+    // --------------------------------------------
+    // 2) Process the Registration Form Submission
+    // --------------------------------------------
+    public function process_registration_form() {
+        if ( isset($_POST['fa_registration_action']) && $_POST['fa_registration_action'] === 'fa_register_user' ) {
+
+            // 1) Verify Nonce for Security
+            if ( ! isset($_POST['fa_register_nonce_field'])
+                || ! wp_verify_nonce($_POST['fa_register_nonce_field'], 'fa_register_nonce') ) {
+                wp_die(__('فشل التحقق الأمني', 'fashion-academy-lms'));
+            }
+
+            // 2) Grab Form Inputs
+            $name     = sanitize_text_field($_POST['reg_name'] ?? '');
+            $email    = sanitize_email($_POST['reg_email'] ?? '');
+            $password = sanitize_text_field($_POST['reg_password'] ?? '');
+
+            // 3) Validate
+            if ( empty($name) || empty($email) || empty($password) ) {
+                wp_die(__('يجب تعبئة كافة الحقول المطلوبة', 'fashion-academy-lms'));
+            }
+            if ( username_exists($name) || email_exists($email) ) {
+                wp_die(__('اسم المستخدم أو البريد الإلكتروني مستخدم مسبقًا', 'fashion-academy-lms'));
+            }
+
+            // 4) Create User
+            $user_id = wp_create_user($name, $password, $email);
+            if ( is_wp_error($user_id) ) {
+                wp_die($user_id->get_error_message());
+            }
+
+            // 5) Set Role to 'student' (ensure you have a 'student' role)
+            $user = new WP_User($user_id);
+            $user->set_role('student'); // or whichever role you use
+
+            // 6) Auto Login
+            $this->auto_login_user($name, $password);
+
+            // 7) Redirect to student dashboard (front end)
+            wp_redirect( site_url('/student-dashboard') );
+            exit;
+        }
+    }
+
+    private function auto_login_user($username, $password) {
+        $creds = array(
+            'user_login'    => $username,
+            'user_password' => $password,
+            'remember'      => true,
+        );
+        $user = wp_signon($creds, false);
+        if ( is_wp_error($user) ) {
+            wp_die($user->get_error_message());
+        }
+    }
+
+    // --------------------------------------------
+    // 3) Render the Login Form [fa_custom_login]
+    // --------------------------------------------
+    public function render_login_form() {
+        if ( is_user_logged_in() ) {
+            return '<p>' . __('أنت مسجل دخول بالفعل', 'fashion-academy-lms') . '</p>';
+        }
+
+        ob_start(); ?>
+        <form method="post" id="fa-login-form">
+            <p>
+                <label for="fa_user_login"><?php _e('اسم المستخدم أو البريد الإلكتروني', 'fashion-academy-lms'); ?></label><br/>
+                <input type="text" name="fa_user_login" id="fa_user_login" required />
+            </p>
+            <p>
+                <label for="fa_user_pass"><?php _e('كلمة المرور', 'fashion-academy-lms'); ?></label><br/>
+                <input type="password" name="fa_user_pass" id="fa_user_pass" required />
+            </p>
+
+            <input type="hidden" name="fa_login_action" value="fa_do_login" />
+            <?php wp_nonce_field('fa_login_nonce', 'fa_login_nonce_field'); ?>
+
+            <p>
+                <input type="submit" value="<?php esc_attr_e('دخول', 'fashion-academy-lms'); ?>" />
+            </p>
+        </form>
+        <?php
+        return ob_get_clean();
+    }
+
+    // --------------------------------------------
+    // 4) Process the Login Form
+    // --------------------------------------------
+    public function process_login_form() {
+        if ( isset($_POST['fa_login_action']) && $_POST['fa_login_action'] === 'fa_do_login' ) {
+            // 1) Check Nonce
+            if ( ! isset($_POST['fa_login_nonce_field'])
+                || ! wp_verify_nonce($_POST['fa_login_nonce_field'], 'fa_login_nonce') ) {
+                wp_die(__('فشل التحقق الأمني', 'fashion-academy-lms'));
+            }
+
+            // 2) Get Form Data
+            $user_login = sanitize_text_field($_POST['fa_user_login'] ?? '');
+            $user_pass  = sanitize_text_field($_POST['fa_user_pass'] ?? '');
+
+            // 3) Attempt Login
+            $creds = array(
+                'user_login'    => $user_login,
+                'user_password' => $user_pass,
+                'remember'      => true
+            );
+            $user = wp_signon($creds, false);
+
+            if ( is_wp_error($user) ) {
+                wp_die($user->get_error_message()); // or handle better
+            }
+
+            // 4) If success, check if admin
+            if ( user_can($user, 'manage_options') ) {
+                // Admin
+                wp_redirect( site_url('/admin-dashboard') );
+            } else {
+                // Student
+                wp_redirect( site_url('/student-dashboard') );
+            }
+            exit;
+        }
+    }
+
+
 
 
     /**
@@ -507,5 +685,6 @@ class FA_Frontend {
             delete_transient('fa_restricted_lesson_notice_' . $user_id);
         }
     }
+
 }
 ?>

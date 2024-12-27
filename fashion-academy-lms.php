@@ -35,10 +35,13 @@ require_once plugin_dir_path(__FILE__) . 'includes/class-fa-post-types.php';
 require_once plugin_dir_path(__FILE__) . 'includes/class-fa-activator.php';
 require_once plugin_dir_path(__FILE__) . 'admin/class-fa-admin.php';
 require_once plugin_dir_path(__FILE__) . 'public/class-fa-frontend.php';
+require_once plugin_dir_path(__FILE__) . 'includes/students-restrictions.php';
 
 // 2. Activation Hook - create DB tables, etc.
 register_activation_hook( __FILE__, 'fa_lms_activation_hook' );
 function fa_lms_activation_hook() {
+    // Create custom user roles
+    fa_lms_register_roles();
     FA_Activator::activate();
     fa_plugin_log( 'Plugin activated successfully.' );
 }
@@ -53,6 +56,12 @@ add_action( 'init', function() {
         fa_plugin_log( 'FA_LMS plugin initialized.' );
     }
 } );
+
+register_deactivation_hook( __FILE__, 'fa_lms_deactivation_hook' );
+function fa_lms_deactivation_hook() {
+    // Remove "Student" role
+    remove_role('student');
+}
 
 function fa_lms_init() {
     // Custom Post Types
