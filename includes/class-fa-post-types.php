@@ -218,6 +218,39 @@ public function render_course_column($column, $post_id) {
             $lesson_order = intval($_POST['fa_lesson_order']);
             update_post_meta($post_id, 'lesson_order', $lesson_order);
         }
+
+        if (isset($_POST['fa_lesson_order'])) {
+            $lesson_order = (int) $_POST['fa_lesson_order'];
+            $course_id    = get_post_meta($post_id, 'lesson_course_id', true);
+
+            // Check for duplicates
+            if ($course_id && $lesson_order > 0) {
+                $existing_lesson = get_posts(array(
+                    'post_type'  => 'lesson',
+                    'meta_query' => array(
+                        'relation' => 'AND',
+                        array(
+                            'key'     => 'lesson_course_id',
+                            'value'   => $course_id,
+                            'compare' => '='
+                        ),
+                        array(
+                            'key'     => 'lesson_order',
+                            'value'   => $lesson_order,
+                            'compare' => '='
+                        )
+                    )
+                ));
+
+                // If found a conflict (and not the same post), you might auto-increment or show an error
+                if (!empty($existing_lesson) && $existing_lesson[0]->ID != $post_id) {
+                    // Example: auto-increment
+                    $lesson_order++;
+                }
+            }
+
+            update_post_meta($post_id, 'lesson_order', $lesson_order);
+        }
     }
 
     /**
@@ -230,19 +263,16 @@ public function render_course_column($column, $post_id) {
             return;
         }
 
-        // Ensure it's a 'lesson' post type
-        if ($post->post_type != 'lesson') {
+        if ($post->post_type !== 'lesson') {
             return;
         }
 
-        // Get the course ID
         $course_id = get_post_meta($post_id, 'lesson_course_id', true);
-
         if (!$course_id) {
-            return;
+            return; // No course assigned -> can't assign order
         }
 
-        // Get the highest current lesson_order in the course
+        // Query the current highest order
         $existing_lessons = get_posts(array(
             'post_type'      => 'lesson',
             'posts_per_page' => 1,
@@ -258,14 +288,14 @@ public function render_course_column($column, $post_id) {
             )
         ));
 
+        $last_order = 0;
         if (!empty($existing_lessons)) {
-            $last_order = intval(get_post_meta($existing_lessons[0]->ID, 'lesson_order', true));
-            $new_order = $last_order + 1;
-        } else {
-            $new_order = 1;
+            $last_order = (int) get_post_meta($existing_lessons[0]->ID, 'lesson_order', true);
         }
 
-        // Update the lesson_order meta field
+        // The new lesson will have the last order + 1
+        $new_order = $last_order + 1;
+
         update_post_meta($post_id, 'lesson_order', $new_order);
     }
 

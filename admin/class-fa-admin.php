@@ -177,8 +177,46 @@ class FA_Admin {
                 wp_die(__('Failed to update the submission. Please try again.', 'fashion-academy-lms'));
             }
 
-            // If passed, unlock the next lesson
-            if ( $new_status === 'passed' ) {
+            // If passed, first mark the *current* lesson as 'passed'
+            if ($new_status === 'passed') {
+                // 1) Mark the current lesson's progress as 'passed'
+                $progress_table = $wpdb->prefix . 'course_progress';
+
+                // Check if there's an existing record for this user+lesson
+                $existing_progress = $wpdb->get_row(
+                    $wpdb->prepare(
+                        "SELECT * FROM $progress_table WHERE user_id = %d AND lesson_id = %d",
+                        $submission->user_id,
+                        $submission->lesson_id
+                    )
+                );
+
+                if ($existing_progress) {
+                    // Update existing record
+                    $wpdb->update(
+                        $progress_table,
+                        array('progress_status' => 'passed'),
+                        array('id' => $existing_progress->id),
+                        array('%s'),
+                        array('%d')
+                    );
+                    fa_plugin_log("Set lesson ID {$submission->lesson_id} as 'passed' for user ID {$submission->user_id}. (updated existing row)");
+                } else {
+                    // Insert new record
+                    $wpdb->insert(
+                        $progress_table,
+                        array(
+                            'user_id'         => $submission->user_id,
+                            'course_id'       => $submission->course_id,
+                            'lesson_id'       => $submission->lesson_id,
+                            'progress_status' => 'passed'
+                        ),
+                        array('%d','%d','%d','%s')
+                    );
+                    fa_plugin_log("Set lesson ID {$submission->lesson_id} as 'passed' for user ID {$submission->user_id}. (inserted new row)");
+                }
+
+                // 2) Now unlock the *next* lesson
                 $this->unlock_next_lesson($submission->user_id, $submission->lesson_id);
             }
 
