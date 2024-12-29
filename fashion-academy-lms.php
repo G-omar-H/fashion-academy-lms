@@ -11,7 +11,6 @@ License:     GPL2
 Text Domain: fashion-academy-lms
 */
 
-
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // Custom logging functionality for this plugin
@@ -57,6 +56,41 @@ add_action( 'init', function() {
     }
 } );
 
+add_action('wp_enqueue_scripts', 'fa_enqueue_frontend_styles');
+function fa_enqueue_frontend_styles() {
+    wp_enqueue_style(
+        'fa-frontend-style',
+        plugin_dir_url(__FILE__) . 'assets/css/frontend.css', // adjust path
+        array(), // dependencies
+        '1.0'
+    );
+}
+
+// AJAX actions for checking a submission's status in real-time
+add_action('wp_ajax_fa_check_submission', 'fa_ajax_check_submission');
+add_action('wp_ajax_nopriv_fa_check_submission', 'fa_ajax_check_submission');
+
+function fa_ajax_check_submission() {
+    global $wpdb;
+    $submission_id = (int) $_GET['submission_id'];
+    $table = $wpdb->prefix . 'homework_submissions';
+
+    fa_plugin_log("AJAX Check Submission: submission_id = $submission_id");
+
+    $submission = $wpdb->get_row(
+        $wpdb->prepare("SELECT * FROM $table WHERE id = %d", $submission_id)
+    );
+
+    if ($submission) {
+        wp_send_json_success([
+            'status' => $submission->status,
+            'grade'  => $submission->grade,
+        ]);
+    } else {
+        wp_send_json_error('Submission not found.', 404);
+    }
+}
+
 register_deactivation_hook( __FILE__, 'fa_lms_deactivation_hook' );
 function fa_lms_deactivation_hook() {
     // Remove "Student" role
@@ -66,11 +100,12 @@ function fa_lms_deactivation_hook() {
 function fa_lms_init() {
     // Custom Post Types
     new FA_Post_Types();
-    
+
     // Admin Menus/Pages
     new FA_Admin();
-    
+
     // Frontend Shortcodes, etc.
     new FA_Frontend();
-
 }
+
+?>

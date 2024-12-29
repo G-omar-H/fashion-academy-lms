@@ -1,0 +1,356 @@
+* {
+    box-sizing: border-box;
+}
+
+/* Common color scheme (example) */
+:root {
+    --fa-primary: #c69;  /* a dusty rose/pink as accent */
+    --fa-background: #fdfdfd;
+    --fa-text: #333;
+    --fa-accent: #e7e7e7;
+}
+
+/* Body styling */
+body {
+    font-family: 'Open Sans', sans-serif;
+    color: #333;
+    background: #fefefe;
+}
+h1, h2, h3, h4 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #c69; /* accent */
+}
+
+/* Optionally use a body class:
+body.fa-lms-body {
+    ...
+}
+*/
+
+/* =============[ Buttons ]============ */
+.fa-button,
+button.fa-button {
+    background-color: var(--fa-primary);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+}
+.fa-button:hover {
+    background-color: #a55;
+}
+
+.fa-box {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.fa-box:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Danger button (Delete, etc.) */
+.button-danger {
+    background: #dc3545 !important;
+    color: #fff !important;
+    border-color: #dc3545 !important;
+}
+.button-danger:hover {
+    background: #b52c39 !important;
+}
+
+.button-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.button-text {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* =============[ Admin Dashboard ]============ */
+.fa-admin-dashboard-wrapper {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 980px;
+}
+.fa-admin-dashboard-wrapper h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    color: var(--fa-primary);
+    text-transform: uppercase;
+}
+
+/* Top nav links */
+.fa-admin-nav {
+    display: flex;
+    gap: 15px;
+    list-style: none;
+    margin-bottom: 1.5rem;
+    padding: 0;
+}
+.fa-admin-nav li {
+    margin: 0;
+}
+.fa-admin-nav a {
+    background: var(--fa-primary);
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 20px;
+    transition: background 0.3s ease;
+}
+.fa-admin-nav a:hover {
+    background: #a55;
+}
+.fa-admin-nav a.active-tab {
+    background: #a55;
+}
+
+/* Admin content container */
+.fa-admin-content {
+    background: var(--fa-accent);
+    padding: 20px;
+    border-radius: 8px;
+}
+
+/* Tables inside admin content */
+.fa-admin-content table.widefat {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+.fa-admin-content table.widefat th,
+.fa-admin-content table.widefat td {
+    border: 1px solid #eee;
+    padding: 12px;
+}
+.fa-admin-content table.widefat thead tr {
+    background-color: #f7f7f7;
+}
+
+/* =============[ Student Dashboard ]============ */
+.fa-student-dashboard-container {
+    max-width: 1200px;
+    margin: 20px auto;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+}
+.fa-student-dashboard-container h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    color: var(--fa-primary);
+    text-transform: uppercase;
+}
+
+/* Layout for the student dash */
+.fa-student-dashboard-layout {
+    display: flex;
+    gap: 20px;
+}
+.fa-lessons-sidebar {
+    width: 25%;
+    background: var(--fa-accent);
+    border-radius: 8px;
+    padding: 20px;
+}
+.fa-lessons-sidebar h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+.fa-lessons-sidebar ul {
+    list-style: none;
+    padding-left: 0;
+}
+.fa-lessons-sidebar li {
+    margin-bottom: 10px;
+}
+.fa-lessons-sidebar li a {
+    color: var(--fa-primary);
+    text-decoration: none;
+    padding: 8px 10px;
+    border-radius: 4px;
+    display: block;
+    transition: background 0.3s ease;
+}
+.fa-lessons-sidebar li a:hover {
+    background: #f0f0f0;
+}
+.fa-lessons-sidebar li a.active-lesson {
+    background: var(--fa-primary);
+    color: #fff;
+}
+
+/* Lesson content area */
+.fa-lesson-content {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 20px;
+}
+.fa-lesson-content h2 {
+    color: var(--fa-primary);
+    margin-top: 0;
+    font-weight: 600;
+}
+.fa-lesson-video {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* =============[ Forms & Inputs ]============ */
+.fa-admin-content form,
+.fa-student-dashboard-container form {
+    margin-bottom: 1.5rem;
+}
+.fa-admin-content form label,
+.fa-student-dashboard-container form label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}
+.fa-admin-content form input[type="text"],
+.fa-admin-content form input[type="number"],
+.fa-admin-content form input[type="email"],
+.fa-admin-content form input[type="password"],
+.fa-admin-content form select,
+.fa-student-dashboard-container form input[type="text"],
+.fa-student-dashboard-container form input[type="email"],
+.fa-student-dashboard-container form input[type="password"],
+.fa-student-dashboard-container form select {
+    width: 100%;
+    max-width: 400px;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.fa-admin-content form input[type="file"] {
+    margin-bottom: 10px;
+}
+
+.fa-admin-content button.button-primary,
+.fa-admin-content input[type="submit"],
+.fa-student-dashboard-container input[type="submit"],
+.fa-student-dashboard-container button {
+    background: var(--fa-primary);
+    color: #fff;
+    border-radius: 20px;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.fa-admin-content button.button-primary:hover,
+.fa-admin-content input[type="submit"]:hover,
+.fa-student-dashboard-container input[type="submit"]:hover,
+.fa-student-dashboard-container button:hover {
+    background: #a55;
+}
+
+/* Homework files preview */
+.fa-file-preview {
+    background: #fdfdfd;
+    border: 1px solid #eee;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+/* Success/notice messages */
+.notice.notice-success {
+    background: #e6ffed;
+    border-left: 4px solid #2fad63;
+    padding: 8px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+}
+
+.fa-spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #3498db;
+    animation: spinner 1s ease-in-out infinite;
+}
+
+@keyframes spinner {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.fa-spinner-section {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.fa-waiting-msg {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.fa-waiting-msg {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #555;
+}
+
+/* Retake button */
+.fa-retake-button {
+    background: #f56;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+.fa-retake-button:hover {
+    background: #d44;
+}
+
+/* On form submit => remove the form container, show spinner + message */
+#fa-homework-container {
+    margin-bottom: 20px;
+}
+
+
+/* =============[ Responsive Tweaks ]============ */
+@media (max-width: 768px) {
+    .fa-student-dashboard-layout {
+        flex-direction: column;
+    }
+    .fa-lessons-sidebar {
+        width: 100% !important;
+        margin-bottom: 20px;
+    }
+    .fa-lesson-content {
+        width: 100% !important;
+    }
+    .fa-admin-nav {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

@@ -18,6 +18,7 @@ class FA_Activator {
             status VARCHAR(20) DEFAULT 'pending' NOT NULL,
             grade FLOAT DEFAULT 0 NOT NULL,
             uploaded_files TEXT, -- To store JSON or serialized array of file URLs
+            instructor_files TEXT,
             notes TEXT,          -- To store user notes/comments
             PRIMARY KEY (id)
         ) $charset_collate;";

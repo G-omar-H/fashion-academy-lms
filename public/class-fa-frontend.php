@@ -1,22 +1,23 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit;
+if (!defined('ABSPATH')) exit;
 
-class FA_Frontend {
-
-    public function __construct() {
+class FA_Frontend
+{
+    public function __construct()
+    {
         // ===========[ Shortcodes ]===========
 
         // 1) Homework Form (existing)
         add_shortcode('fa_homework_form', array($this, 'render_homework_form'));
 
-        // 2) Registration & Login (existing from Milestone 1)
+        // 2) Registration & Login (Milestone 1)
         add_shortcode('fa_custom_register', array($this, 'render_registration_form'));
         add_shortcode('fa_custom_login', array($this, 'render_login_form'));
 
-        // 3) STUDENT DASHBOARD (from Milestone 2)
+        // 3) STUDENT DASHBOARD (Milestone 2)
         add_shortcode('fa_student_dashboard', array($this, 'render_student_dashboard'));
 
-        // 4) MILESTONE 3: FRONT-END ADMIN DASHBOARD
+        // 4) ADMIN DASHBOARD (Milestone 3)
         add_shortcode('fa_admin_dashboard', array($this, 'render_admin_dashboard'));
 
         // ===========[ Form Submissions ]===========
@@ -32,38 +33,37 @@ class FA_Frontend {
         add_action('template_redirect', array($this, 'restrict_lesson_access'));
     }
 
-
     /* ------------------------------------------------------------------------ */
-    /* (1) REGISTRATION & LOGIN (FROM MILESTONE 1, ALREADY IMPLEMENTED)
+    /* (1) REGISTRATION & LOGIN (MILESTONE 1)
     /* ------------------------------------------------------------------------ */
 
     // Render Registration Form [fa_custom_register]
-    public function render_registration_form() {
-        if ( is_user_logged_in() ) {
+    public function render_registration_form()
+    {
+        if (is_user_logged_in()) {
             return '<p>' . __('أنت مسجل دخول بالفعل', 'fashion-academy-lms') . '</p>';
         }
 
-        ob_start();
-        ?>
+        ob_start(); ?>
         <form method="post" id="fa-register-form">
             <p>
                 <label for="reg_name"><?php _e('اسم المستخدم', 'fashion-academy-lms'); ?></label><br/>
-                <input type="text" name="reg_name" id="reg_name" required />
+                <input type="text" name="reg_name" id="reg_name" required/>
             </p>
             <p>
                 <label for="reg_email"><?php _e('البريد الإلكتروني', 'fashion-academy-lms'); ?></label><br/>
-                <input type="email" name="reg_email" id="reg_email" required />
+                <input type="email" name="reg_email" id="reg_email" required/>
             </p>
             <p>
                 <label for="reg_password"><?php _e('كلمة المرور', 'fashion-academy-lms'); ?></label><br/>
-                <input type="password" name="reg_password" id="reg_password" required />
+                <input type="password" name="reg_password" id="reg_password" required/>
             </p>
 
-            <input type="hidden" name="fa_registration_action" value="fa_register_user" />
+            <input type="hidden" name="fa_registration_action" value="fa_register_user"/>
             <?php wp_nonce_field('fa_register_nonce', 'fa_register_nonce_field'); ?>
 
             <p>
-                <input type="submit" value="<?php esc_attr_e('تسجيل حساب', 'fashion-academy-lms'); ?>" />
+                <input type="submit" value="<?php esc_attr_e('تسجيل حساب', 'fashion-academy-lms'); ?>"/>
             </p>
         </form>
         <?php
@@ -71,30 +71,28 @@ class FA_Frontend {
     }
 
     // Process Registration Form
-    public function process_registration_form() {
-        if ( isset($_POST['fa_registration_action']) && $_POST['fa_registration_action'] === 'fa_register_user' ) {
-            // Check nonce
-            if ( ! isset($_POST['fa_register_nonce_field'])
-                || ! wp_verify_nonce($_POST['fa_register_nonce_field'], 'fa_register_nonce') ) {
+    public function process_registration_form()
+    {
+        if (isset($_POST['fa_registration_action']) && $_POST['fa_registration_action'] === 'fa_register_user') {
+            if (!isset($_POST['fa_register_nonce_field']) ||
+                !wp_verify_nonce($_POST['fa_register_nonce_field'], 'fa_register_nonce')) {
                 wp_die(__('فشل التحقق الأمني', 'fashion-academy-lms'));
             }
 
-            // Extract data
             $name     = sanitize_text_field($_POST['reg_name'] ?? '');
             $email    = sanitize_email($_POST['reg_email'] ?? '');
             $password = sanitize_text_field($_POST['reg_password'] ?? '');
 
-            // Validate
-            if ( empty($name) || empty($email) || empty($password) ) {
+            if (empty($name) || empty($email) || empty($password)) {
                 wp_die(__('يجب تعبئة كافة الحقول المطلوبة', 'fashion-academy-lms'));
             }
-            if ( username_exists($name) || email_exists($email) ) {
+            if (username_exists($name) || email_exists($email)) {
                 wp_die(__('اسم المستخدم أو البريد الإلكتروني مستخدم مسبقًا', 'fashion-academy-lms'));
             }
 
             // Create user
             $user_id = wp_create_user($name, $password, $email);
-            if ( is_wp_error($user_id) ) {
+            if (is_wp_error($user_id)) {
                 wp_die($user_id->get_error_message());
             }
 
@@ -105,27 +103,29 @@ class FA_Frontend {
             // Auto Login
             $this->auto_login_user($name, $password);
 
-            // Redirect
+            // Redirect to student dashboard
             wp_redirect(site_url('/student-dashboard'));
             exit;
         }
     }
 
-    private function auto_login_user($username, $password) {
+    private function auto_login_user($username, $password)
+    {
         $creds = array(
             'user_login'    => $username,
             'user_password' => $password,
             'remember'      => true,
         );
         $user = wp_signon($creds, false);
-        if ( is_wp_error($user) ) {
+        if (is_wp_error($user)) {
             wp_die($user->get_error_message());
         }
     }
 
     // Render Login Form [fa_custom_login]
-    public function render_login_form() {
-        if ( is_user_logged_in() ) {
+    public function render_login_form()
+    {
+        if (is_user_logged_in()) {
             return '<p>' . __('أنت مسجل دخول بالفعل', 'fashion-academy-lms') . '</p>';
         }
 
@@ -133,18 +133,18 @@ class FA_Frontend {
         <form method="post" id="fa-login-form">
             <p>
                 <label for="fa_user_login"><?php _e('اسم المستخدم أو البريد الإلكتروني', 'fashion-academy-lms'); ?></label><br/>
-                <input type="text" name="fa_user_login" id="fa_user_login" required />
+                <input type="text" name="fa_user_login" id="fa_user_login" required/>
             </p>
             <p>
                 <label for="fa_user_pass"><?php _e('كلمة المرور', 'fashion-academy-lms'); ?></label><br/>
-                <input type="password" name="fa_user_pass" id="fa_user_pass" required />
+                <input type="password" name="fa_user_pass" id="fa_user_pass" required/>
             </p>
 
-            <input type="hidden" name="fa_login_action" value="fa_do_login" />
+            <input type="hidden" name="fa_login_action" value="fa_do_login"/>
             <?php wp_nonce_field('fa_login_nonce', 'fa_login_nonce_field'); ?>
 
             <p>
-                <input type="submit" value="<?php esc_attr_e('دخول', 'fashion-academy-lms'); ?>" />
+                <input type="submit" value="<?php esc_attr_e('دخول', 'fashion-academy-lms'); ?>"/>
             </p>
         </form>
         <?php
@@ -152,10 +152,11 @@ class FA_Frontend {
     }
 
     // Process Login Form
-    public function process_login_form() {
-        if ( isset($_POST['fa_login_action']) && $_POST['fa_login_action'] === 'fa_do_login' ) {
-            if ( ! isset($_POST['fa_login_nonce_field'])
-                || ! wp_verify_nonce($_POST['fa_login_nonce_field'], 'fa_login_nonce') ) {
+    public function process_login_form()
+    {
+        if (isset($_POST['fa_login_action']) && $_POST['fa_login_action'] === 'fa_do_login') {
+            if (!isset($_POST['fa_login_nonce_field']) ||
+                !wp_verify_nonce($_POST['fa_login_nonce_field'], 'fa_login_nonce')) {
                 wp_die(__('فشل التحقق الأمني', 'fashion-academy-lms'));
             }
 
@@ -169,12 +170,12 @@ class FA_Frontend {
             ];
             $user = wp_signon($creds, false);
 
-            if ( is_wp_error($user) ) {
+            if (is_wp_error($user)) {
                 wp_die($user->get_error_message());
             }
 
-            // If admin -> admin dashboard, else -> student dashboard
-            if ( user_can($user, 'manage_options') ) {
+            // If admin => admin dashboard, else => student dashboard
+            if (user_can($user, 'manage_options')) {
                 wp_redirect(site_url('/admin-dashboard'));
             } else {
                 wp_redirect(site_url('/student-dashboard'));
@@ -184,51 +185,46 @@ class FA_Frontend {
     }
 
     /* ------------------------------------------------------------------------ */
-    /* (2) STUDENT DASHBOARD (NEW FOR MILESTONE 2)
+    /* (2) STUDENT DASHBOARD (MILESTONE 2)
     /* ------------------------------------------------------------------------ */
 
-    /**
-     * Shortcode: [fa_student_dashboard]
-     * Renders the student’s main front-end dashboard with a lessons sidebar
-     * and main lesson details (video + homework form).
-     */
-    public function render_student_dashboard() {
-        // 1) Check if logged in as student (or admin can also see it)
-        if ( ! is_user_logged_in() ) {
+    // Shortcode: [fa_student_dashboard]
+    public function render_student_dashboard()
+    {
+        if (!is_user_logged_in()) {
             return '<p>' . __('الرجاء تسجيل الدخول', 'fashion-academy-lms') . '</p>';
         }
-        // If you want to strictly block non-students:
-        // if ( ! current_user_can('student') && ! current_user_can('manage_options') ) {
-        //     return '<p>' . __('لا تملك صلاحية الوصول', 'fashion-academy-lms') . '</p>';
-        // }
 
-        // 2) Fetch all lessons to display in a sidebar
-        $args = array(
+        // Fetch lessons in ascending order
+        $args = [
             'post_type'      => 'lesson',
             'posts_per_page' => -1,
             'orderby'        => 'meta_value_num',
             'meta_key'       => 'lesson_order',
             'order'          => 'ASC'
-        );
+        ];
         $lessons = get_posts($args);
 
         ob_start(); ?>
         <div class="fa-student-dashboard-container">
             <h2><?php _e('لوحة تحكم الطالب', 'fashion-academy-lms'); ?></h2>
             <div class="fa-student-dashboard-layout">
-                <!-- Sidebar / Lessons List -->
                 <div class="fa-lessons-sidebar">
                     <h3><?php _e('الدروس المتاحة', 'fashion-academy-lms'); ?></h3>
                     <ul>
                         <?php
+                        $current_lesson_id = isset($_GET['lesson_id']) ? (int)$_GET['lesson_id'] : 0;
+
                         foreach ($lessons as $lesson) {
                             $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
                             $locked = $this->is_lesson_locked_for_current_user($lesson->ID);
+                            $is_active = ($lesson->ID == $current_lesson_id);
 
                             echo '<li>';
-                            if ( ! $locked ) {
-                                echo '<a href="?lesson_id=' . esc_attr($lesson->ID) . '">';
-                                echo esc_html($lesson->post_title . ' (درس #' . $lesson_order . ')');
+                            if (!$locked) {
+                                $active_class = $is_active ? ' active-lesson' : '';
+                                echo '<a href="?lesson_id=' . $lesson->ID . '" class="' . $active_class . '">';
+                                echo esc_html($lesson->post_title);
                                 echo '</a>';
                             } else {
                                 echo esc_html($lesson->post_title . ' (مغلق)');
@@ -239,13 +235,10 @@ class FA_Frontend {
                     </ul>
                 </div>
 
-                <!-- Main Content / Lesson Details -->
                 <div class="fa-lesson-content">
                     <?php
-                    // If user clicked a lesson in the query string
                     $current_lesson_id = isset($_GET['lesson_id']) ? (int)$_GET['lesson_id'] : 0;
                     if ($current_lesson_id) {
-                        // Check locked
                         if ($this->is_lesson_locked_for_current_user($current_lesson_id)) {
                             echo '<p>' . __('هذا الدرس مغلق حالياً. الرجاء إكمال الدروس السابقة أو الدفع.', 'fashion-academy-lms') . '</p>';
                         } else {
@@ -258,124 +251,203 @@ class FA_Frontend {
                 </div>
             </div>
         </div>
-        <style>
-            .fa-student-dashboard-layout {
-                display: flex;
-            }
-            .fa-lessons-sidebar {
-                width: 25%;
-                margin-right: 20px;
-                background: #f9f9f9;
-                padding: 10px;
-                border-radius: 4px;
-            }
-            .fa-lessons-sidebar ul {
-                list-style: none;
-                padding-left: 0;
-            }
-            .fa-lessons-sidebar li {
-                margin-bottom: 8px;
-            }
-            .fa-lesson-content {
-                flex: 1;
-                border: 1px solid #eee;
-                padding: 10px;
-                border-radius: 4px;
-                background: #fff;
-            }
-        </style>
         <?php
         return ob_get_clean();
     }
 
-    /**
-     * Checks if a given lesson is locked for the current user.
-     * You can integrate your existing "sequential unlock" or "paid" logic here.
-     */
-    private function is_lesson_locked_for_current_user($lesson_id) {
-        // Example: If lesson_order > 3 and user not "paid", lock
-        // Or if user hasn't passed the previous lesson, lock
-        // For now, let's do a simple placeholder returning false => all unlocked.
-        // Adjust to reflect your plugin's sequential/payment logic.
-
-        return false;
+    // If user hasn't paid or hasn't passed a prior lesson, return true. (Placeholder)
+    private function is_lesson_locked_for_current_user($lesson_id)
+    {
+        return false; // placeholder => everything unlocked
     }
 
-    /**
-     * Renders the detail of a specific lesson: video + homework form.
-     */
-    private function render_lesson_details($lesson_id) {
+    // Show lesson details (video + homework form)
+    private function render_lesson_details($lesson_id)
+    {
         $lesson = get_post($lesson_id);
-        if ( ! $lesson ) {
+
+        if (!$lesson) {
             echo '<p>' . __('الدرس غير موجود', 'fashion-academy-lms') . '</p>';
             return;
         }
 
         echo '<h2>' . esc_html($lesson->post_title) . '</h2>';
 
-        // Suppose you store the video URL in meta "lesson_video_url"
         $video_url = get_post_meta($lesson_id, 'lesson_video_url', true);
-        fa_plugin_log($video_url);
         if ($video_url) {
-            ?>
-            <div class="fa-lesson-video" style="margin-bottom:20px;">
-                <video width="600" controls>
-                    <source src="<?php echo esc_url($video_url); ?>" type="video/mp4">
-                    <?php _e('متصفحك لا يدعم فيديو.', 'fashion-academy-lms'); ?>
-                </video>
-            </div>
-            <?php
+            echo '<div class="fa-lesson-video" style="margin-bottom:20px; text-align:center;">';
+            echo '<video width="600" controls>';
+            echo '<source src="' . esc_url($video_url) . '" type="video/mp4">';
+            _e('متصفحك لا يدعم فيديو.', 'fashion-academy-lms');
+            echo '</video>';
+            echo '</div>';
         }
 
-        // Insert the existing homework form
-        // We can do do_shortcode('[fa_homework_form]') if your form uses get_the_ID()
-        // But because we are not on an actual "lesson" post page, let's do a trick:
-        global $post;
-        $original_post = $post;
-        $post = $lesson; // Temporarily set global $post to the lesson
-        setup_postdata($post);
+        // Fetch the submission
+        $submission = $this->get_current_submission_for_user(get_current_user_id(), $lesson_id);
 
-        echo do_shortcode('[fa_homework_form]');
+        // 1) If no submission or submission is 'retake', show the form
+        if (!$submission || $submission->status === 'retake') {
+            // Show the form container with an ID for JS
+            echo '<div id="fa-homework-container">';
+            echo do_shortcode('[fa_homework_form lesson_id="' . $lesson_id . '"]');
+            echo '</div>';
+            // We'll add a small JS snippet to hide the form and show spinner on submit
+        }
+        // 2) If submission is "pending," remove the form, show spinner
+        elseif ($submission->status === 'pending') {
+            echo '<div class="fa-spinner-section">';
+            echo '<div class="fa-spinner"></div>'; // Replacing spinner.gif with a CSS spinner
+            echo '<p class="fa-waiting-msg">'
+                . __('تم إرسال الواجب. بانتظار تصحيح الأستاذ...', 'fashion-academy-lms') . '</p>';
+            echo '</div>';
+            ?>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const submissionId  = <?php echo (int) $submission->id; ?>;
+                    const currentStatus = "<?php echo esc_js($submission->status); ?>";
+                    const pollInterval  = 15000; // 15 seconds
 
-        wp_reset_postdata();
-        $post = $original_post; // revert
+                    // We only poll if the current status is 'pending'
+                    if (currentStatus === 'pending') {
+                        setInterval(checkSubmissionStatus, pollInterval);
+                    }
+
+                    function checkSubmissionStatus() {
+                        // Request via admin-ajax
+                        const ajaxUrl  = "<?php echo admin_url('admin-ajax.php'); ?>";
+                        const endpoint = ajaxUrl + '?action=fa_check_submission&submission_id=' + submissionId;
+
+                        fetch(endpoint, { credentials: 'same-origin' })
+                            .then(response => response.json())
+                            .then(data => {
+                                // Log the response for debugging
+                                console.log('AJAX Response:', data);
+
+                                // Check if the request was successful
+                                if (!data.success) {
+                                    console.warn('AJAX Error:', data.data);
+                                    return;
+                                }
+
+                                const newStatus = data.data.status;
+
+                                if (newStatus !== currentStatus) {
+                                    // If the status changed (pending->graded or passed), reload the page
+                                    window.location.reload();
+                                }
+                            })
+                            .catch(err => console.log('Fetch error:', err));
+                    }
+                });
+            </script>
+            <?php
+        }
+        // 3) If submission is "graded" or "passed," show results
+        else {
+            echo '<div class="fa-homework-results">';
+
+            if ($submission->status === 'graded') {
+                echo '<p>' . sprintf(__('تم تصحيح الواجب. درجتك: %s%%', 'fashion-academy-lms'), $submission->grade) . '</p>';
+            } elseif ($submission->status === 'passed') {
+                echo '<p>' . sprintf(__('أحسنت! لقد تجاوزت هذا الواجب بنجاح. درجتك: %s%%', 'fashion-academy-lms'), $submission->grade) . '</p>';
+            }
+
+            // If you want to display the instructor feedback files, do so here:
+            $instructor_files = json_decode($submission->instructor_files, true);
+            if (!empty($instructor_files)) {
+                echo '<h4>' . __('مرفقات الأستاذ / التصحيح:', 'fashion-academy-lms') . '</h4><ul>';
+                foreach ($instructor_files as $ifile) {
+                    echo '<li><a href="' . esc_url($ifile) . '" target="_blank">'
+                        . esc_html(basename($ifile)) . '</a></li>';
+                }
+                echo '</ul>';
+            }
+
+            // Retake button
+            echo '<button class="fa-retake-button" onclick="retakeHomework(' . intval($submission->id) . ')">'
+                . __('إعادة المحاولة', 'fashion-academy-lms') . '</button>';
+
+            echo '</div>';
+        }
+
+        // Add some small JS to handle "Retake" + the spinner on submission
+        ?>
+        <script>
+            function retakeHomework(submissionId) {
+                if (!confirm('<?php echo esc_js(__('هل أنت متأكد من إعادة الواجب؟', 'fashion-academy-lms')); ?>')) return;
+                window.location.href = '?retake_homework=' + submissionId;
+            }
+
+            // On form submit => hide the form, show spinner
+            document.addEventListener('DOMContentLoaded', function() {
+                var homeworkForm = document.getElementById('fa-homework-form');
+                if (homeworkForm) {
+                    homeworkForm.addEventListener('submit', function(e) {
+                        // Hide the form container
+                        document.getElementById('fa-homework-container').style.display='none';
+                        // Show a quick inline spinner:
+                        var spinnerDiv = document.createElement('div');
+                        spinnerDiv.innerHTML = '<img src="<?php echo esc_url(plugin_dir_url(__FILE__) . 'assets/img/spinner.gif'); ?>" ' +
+                            'class="fa-spinner-img" alt="Spinner">' +
+                            '<p class="fa-waiting-msg"><?php echo esc_js(__('جاري إرسال الواجب...', 'fashion-academy-lms')); ?></p>';
+                        document.getElementById('fa-homework-container').parentNode.appendChild(spinnerDiv);
+                    });
+                }
+            });
+        </script>
+        <?php
     }
 
-    /* ------------------------------------------------------------------------ */
-    /* (3) MILESTONE 3: FRONT-END ADMIN DASHBOARD
-       A new shortcode [fa_admin_dashboard] that:
-        - Checks if user is admin
-        - Lists students or homework
-        - Lets admin grade, add lessons, etc.
-    /* ------------------------------------------------------------------------ */
 
     /**
-     * Renders the Admin Dashboard [fa_admin_dashboard].
+     * Helper to fetch the current submission for user + lesson.
      */
-    public function render_admin_dashboard() {
-        // 1) Check if current user is admin
-        if ( ! is_user_logged_in() || ! current_user_can('manage_options') ) {
+    private function get_current_submission_for_user($user_id, $lesson_id)
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'homework_submissions';
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE user_id=%d AND lesson_id=%d ORDER BY submission_date DESC LIMIT 1",
+            $user_id,
+            $lesson_id
+        ));
+    }
+
+
+    /* ------------------------------------------------------------------------ */
+    /* (3) ADMIN DASHBOARD (MILESTONE 3)
+    /* ------------------------------------------------------------------------ */
+
+    // Shortcode: [fa_admin_dashboard]
+    public function render_admin_dashboard()
+    {
+        if (!is_user_logged_in() || !current_user_can('manage_options')) {
             return '<p>' . __('لا تملك صلاحية الوصول هنا', 'fashion-academy-lms') . '</p>';
         }
 
-        // We'll create a simple "tabs" or nav approach:
-        ob_start();
-        ?>
+        $admin_page = isset($_GET['admin_page']) ? sanitize_text_field($_GET['admin_page']) : 'homeworks';
+
+        function is_active_tab($tab)
+        {
+            return (isset($_GET['admin_page']) && $_GET['admin_page'] === $tab);
+        }
+
+        ob_start(); ?>
         <div class="fa-admin-dashboard-wrapper">
             <h2><?php _e('لوحة تحكم المشرف (Admin Dashboard)', 'fashion-academy-lms'); ?></h2>
 
-            <!-- Nav links for different tasks: "Homeworks", "Add Lessons", "Search Students" etc. -->
             <ul class="fa-admin-nav">
-                <li><a href="?admin_page=homeworks"><?php _e('إدارة الواجبات', 'fashion-academy-lms'); ?></a></li>
-                <li><a href="?admin_page=lessons"><?php _e('إدارة الدروس', 'fashion-academy-lms'); ?></a></li>
-                <li><a href="?admin_page=students"><?php _e('البحث عن الطلاب', 'fashion-academy-lms'); ?></a></li>
+                <li><a href="?admin_page=homeworks" class="<?php echo is_active_tab('homeworks') ? 'active-tab' : ''; ?>">
+                        <?php _e('إدارة الواجبات', 'fashion-academy-lms'); ?></a></li>
+                <li><a href="?admin_page=lessons" class="<?php echo is_active_tab('lessons') ? 'active-tab' : ''; ?>">
+                        <?php _e('إدارة الدروس', 'fashion-academy-lms'); ?></a></li>
+                <li><a href="?admin_page=students" class="<?php echo is_active_tab('students') ? 'active-tab' : ''; ?>">
+                        <?php _e('البحث عن الطلاب', 'fashion-academy-lms'); ?></a></li>
             </ul>
 
             <div class="fa-admin-content">
                 <?php
-                // Which admin_page is active?
-                $admin_page = isset($_GET['admin_page']) ? sanitize_text_field($_GET['admin_page']) : 'homeworks';
-
                 switch ($admin_page) {
                     case 'homeworks':
                         $this->render_admin_homeworks_page();
@@ -387,66 +459,33 @@ class FA_Frontend {
                         $this->render_admin_students_page();
                         break;
                     default:
-                        $this->render_admin_homeworks_page(); // default tab
+                        $this->render_admin_homeworks_page();
                 }
                 ?>
             </div>
         </div>
-
-        <style>
-            .fa-admin-dashboard-wrapper {
-                margin: 20px;
-            }
-            .fa-admin-nav {
-                list-style: none;
-                padding: 0;
-                margin-bottom: 15px;
-                display: flex;
-                gap: 15px;
-            }
-            .fa-admin-nav li a {
-                background: #0073aa;
-                color: #fff;
-                padding: 6px 12px;
-                border-radius: 3px;
-                text-decoration: none;
-            }
-            .fa-admin-nav li a:hover {
-                background: #005177;
-            }
-            .fa-admin-content {
-                border: 1px solid #ccc;
-                padding: 15px;
-                background: #fff;
-                border-radius: 4px;
-            }
-        </style>
         <?php
         return ob_get_clean();
     }
 
-    /* ------------------- (A) HOMEWORKS PAGE ------------------- */
-
-    private function render_admin_homeworks_page() {
-        // Lists all homeworks from the custom DB table "homework_submissions"
+    // Homeworks
+    private function render_admin_homeworks_page()
+    {
         global $wpdb;
         $submission_table = $wpdb->prefix . 'homework_submissions';
 
-        // Optional filter by status
         $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
         $query = "SELECT * FROM $submission_table";
-        if ( ! empty($status_filter) ) {
+        if (!empty($status_filter)) {
             $query .= $wpdb->prepare(" WHERE status = %s", $status_filter);
         }
         $query .= " ORDER BY submission_date DESC";
 
         $submissions = $wpdb->get_results($query);
-
-        // Display filter form
         ?>
         <h3><?php _e('إدارة الواجبات', 'fashion-academy-lms'); ?></h3>
         <form method="get" style="margin-bottom: 20px;">
-            <input type="hidden" name="admin_page" value="homeworks" />
+            <input type="hidden" name="admin_page" value="homeworks"/>
             <label for="status_filter"><?php _e('Filter by Status:', 'fashion-academy-lms'); ?></label>
             <select name="status" id="status_filter" style="margin-right: 10px;">
                 <option value=""><?php _e('-- All --', 'fashion-academy-lms'); ?></option>
@@ -462,10 +501,8 @@ class FA_Frontend {
             echo '<p>' . __('لا يوجد واجبات لعرضها', 'fashion-academy-lms') . '</p>';
             return;
         }
-
-        // Render table
         ?>
-        <table class="widefat" style="width:100%;">
+        <table class="widefat">
             <thead>
             <tr>
                 <th><?php _e('ID', 'fashion-academy-lms'); ?></th>
@@ -480,9 +517,9 @@ class FA_Frontend {
             <tbody>
             <?php
             foreach ($submissions as $submission) {
-                $user_info  = get_userdata($submission->user_id);
-                $user_name  = $user_info ? $user_info->display_name : __('Unknown', 'fashion-academy-lms');
-                $lesson     = get_post($submission->lesson_id);
+                $user_info = get_userdata($submission->user_id);
+                $user_name = $user_info ? $user_info->display_name : __('Unknown', 'fashion-academy-lms');
+                $lesson = get_post($submission->lesson_id);
                 $lessonName = $lesson ? $lesson->post_title : __('Unknown Lesson', 'fashion-academy-lms');
                 ?>
                 <tr>
@@ -493,8 +530,10 @@ class FA_Frontend {
                     <td><?php echo esc_html($submission->grade); ?></td>
                     <td><?php echo esc_html($submission->submission_date); ?></td>
                     <td>
-                        <a href="?admin_page=homeworks&view_submission=<?php echo esc_attr($submission->id); ?>" class="button">
-                            <?php _e('عرض / تصحيح', 'fashion-academy-lms'); ?>
+                        <a href="?admin_page=homeworks&view_submission=<?php echo esc_attr($submission->id); ?>"
+                           class="button button-inline">
+                            <span class="dashicons dashicons-visibility"></span>
+                            <span class="button-text"><?php _e('عرض / تصحيح', 'fashion-academy-lms'); ?></span>
                         </a>
                     </td>
                 </tr>
@@ -505,89 +544,131 @@ class FA_Frontend {
         </table>
         <?php
 
-        // Check if user clicked "view_submission"
         if (isset($_GET['view_submission'])) {
-            $this->render_admin_homework_detail( intval($_GET['view_submission']) );
+            $this->render_admin_homework_detail(intval($_GET['view_submission']));
         }
     }
 
-    /**
-     * Renders detail for a single homework submission, with a grading form.
-     */
-    private function render_admin_homework_detail($submission_id) {
+    // Single homework detail + grading
+    private function render_admin_homework_detail($submission_id)
+    {
         global $wpdb;
         $submission_table = $wpdb->prefix . 'homework_submissions';
 
-        $submission = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM $submission_table WHERE id=%d", $submission_id)
-        );
-        if ( ! $submission ) {
+        $submission = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $submission_table WHERE id=%d", $submission_id
+        ));
+        if (!$submission) {
             echo '<p>' . __('Submission غير موجود', 'fashion-academy-lms') . '</p>';
             return;
         }
 
-        // If form submitted to grade
-        if ( isset($_POST['fa_grade_submission']) ) {
-            $new_grade  = floatval($_POST['grade']);
-            $new_status = 'graded';
-
-            // Passing threshold
+        // If form submitted to grade + attach instructor files
+        if (isset($_POST['fa_grade_submission']) && $_POST['fa_grade_submission'] === 'true') {
+            $new_grade = floatval($_POST['grade']);
             $passing_grade = 75;
-            if ($new_grade >= $passing_grade) {
-                $new_status = 'passed';
+            $new_status = ($new_grade >= $passing_grade) ? 'passed' : 'graded';
+
+            // 1) Handle instructor files
+            $instructor_files = array();
+            if (!empty($_FILES['instructor_files']['name'][0])) {
+                require_once(ABSPATH . 'wp-admin/includes/file.php');
+
+                $file_count = count($_FILES['instructor_files']['name']);
+                for ($i=0; $i < $file_count; $i++) {
+                    if ($_FILES['instructor_files']['error'][$i] === UPLOAD_ERR_OK) {
+                        $file = array(
+                            'name'     => $_FILES['instructor_files']['name'][$i],
+                            'type'     => $_FILES['instructor_files']['type'][$i],
+                            'tmp_name' => $_FILES['instructor_files']['tmp_name'][$i],
+                            'error'    => $_FILES['instructor_files']['error'][$i],
+                            'size'     => $_FILES['instructor_files']['size'][$i],
+                        );
+                        $movefile = wp_handle_upload($file, ['test_form'=>false]);
+                        if ($movefile && !isset($movefile['error'])) {
+                            $instructor_files[] = esc_url_raw($movefile['url']);
+                        }
+                    }
+                }
             }
 
-            // Update in DB
+            // 2) Merge with existing instructor_files if we want to keep them
+            $existing_ifiles = json_decode($submission->instructor_files, true);
+            if (!is_array($existing_ifiles)) {
+                $existing_ifiles = [];
+            }
+            $all_ifiles = array_merge($existing_ifiles, $instructor_files);
+            $json_ifiles = wp_json_encode($all_ifiles);
+
+            // 3) Update submission
             $res = $wpdb->update(
                 $submission_table,
-                array('grade' => $new_grade, 'status' => $new_status),
-                array('id' => $submission_id),
-                array('%f','%s'),
-                array('%d')
+                [
+                    'grade'            => $new_grade,
+                    'status'           => $new_status,
+                    'instructor_files' => $json_ifiles
+                ],
+                ['id'=>$submission_id],
+                ['%f','%s','%s'],
+                ['%d']
             );
-            if (false === $res) {
-                fa_plugin_log("Failed to update submission ID {$submission_id}");
-                echo '<p>' . __('فشل تحديث التقييم', 'fashion-academy-lms') . '</p>';
-                return;
-            }
+            if ($res === false) {
+                echo '<p style="color:red;">' . __('خطأ في تحديث الواجب', 'fashion-academy-lms') . '</p>';
+            } else {
+                // If 'passed', mark lesson + unlock next
+                if ($new_status === 'passed') {
+                    $this->mark_lesson_as_passed($submission->user_id, $submission->lesson_id);
+                    $this->unlock_next_lesson($submission->user_id, $submission->lesson_id);
+                }
+                echo '<div class="notice notice-success"><p>' . __('تم حفظ التقييم وملفات المعلم!', 'fashion-academy-lms') . '</p></div>';
 
-            // If passed => mark current lesson as passed + unlock next
-            if ($new_status === 'passed') {
-                $this->mark_lesson_as_passed($submission->user_id, $submission->lesson_id);
-                $this->unlock_next_lesson($submission->user_id, $submission->lesson_id);
+                // Refresh submission object
+                $submission = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM $submission_table WHERE id=%d", $submission_id
+                ));
             }
-
-            echo '<div class="notice notice-success"><p>' . __('تم تحديث التقييم!', 'fashion-academy-lms') . '</p></div>';
-            // Re-fetch
-            $submission = $wpdb->get_row( $wpdb->prepare("SELECT * FROM $submission_table WHERE id=%d", $submission_id) );
         }
 
-        // Show details
+        // Now display the submission details, including any instructor_files
         $uploaded_files = json_decode($submission->uploaded_files, true);
         $notes = $submission->notes;
+        $instructor_files = json_decode($submission->instructor_files, true);
 
-        // Show a form to grade
+        echo '<hr>';
+        echo '<h4>' . sprintf(__('تفاصيل الواجب: #%d', 'fashion-academy-lms'), $submission_id) . '</h4>';
+        echo '<p><strong>' . __('الحالة', 'fashion-academy-lms') . ':</strong> ' . esc_html($submission->status) . '</p>';
+        echo '<p><strong>' . __('الدرجة', 'fashion-academy-lms') . ':</strong> ' . esc_html($submission->grade) . '</p>';
+        echo '<p><strong>' . __('ملاحظات الطالب', 'fashion-academy-lms') . ':</strong> ' . esc_html($notes) . '</p>';
+
+        if (!empty($uploaded_files)) {
+            echo '<h5>' . __('الملفات المرفقة (من الطالب):', 'fashion-academy-lms') . '</h5><ul>';
+            foreach ($uploaded_files as $file_url) {
+                echo '<li><a href="' . esc_url($file_url) . '" target="_blank">' . esc_html(basename($file_url)) . '</a></li>';
+            }
+            echo '</ul>';
+        }
+
+        // Show instructor_files if any
+        if (!empty($instructor_files)) {
+            echo '<h5>' . __('ملفات المدرس المرفقة سابقاً:', 'fashion-academy-lms') . '</h5><ul>';
+            foreach ($instructor_files as $ifile_url) {
+                echo '<li><a href="' . esc_url($ifile_url) . '" target="_blank">'
+                    . esc_html(basename($ifile_url)) . '</a></li>';
+            }
+            echo '</ul>';
+        }
+
+        // Grading form with new input for instructor_files
         ?>
-        <hr>
-        <h4><?php _e('تفاصيل الواجب:', 'fashion-academy-lms'); ?> #<?php echo esc_html($submission_id); ?></h4>
-        <p><strong><?php _e('الحالة', 'fashion-academy-lms'); ?>:</strong> <?php echo esc_html($submission->status); ?></p>
-        <p><strong><?php _e('الدرجة', 'fashion-academy-lms'); ?>:</strong> <?php echo esc_html($submission->grade); ?></p>
-        <p><strong><?php _e('ملاحظات الطالب', 'fashion-academy-lms'); ?>:</strong> <?php echo esc_html($notes); ?></p>
-
-        <?php if (!empty($uploaded_files)) : ?>
-            <h5><?php _e('الملفات المرفقة:', 'fashion-academy-lms'); ?></h5>
-            <ul>
-                <?php foreach ($uploaded_files as $file_url) : ?>
-                    <li><a href="<?php echo esc_url($file_url); ?>" target="_blank"><?php echo esc_html(basename($file_url)); ?></a></li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-
-        <form method="post" style="margin-top:15px;">
+        <form method="post" enctype="multipart/form-data" style="margin-top:15px;">
             <p>
                 <label for="grade"><?php _e('التقييم (%):', 'fashion-academy-lms'); ?></label>
                 <input type="number" name="grade" id="grade" step="1" min="0" max="100"
                        value="<?php echo esc_attr($submission->grade); ?>" required>
+            </p>
+            <p>
+                <label for="instructor_files"><?php _e('رفع ملفات التصحيح / التعليق (اختياري):', 'fashion-academy-lms'); ?></label>
+                <input type="file" name="instructor_files[]" id="instructor_files" multiple />
             </p>
             <input type="hidden" name="fa_grade_submission" value="true" />
             <button type="submit" class="button button-primary"><?php _e('حفظ التقييم', 'fashion-academy-lms'); ?></button>
@@ -595,20 +676,17 @@ class FA_Frontend {
         <?php
     }
 
-    /**
-     * Marks the current lesson as 'passed' in course_progress for that user.
-     */
-    private function mark_lesson_as_passed($user_id, $lesson_id) {
+
+    private function mark_lesson_as_passed($user_id, $lesson_id)
+    {
         global $wpdb;
         $progress_table = $wpdb->prefix . 'course_progress';
 
-        // Check existing
-        $existing = $wpdb->get_row( $wpdb->prepare(
+        $existing = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $progress_table WHERE user_id=%d AND lesson_id=%d",
             $user_id,
             $lesson_id
         ));
-
         if ($existing) {
             $wpdb->update(
                 $progress_table,
@@ -617,58 +695,45 @@ class FA_Frontend {
                 array('%s'),
                 array('%d')
             );
-            fa_plugin_log("Set lesson #$lesson_id to 'passed' for user #$user_id (existing progress).");
         } else {
-            // Insert
-            // Need course_id from meta if needed
             $course_id = get_post_meta($lesson_id, 'lesson_course_id', true);
             $wpdb->insert(
                 $progress_table,
                 array(
-                    'user_id' => $user_id,
-                    'course_id' => $course_id ?: 0,
-                    'lesson_id' => $lesson_id,
+                    'user_id'         => $user_id,
+                    'course_id'       => $course_id ?: 0,
+                    'lesson_id'       => $lesson_id,
                     'progress_status' => 'passed'
                 ),
                 array('%d','%d','%d','%s')
             );
-            fa_plugin_log("Set lesson #$lesson_id to 'passed' for user #$user_id (new progress).");
         }
     }
 
-    /**
-     * Unlock the next lesson for the user (already implemented in Milestone 2 admin code).
-     */
-    private function unlock_next_lesson($user_id, $current_lesson_id) {
-        // Reuse the same logic from class-fa-admin or milest. 2
+    private function unlock_next_lesson($user_id, $current_lesson_id)
+    {
         global $wpdb;
         $progress_table = $wpdb->prefix . 'course_progress';
 
         $current_order = get_post_meta($current_lesson_id, 'lesson_order', true);
         $course_id     = get_post_meta($current_lesson_id, 'lesson_course_id', true);
-        if (!$course_id || !$current_order) {
-            return;
-        }
+        if (!$course_id || !$current_order) return;
 
-        $next_lesson = get_posts(array(
-            'post_type' => 'lesson',
+        $next_lesson = get_posts([
+            'post_type'      => 'lesson',
             'posts_per_page' => 1,
-            'meta_key' => 'lesson_order',
-            'orderby' => 'meta_value_num',
-            'order' => 'ASC',
-            'meta_query' => array(
-                array('key' => 'lesson_course_id', 'value' => $course_id),
-                array('key' => 'lesson_order', 'value' => intval($current_order)+1, 'compare' => '=', 'type' => 'NUMERIC')
-            )
-        ));
-        if (empty($next_lesson)) {
-            fa_plugin_log("No next lesson after #$current_lesson_id for user #$user_id");
-            return;
-        }
+            'meta_key'       => 'lesson_order',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'ASC',
+            'meta_query'     => [
+                ['key' => 'lesson_course_id','value' => $course_id],
+                ['key' => 'lesson_order','value' => intval($current_order)+1, 'compare' => '=', 'type' => 'NUMERIC']
+            ]
+        ]);
+        if (empty($next_lesson)) return;
 
         $next_lesson_id = $next_lesson[0]->ID;
-        // Check existing
-        $existing_progress = $wpdb->get_row( $wpdb->prepare(
+        $existing_progress = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $progress_table WHERE user_id=%d AND lesson_id=%d",
             $user_id,
             $next_lesson_id
@@ -676,64 +741,56 @@ class FA_Frontend {
         if ($existing_progress) {
             $wpdb->update(
                 $progress_table,
-                array('progress_status' => 'incomplete'),
-                array('id'=>$existing_progress->id),
-                array('%s'),
-                array('%d')
+                ['progress_status'=>'incomplete'],
+                ['id'=>$existing_progress->id],
+                ['%s'],
+                ['%d']
             );
-            fa_plugin_log("Unlocked next lesson #$next_lesson_id for user #$user_id (existing progress).");
         } else {
             $wpdb->insert(
                 $progress_table,
-                array(
-                    'user_id' => $user_id,
-                    'course_id' => $course_id,
-                    'lesson_id' => $next_lesson_id,
+                [
+                    'user_id'         => $user_id,
+                    'course_id'       => $course_id,
+                    'lesson_id'       => $next_lesson_id,
                     'progress_status' => 'incomplete'
-                ),
-                array('%d','%d','%d','%s')
+                ],
+                ['%d','%d','%d','%s']
             );
-            fa_plugin_log("Unlocked next lesson #$next_lesson_id for user #$user_id (new progress).");
         }
     }
 
-    /* ------------------- (B) LESSONS PAGE ------------------- */
-
-    private function render_admin_lessons_page() {
-        // 1) If "Add Lesson" form is submitted, handle it
-        if ( isset($_POST['fa_create_lesson_action']) && $_POST['fa_create_lesson_action'] === 'create_lesson' ) {
+    /* (B) LESSONS PAGE (CREATE, EDIT, DELETE) */
+    private function render_admin_lessons_page()
+    {
+        // 1) Handle "Add Lesson"
+        if (isset($_POST['fa_create_lesson_action']) && $_POST['fa_create_lesson_action'] === 'create_lesson') {
             check_admin_referer('fa_create_lesson_nonce', 'fa_create_lesson_nonce_field');
 
-            $lesson_title = sanitize_text_field($_POST['lesson_title'] ?? '');
-            $course_id    = intval($_POST['course_id'] ?? 0);
-            $video_url    = ''; // We’ll fill this if we upload a file
-            $lesson_order = intval($_POST['lesson_order'] ?? 0);
+            $lesson_title  = sanitize_text_field($_POST['lesson_title'] ?? '');
+            $course_id     = intval($_POST['course_id'] ?? 0);
+            $video_url     = '';
+            $lesson_order  = intval($_POST['lesson_order'] ?? 0);
 
             if (empty($lesson_title)) {
                 echo '<p style="color:red;">' . __('يجب إدخال عنوان الدرس', 'fashion-academy-lms') . '</p>';
             } else {
-                // Upload the video file if provided
-                if ( isset($_FILES['video_file']) && !empty($_FILES['video_file']['name']) ) {
+                if (isset($_FILES['video_file']) && !empty($_FILES['video_file']['name'])) {
                     $upload = $this->fa_admin_upload_video_file($_FILES['video_file']);
-                    if ( is_wp_error($upload) ) {
+                    if (is_wp_error($upload)) {
                         echo '<p style="color:red;">' . $upload->get_error_message() . '</p>';
                     } else {
-                        // $upload is an attachment ID or URL depending on implementation
-                        // Let’s assume we store the attachment ID in $video_url
                         $video_url = $upload;
                     }
                 }
 
-                // Insert the lesson post
-                $lesson_id = wp_insert_post(array(
+                $lesson_id = wp_insert_post([
                     'post_title'   => $lesson_title,
                     'post_type'    => 'lesson',
-                    'post_status'  => 'publish',
-                    'post_content' => '' // or something if you want content
-                ), true);
+                    'post_status'  => 'publish'
+                ], true);
 
-                if (! is_wp_error($lesson_id)) {
-                    // Update meta
+                if (!is_wp_error($lesson_id)) {
                     if ($course_id) {
                         update_post_meta($lesson_id, 'lesson_course_id', $course_id);
                     }
@@ -743,7 +800,6 @@ class FA_Frontend {
                     if ($video_url) {
                         update_post_meta($lesson_id, 'lesson_video_url', $video_url);
                     }
-
                     echo '<div class="notice notice-success"><p>'
                         . __('تم إنشاء الدرس بنجاح!', 'fashion-academy-lms')
                         . ' (ID=' . $lesson_id . ')</p></div>';
@@ -753,17 +809,21 @@ class FA_Frontend {
             }
         }
 
-        // 2) Render the "Add Lesson" form
-        $courses = get_posts(array(
-            'post_type'   => 'course',
-            'numberposts' => -1,
-            'post_status' => 'publish'
-        ));
+        // 2) Check edit or delete
+        if (isset($_GET['edit_lesson'])) {
+            $this->render_admin_edit_lesson(intval($_GET['edit_lesson']));
+            return;
+        }
+        if (isset($_GET['delete_lesson'])) {
+            $this->admin_delete_lesson(intval($_GET['delete_lesson']));
+        }
+
+        // "Add Lesson" form
         ?>
         <h3><?php _e('إضافة درس جديد', 'fashion-academy-lms'); ?></h3>
         <form method="post" enctype="multipart/form-data" style="margin-bottom:20px;">
             <?php wp_nonce_field('fa_create_lesson_nonce', 'fa_create_lesson_nonce_field'); ?>
-            <input type="hidden" name="fa_create_lesson_action" value="create_lesson" />
+            <input type="hidden" name="fa_create_lesson_action" value="create_lesson"/>
 
             <p>
                 <label for="lesson_title"><?php _e('عنوان الدرس:', 'fashion-academy-lms'); ?></label><br>
@@ -771,10 +831,17 @@ class FA_Frontend {
             </p>
             <p>
                 <label for="course_id"><?php _e('اختر الكورس:', 'fashion-academy-lms'); ?></label><br>
+                <?php
+                $courses = get_posts([
+                    'post_type'=>'course',
+                    'numberposts'=>-1,
+                    'post_status'=>'publish'
+                ]);
+                ?>
                 <select name="course_id" id="course_id">
                     <option value="0"><?php _e('-- لا يوجد --', 'fashion-academy-lms'); ?></option>
-                    <?php foreach($courses as $course) {
-                        echo '<option value="' . $course->ID . '">' . esc_html($course->post_title) . '</option>';
+                    <?php foreach($courses as $c) {
+                        echo '<option value="'. $c->ID .'">'. esc_html($c->post_title) .'</option>';
                     } ?>
                 </select>
             </p>
@@ -785,22 +852,19 @@ class FA_Frontend {
             <p>
                 <label for="video_file"><?php _e('رفع ملف الفيديو:', 'fashion-academy-lms'); ?></label><br>
                 <input type="file" name="video_file" id="video_file" accept="video/*">
-                <small style="color:#666;">
-                    <?php _e('يمكنك رفع ملف فيديو من جهازك', 'fashion-academy-lms'); ?>
-                </small>
             </p>
             <button type="submit" class="button button-primary"><?php _e('إضافة الدرس', 'fashion-academy-lms'); ?></button>
         </form>
         <?php
 
         // 3) List existing lessons
-        $lessons = get_posts(array(
+        $lessons = get_posts([
             'post_type'=>'lesson',
             'numberposts'=>-1,
             'orderby'=>'meta_value_num',
             'meta_key'=>'lesson_order',
             'order'=>'ASC'
-        ));
+        ]);
         if (!$lessons) {
             echo '<p>' . __('لا يوجد دروس.', 'fashion-academy-lms') . '</p>';
             return;
@@ -815,6 +879,7 @@ class FA_Frontend {
                 <th><?php _e('الكورس', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('الترتيب', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('الفيديو', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('إدارة', 'fashion-academy-lms'); ?></th>
             </tr>
             </thead>
             <tbody>
@@ -832,6 +897,17 @@ class FA_Frontend {
                 echo '<td>' . esc_html($courseName) . '</td>';
                 echo '<td>' . esc_html($order) . '</td>';
                 echo '<td>' . esc_html($video ? basename($video) : '--') . '</td>';
+                // Edit + Delete links
+                echo '<td>
+                    <a href="?admin_page=lessons&edit_lesson='. esc_attr($lesson->ID) .'" class="button button-inline button-primary">
+                        <span class="dashicons dashicons-edit"></span> <span class="button-text">تعديل</span>
+                    </a>
+                    <a href="?admin_page=lessons&delete_lesson='. esc_attr($lesson->ID) .'" 
+                       class="button button-danger button-inline"
+                       onclick="return confirm(\'هل أنت متأكد من حذف هذا الدرس؟\');">
+                       <span class="dashicons dashicons-trash"></span> <span class="button-text">حذف</span>
+                    </a>
+                </td>';
                 echo '</tr>';
             }
             ?>
@@ -840,11 +916,9 @@ class FA_Frontend {
         <?php
     }
 
-    /**
-     * Helper to handle uploading a video file from the admin's "Add Lesson" form.
-     * Returns either WP_Error or a string with the attachment URL (or ID).
-     */
-    private function fa_admin_upload_video_file($file_array) {
+    // The function to handle file uploads (Video)
+    private function fa_admin_upload_video_file($file_array)
+    {
         require_once(ABSPATH . 'wp-admin/includes/file.php');
         require_once(ABSPATH . 'wp-admin/includes/media.php');
         require_once(ABSPATH . 'wp-admin/includes/image.php');
@@ -852,49 +926,160 @@ class FA_Frontend {
         if ($file_array['error'] !== UPLOAD_ERR_OK) {
             return new WP_Error('upload_error', __('حدث خطأ عند رفع الملف', 'fashion-academy-lms'));
         }
-
-        // Optional: restrict to certain mime types if you want only mp4, avi, etc.
-        $allowed_mimes = array('video/mp4'=>'video/mp4','video/quicktime'=>'video/quicktime');
+        // Restrict to certain mime types if desired
+        $allowed_mimes = ['video/mp4'=>'video/mp4','video/quicktime'=>'video/quicktime'];
         $check_filetype = wp_check_filetype_and_ext($file_array['tmp_name'], $file_array['name'], false);
         if (! in_array($check_filetype['type'], $allowed_mimes)) {
             return new WP_Error('upload_error', __('هذا النوع من الفيديو غير مسموح به', 'fashion-academy-lms'));
         }
 
-        // Use WordPress API to handle the upload, store in Media Library
         $attach_id = media_handle_upload('video_file', 0);
         if (is_wp_error($attach_id)) {
-            return $attach_id; // some error
+            return $attach_id;
         }
-
-        // Return the URL or the attachment ID
-        $video_url = wp_get_attachment_url($attach_id);
-        return $video_url;
+        return wp_get_attachment_url($attach_id);
     }
 
+    // Edit existing lesson
+    private function render_admin_edit_lesson($lesson_id)
+    {
+        $lesson = get_post($lesson_id);
+        if (!$lesson || $lesson->post_type !== 'lesson') {
+            echo '<p style="color:red;">' . __('الدرس غير موجود', 'fashion-academy-lms') . '</p>';
+            return;
+        }
 
-    /* ------------------- (C) STUDENTS PAGE ------------------- */
+        if (isset($_POST['fa_edit_lesson_action']) && $_POST['fa_edit_lesson_action'] === 'update_lesson') {
+            check_admin_referer('fa_edit_lesson_nonce', 'fa_edit_lesson_nonce_field');
 
-    private function render_admin_students_page() {
-        // Example: let admin search by username or email
+            $new_title  = sanitize_text_field($_POST['lesson_title'] ?? '');
+            $course_id  = intval($_POST['course_id'] ?? 0);
+            $new_order  = intval($_POST['lesson_order'] ?? 0);
+            $video_url  = get_post_meta($lesson_id, 'lesson_video_url', true);
+
+            if (empty($new_title)) {
+                echo '<p style="color:red;">' . __('يجب إدخال عنوان الدرس', 'fashion-academy-lms') . '</p>';
+            } else {
+                $update_res = wp_update_post([
+                    'ID'         => $lesson_id,
+                    'post_title' => $new_title
+                ], true);
+
+                if (!is_wp_error($update_res)) {
+                    update_post_meta($lesson_id, 'lesson_course_id', $course_id);
+                    update_post_meta($lesson_id, 'lesson_order', $new_order);
+
+                    if (isset($_FILES['video_file']) && !empty($_FILES['video_file']['name'])) {
+                        $upload = $this->fa_admin_upload_video_file($_FILES['video_file']);
+                        if (!is_wp_error($upload)) {
+                            $video_url = $upload;
+                        } else {
+                            echo '<p style="color:red;">' . $upload->get_error_message() . '</p>';
+                        }
+                    }
+                    if ($video_url) {
+                        update_post_meta($lesson_id, 'lesson_video_url', $video_url);
+                    }
+
+                    echo '<div class="notice notice-success"><p>' . __('تم تحديث الدرس بنجاح!', 'fashion-academy-lms') . '</p></div>';
+                    $lesson = get_post($lesson_id);
+                } else {
+                    echo '<p style="color:red;">' . $update_res->get_error_message() . '</p>';
+                }
+            }
+        }
+
+        $current_course_id = get_post_meta($lesson_id, 'lesson_course_id', true);
+        $current_order     = get_post_meta($lesson_id, 'lesson_order', true);
+        $current_video     = get_post_meta($lesson_id, 'lesson_video_url', true);
+
+        $courses = get_posts([
+            'post_type'=>'course',
+            'numberposts'=>-1,
+            'post_status'=>'publish'
+        ]);
+        ?>
+        <h3><?php _e('تعديل الدرس', 'fashion-academy-lms'); ?></h3>
+        <form method="post" enctype="multipart/form-data">
+            <?php wp_nonce_field('fa_edit_lesson_nonce', 'fa_edit_lesson_nonce_field'); ?>
+            <input type="hidden" name="fa_edit_lesson_action" value="update_lesson"/>
+
+            <p>
+                <label for="lesson_title"><?php _e('عنوان الدرس:', 'fashion-academy-lms'); ?></label><br/>
+                <input type="text" name="lesson_title" id="lesson_title" style="width:300px;"
+                       value="<?php echo esc_attr($lesson->post_title); ?>"/>
+            </p>
+            <p>
+                <label for="course_id"><?php _e('اختر الكورس:', 'fashion-academy-lms'); ?></label><br/>
+                <select name="course_id" id="course_id">
+                    <option value="0"><?php _e('-- لا يوجد --', 'fashion-academy-lms'); ?></option>
+                    <?php
+                    foreach ($courses as $c) {
+                        $selected = ($c->ID == $current_course_id) ? 'selected' : '';
+                        echo '<option value="' . $c->ID . '" ' . $selected . '>' . esc_html($c->post_title) . '</option>';
+                    }
+                    ?>
+                </select>
+            </p>
+            <p>
+                <label for="lesson_order"><?php _e('ترتيب الدرس:', 'fashion-academy-lms'); ?></label><br/>
+                <input type="number" name="lesson_order" id="lesson_order" style="width:100px;"
+                       value="<?php echo esc_attr($current_order); ?>" min="1"/>
+            </p>
+            <p>
+                <?php if ($current_video): ?>
+                    <strong><?php _e('الفيديو الحالي:', 'fashion-academy-lms'); ?></strong>
+                    <br/>
+                    <?php echo esc_html(basename($current_video)); ?>
+                    <br/><br/>
+                <?php endif; ?>
+                <label for="video_file"><?php _e('رفع فيديو جديد (اختياري):', 'fashion-academy-lms'); ?></label><br/>
+                <input type="file" name="video_file" accept="video/*"/>
+            </p>
+            <button type="submit" class="button button-primary"><?php _e('حفظ التعديلات', 'fashion-academy-lms'); ?></button>
+        </form>
+        <p><a href="?admin_page=lessons" class="button"><?php _e('عودة إلى الدروس', 'fashion-academy-lms'); ?></a></p>
+        <?php
+    }
+
+    // Delete lesson
+    private function admin_delete_lesson($lesson_id)
+    {
+        $lesson = get_post($lesson_id);
+        if (!$lesson || $lesson->post_type !== 'lesson') {
+            echo '<p style="color:red;">' . __('الدرس غير موجود', 'fashion-academy-lms') . '</p>';
+            return;
+        }
+        wp_delete_post($lesson_id, true);
+        echo '<div class="notice notice-success"><p>' . __('تم حذف الدرس', 'fashion-academy-lms') . '</p></div>';
+    }
+
+    // ========== STUDENTS PAGE ==========
+    private function render_admin_students_page()
+    {
         ?>
         <h3><?php _e('البحث عن الطلاب', 'fashion-academy-lms'); ?></h3>
         <form method="get">
-            <input type="hidden" name="admin_page" value="students" />
+            <input type="hidden" name="admin_page" value="students"/>
             <label for="student_search"><?php _e('البحث:', 'fashion-academy-lms'); ?></label>
-            <input type="text" name="student_search" id="student_search" value="<?php echo esc_attr($_GET['student_search']??''); ?>" />
+            <input type="text" name="student_search" id="student_search"
+                   value="<?php echo esc_attr($_GET['student_search'] ?? ''); ?>"/>
             <button type="submit" class="button"><?php _e('بحث', 'fashion-academy-lms'); ?></button>
         </form>
         <?php
 
-        if (isset($_GET['student_search']) && $_GET['student_search'] !== '') {
-            $search = sanitize_text_field($_GET['student_search']);
+        if (isset($_GET['view_student'])) {
+            $this->render_admin_student_profile(intval($_GET['view_student']));
+            return;
+        }
 
-            // Query users with 'student' role matching that string
-            $args = array(
-                'role'    => 'student',
-                'search'  => "*{$search}*",
-                'search_columns' => array('user_login','user_email','display_name')
-            );
+        if (!empty($_GET['student_search'])) {
+            $search = sanitize_text_field($_GET['student_search']);
+            $args = [
+                'role'           => 'student',
+                'search'         => "*{$search}*",
+                'search_columns' => ['user_login','user_email','display_name']
+            ];
             $users = get_users($args);
 
             if (!$users) {
@@ -907,6 +1092,7 @@ class FA_Frontend {
                         <th><?php _e('ID', 'fashion-academy-lms'); ?></th>
                         <th><?php _e('اسم المستخدم', 'fashion-academy-lms'); ?></th>
                         <th><?php _e('البريد الإلكتروني', 'fashion-academy-lms'); ?></th>
+                        <th><?php _e('إدارة', 'fashion-academy-lms'); ?></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -916,6 +1102,9 @@ class FA_Frontend {
                         echo '<td>' . esc_html($u->ID) . '</td>';
                         echo '<td>' . esc_html($u->display_name) . '</td>';
                         echo '<td>' . esc_html($u->user_email) . '</td>';
+                        echo '<td>
+                            <a href="?admin_page=students&view_student='. esc_attr($u->ID) .'" class="button">'
+                            . __('عرض الملف', 'fashion-academy-lms') . '</a></td>';
                         echo '</tr>';
                     }
                     ?>
@@ -926,18 +1115,86 @@ class FA_Frontend {
         }
     }
 
+    private function render_admin_student_profile($user_id)
+    {
+        $user_info = get_userdata($user_id);
+        if (!$user_info) {
+            echo '<p style="color:red;">' . __('المستخدم غير موجود', 'fashion-academy-lms') . '</p>';
+            return;
+        }
+
+        if (isset($_POST['fa_update_student_profile']) && $_POST['fa_update_student_profile'] === 'yes') {
+            check_admin_referer('fa_update_student_nonce', 'fa_update_student_nonce_field');
+
+            $display_name = sanitize_text_field($_POST['display_name'] ?? '');
+            $email        = sanitize_email($_POST['email'] ?? '');
+
+            if (empty($display_name) || empty($email)) {
+                echo '<p style="color:red;">' . __('يرجى تعبئة كافة الحقول.', 'fashion-academy-lms') . '</p>';
+            } else {
+                $res = wp_update_user([
+                    'ID'           => $user_id,
+                    'display_name' => $display_name,
+                    'user_email'   => $email
+                ]);
+                if (is_wp_error($res)) {
+                    echo '<p style="color:red;">' . $res->get_error_message() . '</p>';
+                } else {
+                    echo '<div class="notice notice-success"><p>' . __('تم تحديث بيانات الطالب بنجاح!', 'fashion-academy-lms') . '</p></div>';
+                    $user_info = get_userdata($user_id);
+                }
+            }
+        }
+        ?>
+        <h3><?php _e('ملف الطالب', 'fashion-academy-lms'); ?>: <?php echo esc_html($user_info->display_name); ?></h3>
+        <form method="post">
+            <?php wp_nonce_field('fa_update_student_nonce', 'fa_update_student_nonce_field'); ?>
+            <input type="hidden" name="fa_update_student_profile" value="yes"/>
+
+            <p>
+                <label for="display_name"><?php _e('الاسم المعروض', 'fashion-academy-lms'); ?>:</label><br/>
+                <input type="text" name="display_name" id="display_name" style="width:300px;"
+                       value="<?php echo esc_attr($user_info->display_name); ?>"/>
+            </p>
+            <p>
+                <label for="email"><?php _e('البريد الإلكتروني', 'fashion-academy-lms'); ?>:</label><br/>
+                <input type="email" name="email" id="email" style="width:300px;"
+                       value="<?php echo esc_attr($user_info->user_email); ?>"/>
+            </p>
+
+            <button type="submit" class="button button-primary"><?php _e('حفظ', 'fashion-academy-lms'); ?></button>
+        </form>
+        <p><a href="?admin_page=students" class="button"><?php _e('عودة للبحث', 'fashion-academy-lms'); ?></a></p>
+        <?php
+    }
+
+
     /**
      * 1) Render the homework form on the front end
      */
-    public function render_homework_form() {
+    public function render_homework_form($atts = [])
+    {
         // Ensure user is logged in
-        if ( ! is_user_logged_in() ) {
+        if (!is_user_logged_in()) {
             return '<p>' . __('You must be logged in to submit homework.', 'fashion-academy-lms') . '</p>';
         }
 
-        // Retrieve the current lesson ID and course ID
-        $lesson_id = get_the_ID();
-        $course_id = get_post_meta($lesson_id, 'lesson_course_id', true);
+        $atts = shortcode_atts([
+            'lesson_id' => 0,
+        ], $atts);
+
+        // If not set in $atts, fallback to $_GET
+        $lesson_id = $atts['lesson_id'] ? $atts['lesson_id'] : (int) ($_GET['lesson_id'] ?? 0);
+
+        // If still zero, fallback to get_the_ID() last
+        if (!$lesson_id) {
+            $lesson_id = get_the_ID();
+        }
+
+        // Now $lesson_id is correct. Next get course_id:
+        $course_id = (int) get_post_meta($lesson_id, 'lesson_course_id', true);
+
+        fa_plugin_log('Homework form logs => Lesson ID: ' . $lesson_id . ', Course ID: ' . $course_id);
 
         // Fetch any existing submissions by the user for this lesson
         global $wpdb;
@@ -952,29 +1209,32 @@ class FA_Frontend {
 
         // If a submission exists, fetch uploaded files and notes directly from the table
         $uploaded_files = $existing_submission ? json_decode($existing_submission->uploaded_files, true) : array();
-        $notes          = $existing_submission ? esc_textarea($existing_submission->notes) : '';
+        $notes = $existing_submission ? esc_textarea($existing_submission->notes) : '';
 
         // Build the form HTML with file preview and removal option
         ob_start();
         ?>
         <form method="post" enctype="multipart/form-data" class="fa-homework-form" id="fa-homework-form">
             <?php wp_nonce_field('fa_homework_submission', 'fa_homework_nonce'); ?>
-            <input type="hidden" name="fa_action" value="submit_homework" />
-            <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id); ?>" />
-            <input type="hidden" name="course_id" value="<?php echo esc_attr($course_id); ?>" />
+            <input type="hidden" name="fa_action" value="submit_homework"/>
+            <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id); ?>"/>
+            <input type="hidden" name="course_id" value="<?php echo esc_attr($course_id); ?>"/>
 
             <p>
                 <label for="homework_files"><?php _e('Upload your homework (images, PDFs, etc.):', 'fashion-academy-lms'); ?></label><br>
-                <input type="file" name="homework_files[]" id="homework_files" multiple="multiple" accept=".jpg,.jpeg,.png,.pdf" />
+                <input type="file" name="homework_files[]" id="homework_files" multiple="multiple"
+                       accept=".jpg,.jpeg,.png,.pdf"/>
             </p>
 
             <div id="file_preview">
-                <?php if ( ! empty($uploaded_files) && is_array($uploaded_files) ) : ?>
+                <?php if (!empty($uploaded_files) && is_array($uploaded_files)) : ?>
                     <?php foreach ($uploaded_files as $index => $file_url) : ?>
                         <div class="fa-file-preview">
                             <span><?php echo esc_html(basename($file_url)); ?></span>
-                            <button type="button" class="fa-remove-file" data-index="<?php echo esc_attr($index); ?>">Remove</button>
-                            <input type="hidden" name="existing_files[]" value="<?php echo esc_attr($file_url); ?>" />
+                            <button type="button" class="fa-remove-file" data-index="<?php echo esc_attr($index); ?>">
+                                Remove
+                            </button>
+                            <input type="hidden" name="existing_files[]" value="<?php echo esc_attr($file_url); ?>"/>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -982,11 +1242,12 @@ class FA_Frontend {
 
             <p>
                 <label for="homework_notes"><?php _e('Any notes or comments:', 'fashion-academy-lms'); ?></label><br>
-                <textarea name="homework_notes" id="homework_notes" rows="4" cols="50"><?php echo esc_textarea($notes); ?></textarea>
+                <textarea name="homework_notes" id="homework_notes" rows="4"
+                          cols="50"><?php echo esc_textarea($notes); ?></textarea>
             </p>
 
             <p>
-                <input type="submit" value="<?php _e('Submit Homework', 'fashion-academy-lms'); ?>" />
+                <input type="submit" value="<?php _e('Submit Homework', 'fashion-academy-lms'); ?>"/>
             </p>
         </form>
 
@@ -1067,7 +1328,6 @@ class FA_Frontend {
         </script>
 
 
-
         <style>
             .fa-file-preview {
                 display: flex;
@@ -1093,6 +1353,7 @@ class FA_Frontend {
             .fa-remove-file:hover {
                 background-color: #c82333;
             }
+
             .fa-success-message {
                 padding: 10px;
                 background-color: #d4edda;
@@ -1104,7 +1365,7 @@ class FA_Frontend {
         </style>
         <?php
 
-        if ( isset($_GET['homework_submitted']) && $_GET['homework_submitted'] === 'true' ) {
+        if (isset($_GET['homework_submitted']) && $_GET['homework_submitted'] === 'true') {
             echo '<p class="fa-success-message">' . __('Your homework has been submitted successfully!', 'fashion-academy-lms') . '</p>';
         }
 
@@ -1114,27 +1375,79 @@ class FA_Frontend {
     /**
      * 2) Handle form submission (runs on 'init')
      */
-    public function handle_homework_submission() {
-        if ( isset($_POST['fa_action']) && $_POST['fa_action'] === 'submit_homework' ) {
+    public function handle_homework_submission()
+    {
+
+        global $wpdb;
+        $submission_table = $wpdb->prefix . 'homework_submissions';
+
+        // 1) Check if user requested "retake"
+        if (isset($_GET['retake_homework'])) {
+            $submission_id = intval($_GET['retake_homework']);
+
+            // Reset that submission
+            $wpdb->update(
+                $submission_table,
+                [
+                    'status'         => 'retake',
+                    'grade'          => 0,
+                    'uploaded_files' => '[]',
+                ],
+                ['id' => $submission_id],
+                ['%s','%f','%s'],
+                ['%d']
+            );
+
+            // Find which lesson that submission belongs to
+            $lesson_id_for_retake = $wpdb->get_var($wpdb->prepare(
+                "SELECT lesson_id FROM $submission_table WHERE id = %d",
+                $submission_id
+            ));
+
+            // Now redirect back to that lesson page, removing the 'retake_homework' param
+            // We'll do something like: ?lesson_id=XXX (assuming your Student Dashboard uses ?lesson_id= for display)
+            $dashboard_url = add_query_arg(
+                array(
+                    'lesson_id' => $lesson_id_for_retake,
+                    // maybe 'retake_done' => 1
+                ),
+                site_url('/student-dashboard')
+            );
+
+            wp_redirect(remove_query_arg('retake_homework', $dashboard_url));
+            exit;
+
+        }
+
+        if (isset($_POST['fa_action']) && $_POST['fa_action'] === 'submit_homework') {
 
             // Log the $_FILES array for debugging
             fa_plugin_log("Homework Files: " . print_r($_FILES['homework_files'], true));
 
             // Verify nonce for security
-            if ( ! isset($_POST['fa_homework_nonce']) || ! wp_verify_nonce($_POST['fa_homework_nonce'], 'fa_homework_submission') ) {
+            if (!isset($_POST['fa_homework_nonce']) || !wp_verify_nonce($_POST['fa_homework_nonce'], 'fa_homework_submission')) {
                 wp_die(__('Security check failed.', 'fashion-academy-lms'));
             }
 
             // Ensure the user is logged in
-            if ( ! is_user_logged_in() ) return;
+            if (!is_user_logged_in()) return;
 
-            $user_id   = get_current_user_id();
+            $user_id = get_current_user_id();
             $lesson_id = isset($_POST['lesson_id']) ? (int)$_POST['lesson_id'] : 0;
             $course_id = isset($_POST['course_id']) ? (int)$_POST['course_id'] : 0;
-            $notes     = isset($_POST['homework_notes']) ? sanitize_textarea_field($_POST['homework_notes']) : '';
+            $notes = isset($_POST['homework_notes']) ? sanitize_textarea_field($_POST['homework_notes']) : '';
+
+
+            // If course_id is missing, forcibly fetch
+            if ($lesson_id && !$course_id) {
+                $maybe_course_id = (int) get_post_meta($lesson_id, 'lesson_course_id', true);
+                if ($maybe_course_id > 0) {
+                    $course_id = $maybe_course_id;
+                }
+            }
 
             // Validate lesson and course IDs
-            if ( ! $lesson_id || ! $course_id ) {
+            if (!$lesson_id || !$course_id) {
                 fa_plugin_log("Invalid submission data: lesson_id = $lesson_id, course_id = $course_id");
                 wp_die(__('Invalid submission data.', 'fashion-academy-lms'));
             }
@@ -1182,8 +1495,8 @@ class FA_Frontend {
                 }
             }
 
-            if ( ! empty($_FILES['homework_files']['name'][0]) ) {
-                require_once( ABSPATH . 'wp-admin/includes/file.php' );
+            if (!empty($_FILES['homework_files']['name'][0])) {
+                require_once(ABSPATH . 'wp-admin/includes/file.php');
 
                 $allowed_types = array('image/jpeg', 'image/png', 'application/pdf');
                 $max_size = 5 * 1024 * 1024; // 5 MB per file
@@ -1197,29 +1510,29 @@ class FA_Frontend {
                     }
 
                     // Validate file type
-                    if ( ! in_array($_FILES['homework_files']['type'][$i], $allowed_types) ) {
+                    if (!in_array($_FILES['homework_files']['type'][$i], $allowed_types)) {
                         fa_plugin_log("Invalid file type for file: " . $_FILES['homework_files']['name'][$i]);
                         continue; // Skip invalid file types
                     }
 
                     // Validate file size
-                    if ( $_FILES['homework_files']['size'][$i] > $max_size ) {
+                    if ($_FILES['homework_files']['size'][$i] > $max_size) {
                         fa_plugin_log("File size exceeded for file: " . $_FILES['homework_files']['name'][$i]);
                         continue; // Skip large files
                     }
 
                     $file = array(
-                        'name'     => $_FILES['homework_files']['name'][$i],
-                        'type'     => $_FILES['homework_files']['type'][$i],
+                        'name' => $_FILES['homework_files']['name'][$i],
+                        'type' => $_FILES['homework_files']['type'][$i],
                         'tmp_name' => $_FILES['homework_files']['tmp_name'][$i],
-                        'error'    => $_FILES['homework_files']['error'][$i],
-                        'size'     => $_FILES['homework_files']['size'][$i],
+                        'error' => $_FILES['homework_files']['error'][$i],
+                        'size' => $_FILES['homework_files']['size'][$i],
                     );
 
-                    $upload_overrides = array( 'test_form' => false );
+                    $upload_overrides = array('test_form' => false);
                     $movefile = wp_handle_upload($file, $upload_overrides);
 
-                    if ($movefile && ! isset($movefile['error'])) {
+                    if ($movefile && !isset($movefile['error'])) {
                         // Store the file URL
                         $uploaded_files[] = esc_url_raw($movefile['url']);
                         fa_plugin_log("File uploaded successfully: " . $movefile['url']);
@@ -1251,18 +1564,18 @@ class FA_Frontend {
                 )
             );
 
-            if ( $existing_submission ) {
+            if ($existing_submission) {
                 // Update the existing submission
                 $update_result = $wpdb->update(
                     $submission_table,
                     array(
                         'submission_date' => current_time('mysql'),
-                        'status'          => 'pending',
-                        'grade'           => 0, // Reset grade
-                        'uploaded_files'  => $json_files,
-                        'notes'           => $notes,
+                        'status' => 'pending',
+                        'grade' => 0, // Reset grade
+                        'uploaded_files' => $json_files,
+                        'notes' => $notes,
                     ),
-                    array( 'id' => $existing_submission->id ),
+                    array('id' => $existing_submission->id),
                     array(
                         '%s',
                         '%s',
@@ -1270,10 +1583,10 @@ class FA_Frontend {
                         '%s',
                         '%s',
                     ),
-                    array( '%d' )
+                    array('%d')
                 );
 
-                if ( false === $update_result ) {
+                if (false === $update_result) {
                     fa_plugin_log("Failed to update submission ID {$existing_submission->id}");
                     wp_die(__('Failed to update your submission. Please try again.', 'fashion-academy-lms'));
                 }
@@ -1285,14 +1598,14 @@ class FA_Frontend {
                 $insert_result = $wpdb->insert(
                     $submission_table,
                     array(
-                        'user_id'         => $user_id,
-                        'course_id'       => $course_id,
-                        'lesson_id'       => $lesson_id,
+                        'user_id' => $user_id,
+                        'course_id' => $course_id,
+                        'lesson_id' => $lesson_id,
                         'submission_date' => current_time('mysql'),
-                        'status'          => 'pending',
-                        'grade'           => 0, // default
-                        'uploaded_files'  => $json_files,
-                        'notes'           => $notes,
+                        'status' => 'pending',
+                        'grade' => 0, // default
+                        'uploaded_files' => $json_files,
+                        'notes' => $notes,
                     ),
                     array(
                         '%d',
@@ -1306,7 +1619,7 @@ class FA_Frontend {
                     )
                 );
 
-                if ( false === $insert_result ) {
+                if (false === $insert_result) {
                     fa_plugin_log("Failed to insert new submission for user ID $user_id, lesson ID $lesson_id");
                     wp_die(__('Failed to submit your homework. Please try again.', 'fashion-academy-lms'));
                 }
@@ -1318,8 +1631,14 @@ class FA_Frontend {
             // Optional: Log successful submission
             fa_plugin_log("Homework submission successful. Submission ID: $submission_id");
 
-            // Redirect with a success message
-            wp_redirect(add_query_arg('homework_submitted', 'true', get_permalink($lesson_id)));
+            $dashboard_url = add_query_arg(
+                array(
+                    'lesson_id'         => $lesson_id,
+                    'homework_submitted'=> 'true'
+                ),
+                site_url('/student-dashboard')
+            );
+            wp_redirect($dashboard_url);
             exit;
         }
     }
@@ -1327,12 +1646,13 @@ class FA_Frontend {
     /**
      * Restrict access to lessons based on user's progress
      */
-    public function restrict_lesson_access() {
-        if ( ! is_singular('lesson') ) {
+    public function restrict_lesson_access()
+    {
+        if (!is_singular('lesson')) {
             return; // Only restrict single lesson pages
         }
 
-        if ( ! is_user_logged_in() ) {
+        if (!is_user_logged_in()) {
             // Redirect non-logged-in users to login page
             wp_redirect(wp_login_url(get_permalink()));
             exit;
@@ -1345,7 +1665,7 @@ class FA_Frontend {
         // Fetch course ID from lesson meta
         $course_id = get_post_meta($lesson_id, 'lesson_course_id', true);
 
-        if ( !$course_id ) {
+        if (!$course_id) {
             // If no course ID is associated, allow access
             return;
         }
@@ -1359,22 +1679,22 @@ class FA_Frontend {
 
         // Fetch all lessons in the course up to the current one
         $required_lessons = get_posts(array(
-            'post_type'      => 'lesson',
+            'post_type' => 'lesson',
             'posts_per_page' => -1,
-            'meta_key'       => 'lesson_order',
-            'orderby'        => 'meta_value_num',
-            'order'          => 'ASC',
-            'meta_query'     => array(
+            'meta_key' => 'lesson_order',
+            'orderby' => 'meta_value_num',
+            'order' => 'ASC',
+            'meta_query' => array(
                 array(
-                    'key'     => 'lesson_course_id',
-                    'value'   => $course_id,
+                    'key' => 'lesson_course_id',
+                    'value' => $course_id,
                     'compare' => '='
                 ),
                 array(
-                    'key'     => 'lesson_order',
-                    'value'   => intval($current_order) - 1,
+                    'key' => 'lesson_order',
+                    'value' => intval($current_order) - 1,
                     'compare' => '<=',
-                    'type'    => 'NUMERIC'
+                    'type' => 'NUMERIC'
                 )
             )
         ));
@@ -1389,7 +1709,7 @@ class FA_Frontend {
                 )
             );
 
-            if ( $progress !== 'passed' ) {
+            if ($progress !== 'passed') {
                 // If any required lesson is not passed, restrict access
                 // Set a transient to display a notice after redirection
                 set_transient('fa_restricted_lesson_notice_' . $user_id, true, 30);
@@ -1405,13 +1725,14 @@ class FA_Frontend {
     /**
      * Display a notice to the user about restricted access
      */
-    public function display_restricted_lesson_notice() {
-        if ( ! is_user_logged_in() ) {
+    public function display_restricted_lesson_notice()
+    {
+        if (!is_user_logged_in()) {
             return;
         }
 
         $user_id = get_current_user_id();
-        if ( get_transient('fa_restricted_lesson_notice_' . $user_id) ) {
+        if (get_transient('fa_restricted_lesson_notice_' . $user_id)) {
             echo '<div class="notice notice-error is-dismissible fa-restricted-lesson-notice">
                     <p>' . __('You must complete the previous lessons to access this one.', 'fashion-academy-lms') . '</p>
                   </div>';
@@ -1420,4 +1741,5 @@ class FA_Frontend {
     }
 
 }
+
 ?>
