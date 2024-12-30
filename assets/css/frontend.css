@@ -686,6 +686,8 @@ input[type="submit"]:active {
     background-color: #FFF2E0; /* Slight hover effect */
 }
 
+
+
 /* File Name */
 .fa-homework-form .fa-file-preview span {
     flex: 1;

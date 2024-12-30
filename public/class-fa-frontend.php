@@ -426,6 +426,13 @@ class FA_Frontend
         // Fetch the submission
         $submission = $this->get_current_submission_for_user(get_current_user_id(), $lesson_id);
 
+        echo '<div class="fa-homework-header">';
+        echo '<h2 class="fa-homework-title">' . __('📚 الواجب المنزلي الخاص بك', 'fashion-academy-lms') . '</h2>';
+        echo '<p class="fa-homework-desc">'
+            . __('تم تعيين هذا الواجب في نهاية الدرس. يرجى مراجعة محتوى الدرس قبل إرساله، واتباع التعليمات أدناه لإتمام عملية التسليم.', 'fashion-academy-lms')
+            . '</p>';
+        echo '</div>';
+
         // 1) If no submission or submission is 'retake', show the form
         if (!$submission || $submission->status === 'retake') {
             // Show the form container with an ID for JS
@@ -511,10 +518,17 @@ class FA_Frontend
             echo '</div>';
         }
 
-        // chat section
-        echo '<div class="fa-chat-section">';
-        echo do_shortcode('[fa_chat]');
+        echo '<div class="fa-chat-header">';
+        echo '<h2 class="fa-chat-title">' . __('💬 مرحباً بك في قسم الأسئلة والنقاش', 'fashion-academy-lms') . '</h2>';
+        echo '<p class="fa-chat-desc">'
+            . __('هل لديك أي أسئلة حول الدرس؟ لا تتردد في طرحها هنا وسنكون سعداء بمساعدتك!', 'fashion-academy-lms')
+            . '</p>';
         echo '</div>';
+
+
+        // chat section
+        echo do_shortcode('[fa_chat]');
+      
         // Add some small JS to handle "Retake" + the spinner on submission
         ?>
         <script>
