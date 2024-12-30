@@ -56,15 +56,7 @@ add_action( 'init', function() {
     }
 } );
 
-add_action('wp_enqueue_scripts', 'fa_enqueue_frontend_styles');
-function fa_enqueue_frontend_styles() {
-    wp_enqueue_style(
-        'fa-frontend-style',
-        plugin_dir_url(__FILE__) . 'assets/css/frontend.css', // adjust path
-        array(), // dependencies
-        '1.0'
-    );
-}
+
 
 // AJAX actions for checking a submission's status in real-time
 add_action('wp_ajax_fa_check_submission', 'fa_ajax_check_submission');

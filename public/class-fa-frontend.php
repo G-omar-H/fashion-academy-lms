@@ -31,7 +31,40 @@ class FA_Frontend
 
         // Restrict lesson access
         add_action('template_redirect', array($this, 'restrict_lesson_access'));
+
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_styles'));
+
     }
+
+    public function enqueue_styles()
+    {
+        // Enqueue the main frontend stylesheet
+        wp_enqueue_style(
+            'fa-frontend-style',
+            plugin_dir_url(__FILE__) . '../assets/css/frontend.css', // Ensure the path matches
+            array(),
+            '1.2.0',
+            'all'
+        );
+
+        // Enqueue Google Fonts and Font Awesome
+        wp_enqueue_style(
+            'fa-google-fonts',
+            'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap',
+            array(),
+            null
+        );
+
+        wp_enqueue_style(
+            'fa-font-awesome',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+            array(),
+            '6.4.0',
+            'all'
+        );
+    }
+
+
 
     /* ------------------------------------------------------------------------ */
     /* (1) REGISTRATION & LOGIN (MILESTONE 1)
@@ -189,47 +222,111 @@ class FA_Frontend
     /* ------------------------------------------------------------------------ */
 
     // Shortcode: [fa_student_dashboard]
+    /* ------------------------------------------------------------------------ */
+    /* (2) STUDENT DASHBOARD (MILESTONE 1)
+    /* ------------------------------------------------------------------------ */
+
+// Shortcode: [fa_student_dashboard]
     public function render_student_dashboard()
     {
         if (!is_user_logged_in()) {
             return '<p>' . __('الرجاء تسجيل الدخول', 'fashion-academy-lms') . '</p>';
         }
 
-        // Fetch lessons in ascending order
-        $args = [
+        // Fetch all modules ordered by 'module_order'
+        $modules = get_posts([
+            'post_type'      => 'module',
+            'posts_per_page' => -1,
+            'orderby'        => 'meta_value_num',
+            'meta_key'       => 'module_order',
+            'order'          => 'ASC'
+        ]);
+
+        // Fetch all lessons ordered by 'lesson_order'
+        $lessons = get_posts([
             'post_type'      => 'lesson',
             'posts_per_page' => -1,
             'orderby'        => 'meta_value_num',
             'meta_key'       => 'lesson_order',
             'order'          => 'ASC'
-        ];
-        $lessons = get_posts($args);
+        ]);
+
+        // Group lessons by module
+        $lessons_by_module = array();
+        $unassigned_lessons = array();
+
+        foreach ($lessons as $lesson) {
+            $module_id = get_post_meta($lesson->ID, 'lesson_module_id', true);
+            if ($module_id) {
+                if (!isset($lessons_by_module[$module_id])) {
+                    $lessons_by_module[$module_id] = array();
+                }
+                $lessons_by_module[$module_id][] = $lesson;
+            } else {
+                $unassigned_lessons[] = $lesson;
+            }
+        }
 
         ob_start(); ?>
         <div class="fa-student-dashboard-container">
             <h2><?php _e('لوحة تحكم الطالب', 'fashion-academy-lms'); ?></h2>
             <div class="fa-student-dashboard-layout">
                 <div class="fa-lessons-sidebar">
-                    <h3><?php _e('الدروس المتاحة', 'fashion-academy-lms'); ?></h3>
+                    <h3><?php _e('المواد والدروس المتاحة', 'fashion-academy-lms'); ?></h3>
                     <ul>
                         <?php
                         $current_lesson_id = isset($_GET['lesson_id']) ? (int)$_GET['lesson_id'] : 0;
 
-                        foreach ($lessons as $lesson) {
-                            $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
-                            $locked = $this->is_lesson_locked_for_current_user($lesson->ID);
-                            $is_active = ($lesson->ID == $current_lesson_id);
+                        // Iterate through each module
+                        foreach ($modules as $module) {
+                            echo '<li><strong>' . esc_html($module->post_title) . '</strong>';
+                            echo '<ul>';
 
-                            echo '<li>';
-                            if (!$locked) {
-                                $active_class = $is_active ? ' active-lesson' : '';
-                                echo '<a href="?lesson_id=' . $lesson->ID . '" class="' . $active_class . '">';
-                                echo esc_html($lesson->post_title);
-                                echo '</a>';
+                            if (isset($lessons_by_module[$module->ID])) {
+                                foreach ($lessons_by_module[$module->ID] as $lesson) {
+                                    $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
+                                    $locked = $this->is_lesson_locked_for_current_user($lesson->ID);
+                                    $is_active = ($lesson->ID == $current_lesson_id);
+
+                                    echo '<li>';
+                                    if (!$locked) {
+                                        $active_class = $is_active ? ' active-lesson' : '';
+                                        echo '<a href="?lesson_id=' . esc_attr($lesson->ID) . '" class="' . esc_attr($active_class) . '">';
+                                        echo esc_html($lesson_order . '. ' . $lesson->post_title);
+                                        echo '</a>';
+                                    } else {
+                                        echo esc_html($lesson_order . '. ' . $lesson->post_title . ' (مغلق)');
+                                    }
+                                    echo '</li>';
+                                }
                             } else {
-                                echo esc_html($lesson->post_title . ' (مغلق)');
+                                echo '<li>' . __('لا توجد دروس في هذه المادة.', 'fashion-academy-lms') . '</li>';
                             }
-                            echo '</li>';
+
+                            echo '</ul></li>';
+                        }
+
+                        // List unassigned lessons under a separate heading
+                        if (!empty($unassigned_lessons)) {
+                            echo '<li><strong>' . __('دروس بدون مادة', 'fashion-academy-lms') . '</strong>';
+                            echo '<ul>';
+                            foreach ($unassigned_lessons as $lesson) {
+                                $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
+                                $locked = $this->is_lesson_locked_for_current_user($lesson->ID);
+                                $is_active = ($lesson->ID == $current_lesson_id);
+
+                                echo '<li>';
+                                if (!$locked) {
+                                    $active_class = $is_active ? ' active-lesson' : '';
+                                    echo '<a href="?lesson_id=' . esc_attr($lesson->ID) . '" class="' . esc_attr($active_class) . '">';
+                                    echo esc_html($lesson_order . '. ' . $lesson->post_title);
+                                    echo '</a>';
+                                } else {
+                                    echo esc_html($lesson_order . '. ' . $lesson->post_title . ' (مغلق)');
+                                }
+                                echo '</li>';
+                            }
+                            echo '</ul></li>';
                         }
                         ?>
                     </ul>
@@ -254,6 +351,7 @@ class FA_Frontend
         <?php
         return ob_get_clean();
     }
+
 
     // If user hasn't paid or hasn't passed a prior lesson, return true. (Placeholder)
     private function is_lesson_locked_for_current_user($lesson_id)
@@ -442,6 +540,8 @@ class FA_Frontend
                         <?php _e('إدارة الواجبات', 'fashion-academy-lms'); ?></a></li>
                 <li><a href="?admin_page=lessons" class="<?php echo is_active_tab('lessons') ? 'active-tab' : ''; ?>">
                         <?php _e('إدارة الدروس', 'fashion-academy-lms'); ?></a></li>
+                <li><a href="?admin_page=modules" class="<?php echo is_active_tab('modules') ? 'active-tab' : ''; ?>">
+                        <?php _e('إدارة المواد', 'fashion-academy-lms'); ?></a></li>
                 <li><a href="?admin_page=students" class="<?php echo is_active_tab('students') ? 'active-tab' : ''; ?>">
                         <?php _e('البحث عن الطلاب', 'fashion-academy-lms'); ?></a></li>
             </ul>
@@ -455,6 +555,9 @@ class FA_Frontend
                     case 'lessons':
                         $this->render_admin_lessons_page();
                         break;
+                    case 'modules':
+                        $this->render_admin_modules_page();
+                        break;
                     case 'students':
                         $this->render_admin_students_page();
                         break;
@@ -467,6 +570,7 @@ class FA_Frontend
         <?php
         return ob_get_clean();
     }
+
 
     // Homeworks
     private function render_admin_homeworks_page()
@@ -761,6 +865,7 @@ class FA_Frontend
     }
 
     /* (B) LESSONS PAGE (CREATE, EDIT, DELETE) */
+    /* (B) LESSONS PAGE (CREATE, EDIT, DELETE) */
     private function render_admin_lessons_page()
     {
         // 1) Handle "Add Lesson"
@@ -769,12 +874,22 @@ class FA_Frontend
 
             $lesson_title  = sanitize_text_field($_POST['lesson_title'] ?? '');
             $course_id     = intval($_POST['course_id'] ?? 0);
+            $module_id     = intval($_POST['module_id'] ?? 0); // New field for module assignment
             $video_url     = '';
             $lesson_order  = intval($_POST['lesson_order'] ?? 0);
 
             if (empty($lesson_title)) {
                 echo '<p style="color:red;">' . __('يجب إدخال عنوان الدرس', 'fashion-academy-lms') . '</p>';
             } else {
+                // Ensure that if a Module is selected, it belongs to the selected Course
+                if ($module_id > 0) {
+                    $module_course_id = get_post_meta($module_id, 'module_course_id', true);
+                    if ($module_course_id != $course_id) {
+                        echo '<p style="color:red;">' . __('المادة المختارة لا تنتمي إلى الكورس المحدد.', 'fashion-academy-lms') . '</p>';
+                        return;
+                    }
+                }
+
                 if (isset($_FILES['video_file']) && !empty($_FILES['video_file']['name'])) {
                     $upload = $this->fa_admin_upload_video_file($_FILES['video_file']);
                     if (is_wp_error($upload)) {
@@ -793,6 +908,9 @@ class FA_Frontend
                 if (!is_wp_error($lesson_id)) {
                     if ($course_id) {
                         update_post_meta($lesson_id, 'lesson_course_id', $course_id);
+                    }
+                    if ($module_id) {
+                        update_post_meta($lesson_id, 'lesson_module_id', $module_id);
                     }
                     if ($lesson_order > 0) {
                         update_post_meta($lesson_id, 'lesson_order', $lesson_order);
@@ -841,7 +959,26 @@ class FA_Frontend
                 <select name="course_id" id="course_id">
                     <option value="0"><?php _e('-- لا يوجد --', 'fashion-academy-lms'); ?></option>
                     <?php foreach($courses as $c) {
-                        echo '<option value="'. $c->ID .'">'. esc_html($c->post_title) .'</option>';
+                        echo '<option value="'. esc_attr($c->ID) .'">'. esc_html($c->post_title) .'</option>';
+                    } ?>
+                </select>
+            </p>
+            <p>
+                <label for="module_id"><?php _e('اختر المادة (اختياري):', 'fashion-academy-lms'); ?></label><br>
+                <?php
+                $modules = get_posts([
+                    'post_type'=>'module',
+                    'numberposts'=>-1,
+                    'post_status'=>'publish',
+                    'orderby'=>'meta_value_num',
+                    'meta_key'=>'module_order',
+                    'order'=>'ASC'
+                ]);
+                ?>
+                <select name="module_id" id="module_id">
+                    <option value="0"><?php _e('-- لا يوجد --', 'fashion-academy-lms'); ?></option>
+                    <?php foreach($modules as $m) {
+                        echo '<option value="'. esc_attr($m->ID) .'">'. esc_html($m->post_title) .'</option>';
                     } ?>
                 </select>
             </p>
@@ -877,6 +1014,7 @@ class FA_Frontend
                 <th><?php _e('ID', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('عنوان الدرس', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('الكورس', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('المادة', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('الترتيب', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('الفيديو', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('إدارة', 'fashion-academy-lms'); ?></th>
@@ -888,6 +1026,11 @@ class FA_Frontend
                 $course_id  = get_post_meta($lesson->ID, 'lesson_course_id', true);
                 $course     = get_post($course_id);
                 $courseName = $course ? $course->post_title : __('--', 'fashion-academy-lms');
+
+                $module_id  = get_post_meta($lesson->ID, 'lesson_module_id', true);
+                $module     = get_post($module_id);
+                $moduleName = $module ? $module->post_title : __('--', 'fashion-academy-lms');
+
                 $order      = get_post_meta($lesson->ID, 'lesson_order', true);
                 $video      = get_post_meta($lesson->ID, 'lesson_video_url', true);
 
@@ -895,19 +1038,20 @@ class FA_Frontend
                 echo '<td>' . esc_html($lesson->ID) . '</td>';
                 echo '<td>' . esc_html($lesson->post_title) . '</td>';
                 echo '<td>' . esc_html($courseName) . '</td>';
+                echo '<td>' . esc_html($moduleName) . '</td>';
                 echo '<td>' . esc_html($order) . '</td>';
                 echo '<td>' . esc_html($video ? basename($video) : '--') . '</td>';
                 // Edit + Delete links
                 echo '<td>
-                    <a href="?admin_page=lessons&edit_lesson='. esc_attr($lesson->ID) .'" class="button button-inline button-primary">
-                        <span class="dashicons dashicons-edit"></span> <span class="button-text">تعديل</span>
-                    </a>
-                    <a href="?admin_page=lessons&delete_lesson='. esc_attr($lesson->ID) .'" 
-                       class="button button-danger button-inline"
-                       onclick="return confirm(\'هل أنت متأكد من حذف هذا الدرس؟\');">
-                       <span class="dashicons dashicons-trash"></span> <span class="button-text">حذف</span>
-                    </a>
-                </td>';
+                <a href="?admin_page=lessons&edit_lesson='. esc_attr($lesson->ID) .'" class="button button-inline button-primary">
+                    <span class="dashicons dashicons-edit"></span> <span class="button-text">تعديل</span>
+                </a>
+                <a href="?admin_page=lessons&delete_lesson='. esc_attr($lesson->ID) .'" 
+                   class="button button-danger button-inline"
+                   onclick="return confirm(\'هل أنت متأكد من حذف هذا الدرس؟\');">
+                   <span class="dashicons dashicons-trash"></span> <span class="button-text">حذف</span>
+                </a>
+            </td>';
                 echo '</tr>';
             }
             ?>
@@ -915,6 +1059,7 @@ class FA_Frontend
         </table>
         <?php
     }
+
 
     // The function to handle file uploads (Video)
     private function fa_admin_upload_video_file($file_array)
@@ -941,6 +1086,7 @@ class FA_Frontend
     }
 
     // Edit existing lesson
+    // Edit existing lesson
     private function render_admin_edit_lesson($lesson_id)
     {
         $lesson = get_post($lesson_id);
@@ -954,12 +1100,22 @@ class FA_Frontend
 
             $new_title  = sanitize_text_field($_POST['lesson_title'] ?? '');
             $course_id  = intval($_POST['course_id'] ?? 0);
+            $module_id  = intval($_POST['module_id'] ?? 0); // New field for module assignment
             $new_order  = intval($_POST['lesson_order'] ?? 0);
             $video_url  = get_post_meta($lesson_id, 'lesson_video_url', true);
 
             if (empty($new_title)) {
                 echo '<p style="color:red;">' . __('يجب إدخال عنوان الدرس', 'fashion-academy-lms') . '</p>';
             } else {
+                // Ensure that if a Module is selected, it belongs to the selected Course
+                if ($module_id > 0) {
+                    $module_course_id = get_post_meta($module_id, 'module_course_id', true);
+                    if ($module_course_id != $course_id) {
+                        echo '<p style="color:red;">' . __('المادة المختارة لا تنتمي إلى الكورس المحدد.', 'fashion-academy-lms') . '</p>';
+                        return;
+                    }
+                }
+
                 $update_res = wp_update_post([
                     'ID'         => $lesson_id,
                     'post_title' => $new_title
@@ -968,6 +1124,12 @@ class FA_Frontend
                 if (!is_wp_error($update_res)) {
                     update_post_meta($lesson_id, 'lesson_course_id', $course_id);
                     update_post_meta($lesson_id, 'lesson_order', $new_order);
+
+                    if ($module_id) {
+                        update_post_meta($lesson_id, 'lesson_module_id', $module_id);
+                    } else {
+                        delete_post_meta($lesson_id, 'lesson_module_id'); // Remove module assignment if none selected
+                    }
 
                     if (isset($_FILES['video_file']) && !empty($_FILES['video_file']['name'])) {
                         $upload = $this->fa_admin_upload_video_file($_FILES['video_file']);
@@ -990,6 +1152,7 @@ class FA_Frontend
         }
 
         $current_course_id = get_post_meta($lesson_id, 'lesson_course_id', true);
+        $current_module_id = get_post_meta($lesson_id, 'lesson_module_id', true);
         $current_order     = get_post_meta($lesson_id, 'lesson_order', true);
         $current_video     = get_post_meta($lesson_id, 'lesson_video_url', true);
 
@@ -997,6 +1160,15 @@ class FA_Frontend
             'post_type'=>'course',
             'numberposts'=>-1,
             'post_status'=>'publish'
+        ]);
+
+        $modules = get_posts([
+            'post_type'=>'module',
+            'numberposts'=>-1,
+            'post_status'=>'publish',
+            'orderby'=>'meta_value_num',
+            'meta_key'=>'module_order',
+            'order'=>'ASC'
         ]);
         ?>
         <h3><?php _e('تعديل الدرس', 'fashion-academy-lms'); ?></h3>
@@ -1016,7 +1188,23 @@ class FA_Frontend
                     <?php
                     foreach ($courses as $c) {
                         $selected = ($c->ID == $current_course_id) ? 'selected' : '';
-                        echo '<option value="' . $c->ID . '" ' . $selected . '>' . esc_html($c->post_title) . '</option>';
+                        echo '<option value="' . esc_attr($c->ID) . '" ' . $selected . '>' . esc_html($c->post_title) . '</option>';
+                    }
+                    ?>
+                </select>
+            </p>
+            <p>
+                <label for="module_id"><?php _e('اختر المادة (اختياري):', 'fashion-academy-lms'); ?></label><br/>
+                <select name="module_id" id="module_id">
+                    <option value="0"><?php _e('-- لا يوجد --', 'fashion-academy-lms'); ?></option>
+                    <?php
+                    foreach ($modules as $m) {
+                        // Only list modules that belong to the selected course
+                        $module_course_id = get_post_meta($m->ID, 'module_course_id', true);
+                        if ($module_course_id != $current_course_id) continue;
+
+                        $selected = ($m->ID == $current_module_id) ? 'selected' : '';
+                        echo '<option value="' . esc_attr($m->ID) . '" ' . $selected . '>' . esc_html($m->post_title) . '</option>';
                     }
                     ?>
                 </select>
@@ -1042,6 +1230,7 @@ class FA_Frontend
         <?php
     }
 
+
     // Delete lesson
     private function admin_delete_lesson($lesson_id)
     {
@@ -1052,6 +1241,257 @@ class FA_Frontend
         }
         wp_delete_post($lesson_id, true);
         echo '<div class="notice notice-success"><p>' . __('تم حذف الدرس', 'fashion-academy-lms') . '</p></div>';
+    }
+
+    /**
+     * Render Admin Modules Management Page
+     */
+    private function render_admin_modules_page()
+    {
+        // 1) Handle "Add Module"
+        if (isset($_POST['fa_create_module_action']) && $_POST['fa_create_module_action'] === 'create_module') {
+            check_admin_referer('fa_create_module_nonce', 'fa_create_module_nonce_field');
+
+            $module_title  = sanitize_text_field($_POST['module_title'] ?? '');
+            $course_id     = intval($_POST['course_id'] ?? 0);
+            $module_order  = intval($_POST['module_order'] ?? 0);
+
+            if (empty($module_title)) {
+                echo '<p style="color:red;">' . __('يجب إدخال عنوان المادة', 'fashion-academy-lms') . '</p>';
+            } else {
+                $module_id = wp_insert_post([
+                    'post_title'   => $module_title,
+                    'post_type'    => 'module',
+                    'post_status'  => 'publish'
+                ], true);
+
+                if (!is_wp_error($module_id)) {
+                    if ($course_id) {
+                        update_post_meta($module_id, 'module_course_id', $course_id);
+                    }
+                    if ($module_order > 0) {
+                        update_post_meta($module_id, 'module_order', $module_order);
+                    }
+                    echo '<div class="notice notice-success"><p>'
+                        . __('تم إنشاء المادة بنجاح!', 'fashion-academy-lms')
+                        . ' (ID=' . $module_id . ')</p></div>';
+                } else {
+                    echo '<p style="color:red;">' . $module_id->get_error_message() . '</p>';
+                }
+            }
+        }
+
+        // 2) Check edit or delete
+        if (isset($_GET['edit_module'])) {
+            $this->render_admin_edit_module(intval($_GET['edit_module']));
+            return;
+        }
+        if (isset($_GET['delete_module'])) {
+            $this->admin_delete_module(intval($_GET['delete_module']));
+        }
+
+        // "Add Module" form
+        ?>
+        <h3><?php _e('إضافة مادة جديدة', 'fashion-academy-lms'); ?></h3>
+        <form method="post" style="margin-bottom:20px;">
+            <?php wp_nonce_field('fa_create_module_nonce', 'fa_create_module_nonce_field'); ?>
+            <input type="hidden" name="fa_create_module_action" value="create_module"/>
+
+            <p>
+                <label for="module_title"><?php _e('عنوان المادة:', 'fashion-academy-lms'); ?></label><br>
+                <input type="text" name="module_title" id="module_title" style="width:300px;">
+            </p>
+            <p>
+                <label for="course_id"><?php _e('اختر الكورس:', 'fashion-academy-lms'); ?></label><br>
+                <?php
+                $courses = get_posts([
+                    'post_type'=>'course',
+                    'numberposts'=>-1,
+                    'post_status'=>'publish'
+                ]);
+                ?>
+                <select name="course_id" id="course_id">
+                    <option value="0"><?php _e('-- لا يوجد --', 'fashion-academy-lms'); ?></option>
+                    <?php foreach($courses as $c) {
+                        echo '<option value="'. esc_attr($c->ID) .'">'. esc_html($c->post_title) .'</option>';
+                    } ?>
+                </select>
+            </p>
+            <p>
+                <label for="module_order"><?php _e('ترتيب المادة (module_order):', 'fashion-academy-lms'); ?></label><br>
+                <input type="number" name="module_order" id="module_order" style="width:100px;" value="1" min="1">
+            </p>
+            <button type="submit" class="button button-primary"><?php _e('إضافة المادة', 'fashion-academy-lms'); ?></button>
+        </form>
+        <?php
+
+        // 3) List existing modules
+        $modules = get_posts([
+            'post_type'=>'module',
+            'numberposts'=>-1,
+            'orderby'=>'meta_value_num',
+            'meta_key'=>'module_order',
+            'order'=>'ASC'
+        ]);
+        if (!$modules) {
+            echo '<p>' . __('لا توجد مواد.', 'fashion-academy-lms') . '</p>';
+            return;
+        }
+        ?>
+        <h3><?php _e('كل المواد', 'fashion-academy-lms'); ?></h3>
+        <table class="widefat">
+            <thead>
+            <tr>
+                <th><?php _e('ID', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('عنوان المادة', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('الكورس', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('الترتيب', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('إدارة', 'fashion-academy-lms'); ?></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php
+            foreach ($modules as $module) {
+                $course_id  = get_post_meta($module->ID, 'module_course_id', true);
+                $course     = get_post($course_id);
+                $courseName = $course ? $course->post_title : __('--', 'fashion-academy-lms');
+                $order      = get_post_meta($module->ID, 'module_order', true);
+
+                echo '<tr>';
+                echo '<td>' . esc_html($module->ID) . '</td>';
+                echo '<td>' . esc_html($module->post_title) . '</td>';
+                echo '<td>' . esc_html($courseName) . '</td>';
+                echo '<td>' . esc_html($order) . '</td>';
+                // Edit + Delete links
+                echo '<td>
+                <a href="?admin_page=modules&edit_module='. esc_attr($module->ID) .'" class="button button-inline button-primary">
+                    <span class="dashicons dashicons-edit"></span> <span class="button-text">تعديل</span>
+                </a>
+                <a href="?admin_page=modules&delete_module='. esc_attr($module->ID) .'" 
+                   class="button button-danger button-inline"
+                   onclick="return confirm(\'هل أنت متأكد من حذف هذه المادة؟\');">
+                   <span class="dashicons dashicons-trash"></span> <span class="button-text">حذف</span>
+                </a>
+            </td>';
+                echo '</tr>';
+            }
+            ?>
+            </tbody>
+        </table>
+        <?php
+    }
+
+    /**
+     * Handle File Uploads for Modules (if needed)
+     * If Modules have associated media, implement similar to lessons
+     * Currently, assuming Modules don't require media uploads
+     */
+
+    /**
+     * Edit existing module
+     */
+    private function render_admin_edit_module($module_id)
+    {
+        $module = get_post($module_id);
+        if (!$module || $module->post_type !== 'module') {
+            echo '<p style="color:red;">' . __('المادة غير موجودة', 'fashion-academy-lms') . '</p>';
+            return;
+        }
+
+        if (isset($_POST['fa_edit_module_action']) && $_POST['fa_edit_module_action'] === 'update_module') {
+            check_admin_referer('fa_edit_module_nonce', 'fa_edit_module_nonce_field');
+
+            $new_title    = sanitize_text_field($_POST['module_title'] ?? '');
+            $course_id    = intval($_POST['course_id'] ?? 0);
+            $new_order    = intval($_POST['module_order'] ?? 0);
+
+            if (empty($new_title)) {
+                echo '<p style="color:red;">' . __('يجب إدخال عنوان المادة', 'fashion-academy-lms') . '</p>';
+            } else {
+                $update_res = wp_update_post([
+                    'ID'         => $module_id,
+                    'post_title' => $new_title
+                ], true);
+
+                if (!is_wp_error($update_res)) {
+                    update_post_meta($module_id, 'module_course_id', $course_id);
+                    update_post_meta($module_id, 'module_order', $new_order);
+
+                    echo '<div class="notice notice-success"><p>' . __('تم تحديث المادة بنجاح!', 'fashion-academy-lms') . '</p></div>';
+                    $module = get_post($module_id);
+                } else {
+                    echo '<p style="color:red;">' . $update_res->get_error_message() . '</p>';
+                }
+            }
+        }
+
+        $current_course_id = get_post_meta($module_id, 'module_course_id', true);
+        $current_order     = get_post_meta($module_id, 'module_order', true);
+
+        $courses = get_posts([
+            'post_type'=>'course',
+            'numberposts'=>-1,
+            'post_status'=>'publish'
+        ]);
+        ?>
+        <h3><?php _e('تعديل المادة', 'fashion-academy-lms'); ?></h3>
+        <form method="post">
+            <?php wp_nonce_field('fa_edit_module_nonce', 'fa_edit_module_nonce_field'); ?>
+            <input type="hidden" name="fa_edit_module_action" value="update_module"/>
+
+            <p>
+                <label for="module_title"><?php _e('عنوان المادة:', 'fashion-academy-lms'); ?></label><br/>
+                <input type="text" name="module_title" id="module_title" style="width:300px;"
+                       value="<?php echo esc_attr($module->post_title); ?>"/>
+            </p>
+            <p>
+                <label for="course_id"><?php _e('اختر الكورس:', 'fashion-academy-lms'); ?></label><br/>
+                <select name="course_id" id="course_id">
+                    <option value="0"><?php _e('-- لا يوجد --', 'fashion-academy-lms'); ?></option>
+                    <?php
+                    foreach ($courses as $c) {
+                        $selected = ($c->ID == $current_course_id) ? 'selected' : '';
+                        echo '<option value="' . esc_attr($c->ID) . '" ' . $selected . '>' . esc_html($c->post_title) . '</option>';
+                    }
+                    ?>
+                </select>
+            </p>
+            <p>
+                <label for="module_order"><?php _e('ترتيب المادة:', 'fashion-academy-lms'); ?></label><br/>
+                <input type="number" name="module_order" id="module_order" style="width:100px;"
+                       value="<?php echo esc_attr($current_order); ?>" min="1"/>
+            </p>
+            <button type="submit" class="button button-primary"><?php _e('حفظ التعديلات', 'fashion-academy-lms'); ?></button>
+        </form>
+        <p><a href="?admin_page=modules" class="button"><?php _e('عودة إلى المواد', 'fashion-academy-lms'); ?></a></p>
+        <?php
+    }
+
+    /**
+     * Delete a module
+     */
+    private function admin_delete_module($module_id)
+    {
+        $module = get_post($module_id);
+        if (!$module || $module->post_type !== 'module') {
+            echo '<p style="color:red;">' . __('المادة غير موجودة', 'fashion-academy-lms') . '</p>';
+            return;
+        }
+
+        // Before deleting, unassign lessons from this module
+        $lessons = get_posts([
+            'post_type'      => 'lesson',
+            'posts_per_page' => -1,
+            'meta_key'       => 'lesson_module_id',
+            'meta_value'     => $module_id,
+        ]);
+
+        foreach ($lessons as $lesson) {
+            update_post_meta($lesson->ID, 'lesson_module_id', '');
+        }
+
+        wp_delete_post($module_id, true);
+        echo '<div class="notice notice-success"><p>' . __('تم حذف المادة بنجاح.', 'fashion-academy-lms') . '</p></div>';
     }
 
     // ========== STUDENTS PAGE ==========

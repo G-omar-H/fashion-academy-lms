@@ -1,357 +1,787 @@
+/* ===================================================
+   FA_Frontend Enhanced Stylesheet
+   Stylish and Sophisticated Design for Arabic Fashion Academy LMS
+   =================================================== */
+
+/* ===================================================
+   1. Importing Fonts and Icons
+   =================================================== */
+
+/* 1.1 Google Fonts: Tajawal for body text and Amiri for headings */
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap');
+
+/* 1.2 Font Awesome for additional icons */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+
+/* ===================================================
+   2. CSS Variables (Root Variables) for Theming
+   =================================================== */
+:root {
+    /* 2.1 Color Palette Inspired by Elegant Fashion */
+    --primary-color: #2C2C2C; /* Rich Black */
+    --secondary-color: #D4AF37; /* Gold Accent */
+    --accent-color: #E0E0E0; /* Light Silver */
+    --background-color: #F9F9F9; /* Soft White */
+    --text-color: #333333; /* Dark Gray */
+    --link-color: #D4AF37; /* Gold for links */
+    --link-hover-color: #B3922C; /* Darker Gold on hover */
+    --border-color: #E0E0E0; /* Light Silver */
+    --button-background: #2C2C2C; /* Rich Black */
+    --button-color: #FFFFFF; /* White Text */
+    --button-hover-background: #D4AF37; /* Gold on hover */
+    --input-background: #FFFFFF; /* White Input Background */
+    --input-border: #CCCCCC; /* Light Gray Input Border */
+
+    /* 2.2 Shadows */
+    --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+    /* 2.3 Typography */
+    --heading-font: 'Amiri', serif;
+    --body-font: 'Tajawal', sans-serif;
+
+    /* 2.4 Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    /* 2.5 Border Radius */
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+
+    /* 2.6 Transition */
+    --transition-speed: 0.3s;
+}
+
+/* ===================================================
+   3. Global Styles
+   =================================================== */
+
+/* 3.1 Box Sizing and Resets */
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-/* Common color scheme (example) */
-:root {
-    --fa-primary: #c69;  /* a dusty rose/pink as accent */
-    --fa-background: #fdfdfd;
-    --fa-text: #333;
-    --fa-accent: #e7e7e7;
-}
-
-/* Body styling */
+/* 3.2 Body Styling */
 body {
-    font-family: 'Open Sans', sans-serif;
-    color: #333;
-    background: #fefefe;
+    font-family: var(--body-font);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    font-size: 16px;
+    direction: rtl; /* Enable RTL Support */
 }
-h1, h2, h3, h4 {
-    font-family: 'Playfair Display', serif;
+
+/* 3.3 Link Styling */
+a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color var(--transition-speed) ease, transform var(--transition-speed) ease;
+}
+
+a:hover {
+    color: var(--link-hover-color);
+    transform: translateY(-2px);
+}
+
+/* 3.4 Headings */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--heading-font);
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+}
+
+/* 3.5 Paragraphs */
+p {
+    margin-bottom: var(--spacing-lg);
+}
+
+/* 3.6 Lists */
+ul, ol {
+    margin-bottom: var(--spacing-lg);
+    padding-right: var(--spacing-md);
+}
+
+/* 3.7 Container */
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-lg) 0;
+}
+
+/* ===================================================
+   4. Typography Enhancements
+   =================================================== */
+
+/* 4.1 Form Labels */
+label {
     font-weight: 700;
-    letter-spacing: 1px;
-    color: #c69; /* accent */
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    color: var(--primary-color);
 }
 
-/* Optionally use a body class:
-body.fa-lms-body {
-    ...
+/* 4.2 Input Fields */
+input, select, textarea {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius-sm);
+    font-family: var(--body-font);
+    font-size: 16px;
+    background-color: var(--input-background);
+    transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
 }
-*/
 
-/* =============[ Buttons ]============ */
-.fa-button,
-button.fa-button {
-    background-color: var(--fa-primary);
-    color: #fff;
+input:focus, select:focus, textarea:focus {
+    border-color: var(--link-color);
+    box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+    outline: none;
+}
+
+/* 4.3 Textarea Specific */
+textarea {
+    resize: vertical;
+}
+
+/* ===================================================
+   5. Buttons
+   =================================================== */
+
+/* 5.1 Base Button Styling */
+button,
+input[type="submit"] {
+    background-color: var(--button-background);
+    color: var(--button-color);
     border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-md);
     cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.3s ease;
-}
-.fa-button:hover {
-    background-color: #a55;
-}
-
-.fa-box {
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    border-radius: 8px;
-    background: #fff;
-    padding: 20px;
-    margin-bottom: 20px;
-}
-.fa-box:hover {
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    font-size: 16px;
+    font-weight: 700;
+    transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Danger button (Delete, etc.) */
+button:hover,
+input[type="submit"]:hover {
+    background-color: var(--button-hover-background);
+    transform: translateY(-2px);
+}
+
+/* 5.2 Primary Button */
+.button-primary {
+    background-color: var(--button-background);
+}
+
+.button-primary:hover {
+    background-color: var(--button-hover-background);
+}
+
+/* 5.3 Danger Button */
 .button-danger {
-    background: #dc3545 !important;
-    color: #fff !important;
-    border-color: #dc3545 !important;
-}
-.button-danger:hover {
-    background: #b52c39 !important;
+    background-color: #C3073F; /* Burgundy */
 }
 
+.button-danger:hover {
+    background-color: #950740; /* Darker Burgundy */
+}
+
+/* 5.4 Inline Buttons */
 .button-inline {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 14px;
+    border-radius: var(--border-radius-sm);
 }
+
 .button-text {
-    display: inline-block;
-    vertical-align: middle;
+    margin-left: 5px;
 }
 
-/* =============[ Admin Dashboard ]============ */
-.fa-admin-dashboard-wrapper {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px auto;
-    max-width: 980px;
-}
-.fa-admin-dashboard-wrapper h2 {
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
-    color: var(--fa-primary);
-    text-transform: uppercase;
+.fa-icon {
+    margin-left: 5px;
 }
 
-/* Top nav links */
-.fa-admin-nav {
+/* ===================================================
+   6. Forms
+   =================================================== */
+
+/* 6.1 Registration & Login Forms */
+#fa-register-form,
+#fa-login-form,
+.fa-homework-form {
+    background-color: #ffffff;
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-light);
+    max-width: 500px;
+    margin: var(--spacing-xl) auto;
+}
+
+/* 6.2 Form Headings with Underline */
+#fa-register-form h3,
+#fa-login-form h3,
+.fa-homework-form h3 {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    font-size: 28px;
+    color: var(--primary-color);
+    position: relative;
+}
+
+#fa-register-form h3::after,
+#fa-login-form h3::after,
+.fa-homework-form h3::after {
+    content: '';
+    position: absolute;
+    bottom: -var(--spacing-md);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background-color: var(--secondary-color);
+    border-radius: 2px;
+}
+
+/* 6.3 Homework Form File Preview */
+.fa-homework-form .fa-file-preview {
     display: flex;
-    gap: 15px;
-    list-style: none;
-    margin-bottom: 1.5rem;
-    padding: 0;
-}
-.fa-admin-nav li {
-    margin: 0;
-}
-.fa-admin-nav a {
-    background: var(--fa-primary);
-    color: #fff;
-    text-decoration: none;
-    padding: 10px 16px;
-    border-radius: 20px;
-    transition: background 0.3s ease;
-}
-.fa-admin-nav a:hover {
-    background: #a55;
-}
-.fa-admin-nav a.active-tab {
-    background: #a55;
+    align-items: center;
+    background-color: #FFF8F0;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 1px solid #FFDAB9;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-sm);
 }
 
-/* Admin content container */
-.fa-admin-content {
-    background: var(--fa-accent);
-    padding: 20px;
-    border-radius: 8px;
+.fa-homework-form .fa-file-preview span {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-color);
 }
 
-/* Tables inside admin content */
-.fa-admin-content table.widefat {
+/* 6.4 Remove File Button */
+.fa-homework-form .fa-remove-file {
+    background-color: #E74C3C;
+    color: #ffffff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color var(--transition-speed) ease;
+}
+
+.fa-homework-form .fa-remove-file:hover {
+    background-color: #C0392B;
+}
+
+/* 6.5 Spinner Section */
+.fa-spinner-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: var(--spacing-lg);
+}
+
+.fa-spinner {
+    border: 6px solid #F3F3F3;
+    border-top: 6px solid var(--secondary-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: fa-spin 1s linear infinite;
+}
+
+/* Spinner Animation */
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 6.6 Waiting Message */
+.fa-waiting-msg {
+    margin-top: var(--spacing-sm);
+    color: var(--text-color);
+    font-style: italic;
+}
+
+/* 6.7 Success Message */
+.fa-success-message {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: #D4EDDA;
+    color: #155724;
+    border: 1px solid #C3E6CB;
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    font-weight: 700;
+}
+
+/* ===================================================
+   7. Tables
+   =================================================== */
+
+/* 7.1 Widefat Tables */
+.widefat {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
-}
-.fa-admin-content table.widefat th,
-.fa-admin-content table.widefat td {
-    border: 1px solid #eee;
-    padding: 12px;
-}
-.fa-admin-content table.widefat thead tr {
-    background-color: #f7f7f7;
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-light);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
 }
 
-/* =============[ Student Dashboard ]============ */
+.widefat th,
+.widefat td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-color);
+    text-align: right; /* Align text to the right for RTL */
+}
+
+.widefat th {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.widefat tr:nth-child(even) {
+    background-color: #F9F9F9;
+}
+
+.widefat tr:hover {
+    background-color: #F1F1F1;
+}
+
+.widefat td a {
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+.widefat td a:hover {
+    color: #B3922C;
+}
+
+/* 7.2 Responsive Tables */
+@media (max-width: 768px) {
+    .widefat thead {
+        display: none;
+    }
+
+    .widefat tr {
+        display: block;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .widefat td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .widefat td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .widefat td:last-child {
+        justify-content: flex-end;
+    }
+}
+
+/* ===================================================
+   8. Dashboard Layout
+   =================================================== */
+
+/* 8.1 Student Dashboard Container */
 .fa-student-dashboard-container {
-    max-width: 1200px;
-    margin: 20px auto;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-}
-.fa-student-dashboard-container h2 {
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
-    color: var(--fa-primary);
-    text-transform: uppercase;
+    background-color: #ffffff;
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    max-width: 1400px;
+    margin: var(--spacing-xl) auto;
+    box-shadow: var(--shadow-light);
 }
 
-/* Layout for the student dash */
+/* 8.2 Dashboard Heading with Underline */
+.fa-student-dashboard-container h2 {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    font-size: 36px;
+    color: var(--primary-color);
+    position: relative;
+}
+
+.fa-student-dashboard-container h2::after {
+    content: '';
+    position: absolute;
+    bottom: -var(--spacing-md);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(45deg, var(--secondary-color), var(--accent-color));
+    border-radius: 2px;
+}
+
+/* 8.3 Dashboard Layout Flexbox */
 .fa-student-dashboard-layout {
     display: flex;
-    gap: 20px;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
 }
+
+/* 8.4 Lessons Sidebar */
 .fa-lessons-sidebar {
-    width: 25%;
-    background: var(--fa-accent);
-    border-radius: 8px;
-    padding: 20px;
+    flex: 1 1 300px;
+    background-color: #F8F9FA;
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    max-height: 700px;
+    overflow-y: auto;
+    box-shadow: var(--shadow-light);
 }
+
 .fa-lessons-sidebar h3 {
-    font-size: 1.25rem;
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-md);
+    font-size: 22px;
+    color: var(--primary-color);
 }
+
 .fa-lessons-sidebar ul {
     list-style: none;
     padding-left: 0;
 }
-.fa-lessons-sidebar li {
-    margin-bottom: 10px;
+
+.fa-lessons-sidebar > ul > li {
+    margin-bottom: var(--spacing-md);
 }
-.fa-lessons-sidebar li a {
-    color: var(--fa-primary);
-    text-decoration: none;
-    padding: 8px 10px;
-    border-radius: 4px;
+
+.fa-lessons-sidebar > ul > li > strong {
     display: block;
-    transition: background 0.3s ease;
-}
-.fa-lessons-sidebar li a:hover {
-    background: #f0f0f0;
-}
-.fa-lessons-sidebar li a.active-lesson {
-    background: var(--fa-primary);
-    color: #fff;
+    font-size: 18px;
+    color: var(--secondary-color);
+    margin-bottom: var(--spacing-sm);
 }
 
-/* Lesson content area */
-.fa-lesson-content {
-    flex: 1;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 8px;
-    padding: 20px;
-}
-.fa-lesson-content h2 {
-    color: var(--fa-primary);
-    margin-top: 0;
-    font-weight: 600;
-}
-.fa-lesson-video {
-    margin-bottom: 20px;
-    text-align: center;
+.fa-lessons-sidebar ul ul {
+    list-style: none;
+    padding-left: var(--spacing-md);
 }
 
-/* =============[ Forms & Inputs ]============ */
-.fa-admin-content form,
-.fa-student-dashboard-container form {
-    margin-bottom: 1.5rem;
-}
-.fa-admin-content form label,
-.fa-student-dashboard-container form label {
-    font-weight: 600;
-    display: block;
-    margin-bottom: 4px;
-}
-.fa-admin-content form input[type="text"],
-.fa-admin-content form input[type="number"],
-.fa-admin-content form input[type="email"],
-.fa-admin-content form input[type="password"],
-.fa-admin-content form select,
-.fa-student-dashboard-container form input[type="text"],
-.fa-student-dashboard-container form input[type="email"],
-.fa-student-dashboard-container form input[type="password"],
-.fa-student-dashboard-container form select {
-    width: 100%;
-    max-width: 400px;
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-.fa-admin-content form input[type="file"] {
-    margin-bottom: 10px;
+.fa-lessons-sidebar ul ul li {
+    margin-bottom: var(--spacing-xs);
 }
 
-.fa-admin-content button.button-primary,
-.fa-admin-content input[type="submit"],
-.fa-student-dashboard-container input[type="submit"],
-.fa-student-dashboard-container button {
-    background: var(--fa-primary);
-    color: #fff;
-    border-radius: 20px;
-    border: none;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-.fa-admin-content button.button-primary:hover,
-.fa-admin-content input[type="submit"]:hover,
-.fa-student-dashboard-container input[type="submit"]:hover,
-.fa-student-dashboard-container button:hover {
-    background: #a55;
+.fa-lessons-sidebar ul ul li a {
+    color: var(--primary-color);
+    font-size: 16px;
+    transition: color var(--transition-speed) ease;
 }
 
-/* Homework files preview */
-.fa-file-preview {
-    background: #fdfdfd;
-    border: 1px solid #eee;
-    padding: 8px;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
+.fa-lessons-sidebar ul ul li a:hover,
+.fa-lessons-sidebar ul ul li a.active-lesson {
+    color: var(--secondary-color);
+    font-weight: 700;
 }
 
-/* Success/notice messages */
-.notice.notice-success {
-    background: #e6ffed;
-    border-left: 4px solid #2fad63;
-    padding: 8px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-}
-
-.fa-spinner {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top-color: #3498db;
-    animation: spinner 1s ease-in-out infinite;
-}
-
-@keyframes spinner {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.fa-spinner-section {
-    text-align: center;
-    margin: 20px 0;
-}
-
-.fa-waiting-msg {
-    margin-top: 10px;
+.fa-lessons-sidebar ul ul li span.locked-lesson {
+    color: #E74C3C;
     font-size: 14px;
+    font-style: italic;
 }
 
-.fa-waiting-msg {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #555;
+/* 8.5 Lesson Content Area */
+.fa-lesson-content {
+    flex: 2 1 700px;
+    padding: var(--spacing-lg);
+    background-color: #FDFDFD;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-light);
 }
 
-/* Retake button */
-.fa-retake-button {
-    background: #f56;
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
+.fa-lesson-content h2 {
+    margin-bottom: var(--spacing-lg);
+    font-size: 28px;
+    color: var(--primary-color);
+}
+
+.fa-lesson-video {
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.fa-lesson-video video {
+    width: 100%;
+    max-width: 800px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-light);
+}
+
+.fa-lesson-content p {
+    font-size: 16px;
+    color: #555555;
+}
+
+/* ===================================================
+   9. Admin Dashboard
+   =================================================== */
+
+/* 9.1 Admin Dashboard Wrapper */
+.fa-admin-dashboard-wrapper {
+    background-color: #ffffff;
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    max-width: 1600px;
+    margin: var(--spacing-xl) auto;
+    box-shadow: var(--shadow-light);
+}
+
+/* 9.2 Admin Dashboard Heading with Underline */
+.fa-admin-dashboard-wrapper h2 {
+    text-align: center;
+    margin-bottom: var(--spacing-lg);
+    font-size: 36px;
+    color: var(--primary-color);
+    position: relative;
+}
+
+.fa-admin-dashboard-wrapper h2::after {
+    content: '';
+    position: absolute;
+    bottom: -var(--spacing-md);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(45deg, var(--secondary-color), var(--accent-color));
+    border-radius: 2px;
+}
+
+/* 9.3 Admin Navigation */
+.fa-admin-nav {
+    list-style: none;
+    padding-left: 0;
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.fa-admin-nav li a {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: #F1F1F1;
+    color: var(--primary-color);
+    border-radius: var(--border-radius-sm);
+    font-size: 16px;
+    transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.fa-admin-nav li a.active-tab,
+.fa-admin-nav li a:hover {
+    background-color: var(--secondary-color);
+    color: #ffffff;
+}
+
+.fa-admin-nav li a .fa-icon {
+    font-size: 18px;
+}
+
+/* 9.4 Admin Content Area */
+.fa-admin-content {
+    padding: var(--spacing-lg);
+    background-color: #FDFDFD;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-light);
+}
+
+/* ===================================================
+   10. Notifications
+   =================================================== */
+
+/* 10.1 Success Messages */
+.notice-success {
+    background-color: #D4EDDA;
+    color: #155724;
+    border: 1px solid #C3E6CB;
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    font-weight: 700;
+}
+
+/* 10.2 Error Messages */
+.notice-error {
+    background-color: #F8D7DA;
+    color: #721C24;
+    border: 1px solid #F5C6CB;
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    font-weight: 700;
+}
+
+/* 10.3 Dismissible Notices */
+.is-dismissible {
+    position: relative;
+    padding-right: 35px;
+}
+
+.is-dismissible::after {
+    content: '×';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
     cursor: pointer;
-    transition: background 0.3s ease;
+    font-size: 20px;
+    color: #aaa;
 }
+
+.is-dismissible::after:hover {
+    color: #000;
+}
+
+/* ===================================================
+   11. Miscellaneous
+   =================================================== */
+
+/* 11.1 Spinner Animation */
+.fa-spin {
+    animation: fa-spin 1s linear infinite;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 11.2 Retake Homework Button */
+.fa-retake-button {
+    background-color: #FFC107;
+    color: #212529;
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+    margin-top: var(--spacing-md);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
 .fa-retake-button:hover {
-    background: #d44;
+    background-color: #E0A800;
+    transform: translateY(-2px);
 }
 
-/* On form submit => remove the form container, show spinner + message */
-#fa-homework-container {
-    margin-bottom: 20px;
-}
+/* ===================================================
+   12. Responsive Design
+   =================================================== */
 
-
-/* =============[ Responsive Tweaks ]============ */
-@media (max-width: 768px) {
+/* 12.1 Large Screens (Desktops and Laptops) */
+@media (max-width: 1200px) {
     .fa-student-dashboard-layout {
         flex-direction: column;
     }
-    .fa-lessons-sidebar {
-        width: 100% !important;
-        margin-bottom: 20px;
-    }
+
+    .fa-lessons-sidebar,
     .fa-lesson-content {
-        width: 100% !important;
+        max-width: 100%;
     }
-    .fa-admin-nav {
-        flex-direction: column;
-        gap: 8px;
+
+    .fa-admin-dashboard-wrapper {
+        padding: var(--spacing-md);
     }
 }
 
+/* 12.2 Medium Screens (Tablets) */
+@media (max-width: 992px) {
+    .fa-admin-nav {
+        flex-wrap: wrap;
+    }
+
+    .fa-admin-nav li {
+        flex: 1 1 45%;
+        margin-bottom: var(--spacing-md);
+    }
+}
+
+/* 12.3 Small Screens (Large Mobile Devices) */
+@media (max-width: 768px) {
+    .widefat td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--text-color);
+    }
+
+    .fa-lessons-sidebar {
+        max-height: none;
+    }
+
+    .fa-lesson-content h2 {
+        font-size: 24px;
+    }
+
+    .fa-student-dashboard-container h2 {
+        font-size: 28px;
+    }
+
+    .fa-admin-dashboard-wrapper h2 {
+        font-size: 28px;
+    }
+}
+
+/* 12.4 Extra Small Screens (Small Mobile Devices) */
+@media (max-width: 576px) {
+    .fa-admin-nav {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .fa-admin-nav li a {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .fa-lessons-sidebar {
+        padding: var(--spacing-sm);
+    }
+
+    .fa-lesson-content {
+        padding: var(--spacing-sm);
+    }
+
+    .fa-homework-form {
+        padding: var(--spacing-md);
+    }
+
+    .fa-retake-button {
+        width: 100%;
+        justify-content: center;
+    }
+}
