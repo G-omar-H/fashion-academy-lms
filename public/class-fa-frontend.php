@@ -20,6 +20,9 @@ class FA_Frontend
         // 4) ADMIN DASHBOARD (Milestone 3)
         add_shortcode('fa_admin_dashboard', array($this, 'render_admin_dashboard'));
 
+        // 5) CHAT INTERFACE (Milestone 4)
+        add_shortcode('fa_chat', array($this, 'render_chat_interface'));
+
         // ===========[ Form Submissions ]===========
 
         // Registration & Login
@@ -34,6 +37,10 @@ class FA_Frontend
 
         add_action('wp_enqueue_scripts', array($this, 'enqueue_styles'));
 
+        // chat functionalities
+        add_action('wp_ajax_fa_send_message', array($this, 'fa_send_message'));
+        add_action('wp_ajax_fa_fetch_messages', array($this, 'fa_fetch_messages'));
+
     }
 
     public function enqueue_styles()
@@ -45,6 +52,41 @@ class FA_Frontend
             array(),
             '1.2.0',
             'all'
+        );
+
+        // Enqueue Chat CSS
+        wp_enqueue_style(
+            'fa-chat-style',
+            plugin_dir_url(__FILE__) . '../assets/css/fa-chat.css',
+            array(),
+            '1.0.0',
+            'all'
+        );
+
+        // Enqueue Chat JavaScript
+        wp_enqueue_script(
+            'fa-chat-script',
+            plugin_dir_url(__FILE__) . '../assets/js/fa-chat.js',
+            array('jquery'),
+            '1.0.0',
+            true
+        );
+
+        // Localize Script to pass AJAX URL, nonce, and user data
+        wp_localize_script(
+            'fa-chat-script',
+            'faChat',
+            array(
+                'ajax_url'               => admin_url('admin-ajax.php'),
+                'nonce'                  => wp_create_nonce('fa_chat_nonce'),
+                'current_user_id'        => get_current_user_id(),
+                'current_user_display_name' => wp_get_current_user()->display_name,
+                'lesson_id'              => get_the_ID(),
+                // Add Pusher credentials if integrating Pusher (optional)
+                //'pusher_key'             => 'YOUR_PUSHER_APP_KEY', // Replace with actual key
+                //'pusher_cluster'         => 'YOUR_PUSHER_CLUSTER', // Replace with actual cluster
+
+            )
         );
 
         // Enqueue Google Fonts and Font Awesome
@@ -469,6 +511,10 @@ class FA_Frontend
             echo '</div>';
         }
 
+        // chat section
+        echo '<div class="fa-chat-section">';
+        echo do_shortcode('[fa_chat]');
+        echo '</div>';
         // Add some small JS to handle "Retake" + the spinner on submission
         ?>
         <script>
@@ -544,6 +590,9 @@ class FA_Frontend
                         <?php _e('إدارة المواد', 'fashion-academy-lms'); ?></a></li>
                 <li><a href="?admin_page=students" class="<?php echo is_active_tab('students') ? 'active-tab' : ''; ?>">
                         <?php _e('البحث عن الطلاب', 'fashion-academy-lms'); ?></a></li>
+                <li><a href="?admin_page=chats" class="<?php echo is_active_tab('chats') ? 'active-tab' : ''; ?>">
+                        <?php _e('إدارة الدردشة', 'fashion-academy-lms'); ?></a></li>
+
             </ul>
 
             <div class="fa-admin-content">
@@ -561,8 +610,12 @@ class FA_Frontend
                     case 'students':
                         $this->render_admin_students_page();
                         break;
+                    case 'chats':
+                        $this->render_admin_chats_page();
+                        break;
                     default:
                         $this->render_admin_homeworks_page();
+
                 }
                 ?>
             </div>
@@ -1608,6 +1661,98 @@ class FA_Frontend
         <?php
     }
 
+    private function render_admin_chats_page() {
+        global $wpdb;
+
+        // Handle message sending (if submitted)
+        if (isset($_POST['fa_send_admin_message'])) {
+            check_admin_referer('fa_admin_chat_nonce', 'fa_admin_chat_nonce_field');
+
+            $lesson_id = intval($_POST['lesson_id']);
+            $message = sanitize_textarea_field($_POST['message']);
+
+            if (!empty($lesson_id) && !empty($message)) {
+                $wpdb->insert(
+                    $wpdb->prefix . 'fa_chat_messages',
+                    [
+                        'lesson_id' => $lesson_id,
+                        'sender_id' => get_current_user_id(), // Admin ID
+                        'message' => $message,
+                        'sent_at' => current_time('mysql')
+                    ],
+                    ['%d', '%d', '%s', '%s']
+                );
+
+                echo '<div class="notice notice-success"><p>' . __('تم إرسال الرسالة!', 'fashion-academy-lms') . '</p></div>';
+            } else {
+                echo '<div class="notice notice-error"><p>' . __('يجب تحديد درس وكتابة رسالة.', 'fashion-academy-lms') . '</p></div>';
+            }
+        }
+
+        // Fetch lessons and messages
+        $lessons = get_posts([
+            'post_type' => 'lesson',
+            'numberposts' => -1,
+            'orderby' => 'title',
+            'order' => 'ASC',
+        ]);
+
+        $selected_lesson = isset($_GET['lesson_id']) ? intval($_GET['lesson_id']) : 0;
+
+        $messages = [];
+        if ($selected_lesson) {
+            $messages = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}fa_chat_messages WHERE lesson_id = %d ORDER BY sent_at ASC",
+                $selected_lesson
+            ));
+        }
+
+        ?>
+        <h3><?php _e('إدارة الدردشة', 'fashion-academy-lms'); ?></h3>
+        <form method="get">
+            <input type="hidden" name="admin_page" value="chats"/>
+            <label for="lesson_id"><?php _e('اختر درس:', 'fashion-academy-lms'); ?></label>
+            <select name="lesson_id" id="lesson_id">
+                <option value="0"><?php _e('-- اختر --', 'fashion-academy-lms'); ?></option>
+                <?php foreach ($lessons as $lesson) {
+                    $selected = $lesson->ID == $selected_lesson ? 'selected' : '';
+                    echo '<option value="' . esc_attr($lesson->ID) . '" ' . $selected . '>' . esc_html($lesson->post_title) . '</option>';
+                } ?>
+            </select>
+            <button type="submit" class="button"><?php _e('عرض', 'fashion-academy-lms'); ?></button>
+        </form>
+
+        <?php if ($selected_lesson) : ?>
+            <h4><?php _e('الرسائل:', 'fashion-academy-lms'); ?></h4>
+            <div class="fa-chat-messages">
+                <?php if ($messages) : ?>
+                    <ul>
+                        <?php foreach ($messages as $message) :
+                            $user = get_userdata($message->sender_id);
+                            $user_name = $user ? $user->display_name : __('غير معروف', 'fashion-academy-lms');
+                            ?>
+                            <li>
+                                <strong><?php echo esc_html($user_name); ?>:</strong>
+                                <span><?php echo esc_html($message->message); ?></span>
+                                <em>(<?php echo esc_html($message->sent_at); ?>)</em>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else : ?>
+                    <p><?php _e('لا توجد رسائل.', 'fashion-academy-lms'); ?></p>
+                <?php endif; ?>
+            </div>
+
+            <h4><?php _e('إرسال رسالة:', 'fashion-academy-lms'); ?></h4>
+            <form method="post">
+                <?php wp_nonce_field('fa_admin_chat_nonce', 'fa_admin_chat_nonce_field'); ?>
+                <input type="hidden" name="lesson_id" value="<?php echo esc_attr($selected_lesson); ?>"/>
+                <textarea name="message" rows="4" style="width:100%;"></textarea><br/>
+                <button type="submit" name="fa_send_admin_message" class="button button-primary"><?php _e('إرسال', 'fashion-academy-lms'); ?></button>
+            </form>
+        <?php endif;
+    }
+
 
     /**
      * 1) Render the homework form on the front end
@@ -1654,42 +1799,42 @@ class FA_Frontend
         // Build the form HTML with file preview and removal option
         ob_start();
         ?>
-        <form method="post" enctype="multipart/form-data" class="fa-homework-form" id="fa-homework-form">
-            <?php wp_nonce_field('fa_homework_submission', 'fa_homework_nonce'); ?>
-            <input type="hidden" name="fa_action" value="submit_homework"/>
-            <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id); ?>"/>
-            <input type="hidden" name="course_id" value="<?php echo esc_attr($course_id); ?>"/>
+      <form method="post" enctype="multipart/form-data" class="fa-homework-form" id="fa-homework-form">
+    <?php wp_nonce_field('fa_homework_submission', 'fa_homework_nonce'); ?>
+    <input type="hidden" name="fa_action" value="submit_homework"/>
+    <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id); ?>"/>
+    <input type="hidden" name="course_id" value="<?php echo esc_attr($course_id); ?>"/>
 
-            <p>
-                <label for="homework_files"><?php _e('Upload your homework (images, PDFs, etc.):', 'fashion-academy-lms'); ?></label><br>
-                <input type="file" name="homework_files[]" id="homework_files" multiple="multiple"
-                       accept=".jpg,.jpeg,.png,.pdf"/>
-            </p>
+    <p>
+        <label for="homework_files"><?php _e('ارفع إبداعك الفني (صور، ملفات PDF، وغيرها):', 'fashion-academy-lms'); ?></label><br>
+        <input type="file" name="homework_files[]" id="homework_files" multiple="multiple"
+               accept=".jpg,.jpeg,.png,.pdf"/>
+    </p>
 
-            <div id="file_preview">
-                <?php if (!empty($uploaded_files) && is_array($uploaded_files)) : ?>
-                    <?php foreach ($uploaded_files as $index => $file_url) : ?>
-                        <div class="fa-file-preview">
-                            <span><?php echo esc_html(basename($file_url)); ?></span>
-                            <button type="button" class="fa-remove-file" data-index="<?php echo esc_attr($index); ?>">
-                                Remove
-                            </button>
-                            <input type="hidden" name="existing_files[]" value="<?php echo esc_attr($file_url); ?>"/>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
+    <div id="file_preview">
+        <?php if (!empty($uploaded_files) && is_array($uploaded_files)) : ?>
+            <?php foreach ($uploaded_files as $index => $file_url) : ?>
+                <div class="fa-file-preview">
+                    <span><?php echo esc_html(basename($file_url)); ?></span>
+                    <button type="button" class="fa-remove-file" data-index="<?php echo esc_attr($index); ?>">
+                        <?php _e('إزالة', 'fashion-academy-lms'); ?>
+                    </button>
+                    <input type="hidden" name="existing_files[]" value="<?php echo esc_attr($file_url); ?>"/>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
 
-            <p>
-                <label for="homework_notes"><?php _e('Any notes or comments:', 'fashion-academy-lms'); ?></label><br>
-                <textarea name="homework_notes" id="homework_notes" rows="4"
-                          cols="50"><?php echo esc_textarea($notes); ?></textarea>
-            </p>
+    <p>
+        <label for="homework_notes"><?php _e('دع كلماتك تروي جمال تصميمك وقصته:', 'fashion-academy-lms'); ?></label><br>
+        <textarea name="homework_notes" id="homework_notes" rows="4"
+                  cols="50" placeholder="<?php _e('اخبرنا بفكرتك أو الرسالة وراء تصميمك...', 'fashion-academy-lms'); ?>"><?php echo esc_textarea($notes); ?></textarea>
+    </p>
 
-            <p>
-                <input type="submit" value="<?php _e('Submit Homework', 'fashion-academy-lms'); ?>"/>
-            </p>
-        </form>
+    <p>
+        <input type="submit" value="<?php _e('قدم واجبك بكل أناقة!', 'fashion-academy-lms'); ?>"/>
+    </p>
+</form>
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
@@ -1767,42 +1912,6 @@ class FA_Frontend
             });
         </script>
 
-
-        <style>
-            .fa-file-preview {
-                display: flex;
-                align-items: center;
-                margin-bottom: 10px;
-            }
-
-            .fa-file-preview span {
-                flex: 1;
-            }
-
-            .fa-remove-file {
-                padding: 2px 5px;
-                background-color: #dc3545;
-                color: #fff;
-                border: none;
-                cursor: pointer;
-                border-radius: 3px;
-                margin-left: 10px;
-                font-size: 0.9em;
-            }
-
-            .fa-remove-file:hover {
-                background-color: #c82333;
-            }
-
-            .fa-success-message {
-                padding: 10px;
-                background-color: #d4edda;
-                color: #155724;
-                border: 1px solid #c3e6cb;
-                border-radius: 4px;
-                margin-bottom: 15px;
-            }
-        </style>
         <?php
 
         if (isset($_GET['homework_submitted']) && $_GET['homework_submitted'] === 'true') {
@@ -2179,6 +2288,174 @@ class FA_Frontend
             delete_transient('fa_restricted_lesson_notice_' . $user_id);
         }
     }
+
+    public function render_chat_interface() {
+        // Ensure user is logged in
+        if (!is_user_logged_in()) {
+            return '<p>' . __('يجب عليك تسجيل الدخول لاستخدام الدردشة.', 'fashion-academy-lms') . '</p>';
+        }
+
+        // Get current lesson ID
+        $lesson_id = get_the_ID();
+
+        // Chat Container
+        ob_start();
+        ?>
+
+        <section class="fa-chat-section">
+            <!-- Chat Section Header -->
+            <header class="fa-chat-header">
+                <h3><?php _e('مراسلة الأستاذ', 'fashion-academy-lms'); ?></h3>
+                <p class="fa-chat-description"><?php _e('يمكنك هنا إرسال أسئلتك أو استفساراتك المتعلقة بالدرس إلى الأستاذ. يرجى استخدام هذه المساحة للاستفسارات الأكاديمية فقط.', 'fashion-academy-lms'); ?></p>
+            </header>
+
+            <!-- Chat Container -->
+            <div class="fa-chat-container" data-lesson-id="<?php echo esc_attr($lesson_id); ?>">
+                <!-- Messages Area -->
+                <div class="fa-chat-messages" id="fa-chat-messages">
+                    <!-- Messages will be dynamically loaded here -->
+                </div>
+
+                <!-- Chat Input -->
+                <div class="fa-chat-input">
+            <textarea id="fa-chat-message"
+                      placeholder="<?php _e('اكتب رسالتك هنا بوضوح واحترافية...', 'fashion-academy-lms'); ?>"
+                      maxlength="1000"></textarea>
+                    <button id="fa-send-message"><?php _e('إرسال الرسالة', 'fashion-academy-lms'); ?></button>
+                </div>
+            </div>
+        </section>
+
+
+        <?php
+        return ob_get_clean();
+    }
+
+    // AJAX handler methods (fa_send_message and fa_fetch_messages)
+
+    public function fa_send_message() {
+        // Check if user is logged in
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( __('You must be logged in to send messages.', 'fashion-academy-lms') );
+        }
+
+        // Verify nonce
+        check_ajax_referer( 'fa_chat_nonce', 'nonce' );
+
+        // Get and sanitize POST data
+        $lesson_id = isset( $_POST['lesson_id'] ) ? intval( $_POST['lesson_id'] ) : 0;
+        $message   = isset( $_POST['message'] ) ? sanitize_textarea_field( $_POST['message'] ) : '';
+
+        if ( $lesson_id <= 0 || empty( $message ) ) {
+            wp_send_json_error( __('Invalid data provided.', 'fashion-academy-lms') );
+        }
+
+        // Check if the user has access to the lesson
+        if ( ! $this->user_has_access_to_lesson( get_current_user_id(), $lesson_id ) ) {
+            wp_send_json_error( __('You do not have access to this lesson.', 'fashion-academy-lms') );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'chat_messages';
+
+        // Insert the message into the database
+        $inserted = $wpdb->insert(
+            $table,
+            array(
+                'lesson_id' => $lesson_id,
+                'sender_id' => get_current_user_id(),
+                'message'   => $message,
+                'timestamp' => current_time( 'mysql' ),
+            ),
+            array(
+                '%d',
+                '%d',
+                '%s',
+                '%s',
+            )
+        );
+
+        if ( false === $inserted ) {
+            wp_send_json_error( __('Failed to send message. Please try again.', 'fashion-academy-lms') );
+        }
+
+        wp_send_json_success( __('Message sent successfully.', 'fashion-academy-lms') );
+    }
+
+    /**
+     * Check if the user has access to the specified lesson
+     *
+     * @param int $user_id
+     * @param int $lesson_id
+     * @return bool
+     */
+    private function user_has_access_to_lesson( $user_id, $lesson_id ) {
+        // Implement your access logic here
+        // For example, check if the user is enrolled in the course associated with the lesson
+        // Placeholder: Always return true for now
+        return true;
+    }
+
+    // Inside the FA_Frontend class
+
+    public function fa_fetch_messages() {
+        // Check if user is logged in
+        if ( ! is_user_logged_in() ) {
+            wp_send_json_error( __('You must be logged in to fetch messages.', 'fashion-academy-lms') );
+        }
+
+        // Verify nonce
+        check_ajax_referer( 'fa_chat_nonce', 'nonce' );
+
+        // Get and sanitize POST data
+        $lesson_id = isset( $_POST['lesson_id'] ) ? intval( $_POST['lesson_id'] ) : 0;
+
+        if ( $lesson_id <= 0 ) {
+            wp_send_json_error( __('Invalid lesson ID.', 'fashion-academy-lms') );
+        }
+
+        // Check if the user has access to the lesson
+        if ( ! $this->user_has_access_to_lesson( get_current_user_id(), $lesson_id ) ) {
+            wp_send_json_error( __('You do not have access to this lesson.', 'fashion-academy-lms') );
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'chat_messages';
+
+        // Fetch messages ordered by timestamp ascending
+        $messages = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT cm.*, u.display_name, um.meta_value as user_avatar 
+             FROM $table cm
+             JOIN {$wpdb->users} u ON cm.sender_id = u.ID
+             LEFT JOIN {$wpdb->usermeta} um ON cm.sender_id = um.user_id AND um.meta_key = 'user_avatar'
+             WHERE cm.lesson_id = %d
+             ORDER BY cm.timestamp ASC",
+                $lesson_id
+            )
+        );
+
+        if ( empty( $messages ) ) {
+            wp_send_json_success( array( 'messages' => array() ) );
+        }
+
+        // Format messages
+        $formatted_messages = array();
+        foreach ( $messages as $msg ) {
+            $formatted_messages[] = array(
+                'id'           => $msg->id,
+                'sender_id'    => $msg->sender_id,
+                'display_name' => $msg->display_name,
+                'user_avatar'  => get_avatar_url( $msg->sender_id, array( 'size' => 40 ) ), // Using WordPress avatar
+                'message'      => $msg->message,
+                'timestamp'    => $msg->timestamp,
+                'attachment_url'=> esc_url( $msg->attachment_url ),
+            );
+        }
+
+        wp_send_json_success( array( 'messages' => $formatted_messages ) );
+    }
+
 
 }
 

@@ -7,9 +7,9 @@ class FA_Activator {
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
 
-        $table = $wpdb->prefix . 'homework_submissions';
-        // Prepare the SQL statement
-        $sql = "CREATE TABLE IF NOT EXISTS $table (
+        // Existing table: homework_submissions
+        $table_homework = $wpdb->prefix . 'homework_submissions';
+        $sql_homework = "CREATE TABLE IF NOT EXISTS $table_homework (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id BIGINT(20) UNSIGNED NOT NULL,
             course_id BIGINT(20) UNSIGNED NOT NULL,
@@ -17,20 +17,15 @@ class FA_Activator {
             submission_date DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
             status VARCHAR(20) DEFAULT 'pending' NOT NULL,
             grade FLOAT DEFAULT 0 NOT NULL,
-            uploaded_files TEXT, -- To store JSON or serialized array of file URLs
+            uploaded_files TEXT,
             instructor_files TEXT,
-            notes TEXT,          -- To store user notes/comments
+            notes TEXT,
             PRIMARY KEY (id)
         ) $charset_collate;";
 
-        // Load the dbDelta function
-        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-
-        // Run dbDelta
-        dbDelta( $sql );
-
-        $table2 = $wpdb->prefix . 'course_progress';
-        $sql2 = "CREATE TABLE IF NOT EXISTS $table2 (
+        // Existing table: course_progress
+        $table_progress = $wpdb->prefix . 'course_progress';
+        $sql_progress = "CREATE TABLE IF NOT EXISTS $table_progress (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id BIGINT(20) UNSIGNED NOT NULL,
             course_id BIGINT(20) UNSIGNED NOT NULL,
@@ -38,19 +33,29 @@ class FA_Activator {
             progress_status VARCHAR(20) DEFAULT 'incomplete' NOT NULL,
             PRIMARY KEY (id)
         ) $charset_collate;";
-        dbDelta($sql2);
 
-        // Create chat messages table
-        $table3 = $wpdb->prefix . 'chat_messages';
-        $sql3 = "CREATE TABLE IF NOT EXISTS $table3 (
+        // Revised table: chat_messages
+        $table_chat = $wpdb->prefix . 'chat_messages';
+        $sql_chat = "CREATE TABLE IF NOT EXISTS $table_chat (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            lesson_id BIGINT(20) UNSIGNED NOT NULL,
             sender_id BIGINT(20) UNSIGNED NOT NULL,
-            receiver_id BIGINT(20) UNSIGNED NOT NULL,
             message TEXT NOT NULL,
-            date_sent DATETIME NOT NULL,
-            PRIMARY KEY (id)
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            read_status BOOLEAN DEFAULT FALSE NOT NULL,
+            attachment_url VARCHAR(255) NULL,
+            PRIMARY KEY (id),
+            INDEX (lesson_id),
+            INDEX (sender_id)
         ) $charset_collate;";
-        dbDelta($sql3);
+
+        // Load the dbDelta function
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+        // Run dbDelta for each table
+        dbDelta( $sql_homework );
+        dbDelta( $sql_progress );
+        dbDelta( $sql_chat );
     }
 }
 ?>
