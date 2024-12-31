@@ -20,6 +20,7 @@ class FA_Activator {
             uploaded_files TEXT,
             instructor_files TEXT,
             notes TEXT,
+            admin_notes text,
             PRIMARY KEY (id)
         ) $charset_collate;";
 

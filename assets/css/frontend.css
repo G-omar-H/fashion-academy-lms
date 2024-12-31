@@ -1900,5 +1900,45 @@ input[type="file"]:hover {
     }
 }
 
+/* frontend.css */
+
+/* File Preview Container */
+.fa-file-preview {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.fa-file-preview span {
+    flex-grow: 1;
+    word-break: break-all;
+}
+
+.fa-file-preview button.fa-remove-file {
+    background-color: #dc3232;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-left: 10px;
+}
+
+.fa-file-preview button.fa-remove-file:hover {
+    background-color: #a40e0e;
+}
+
+/* Spinner Styling */
+.fa-spinner-img {
+    width: 50px;
+    height: 50px;
+}
+
+.fa-waiting-msg {
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+
 
 

@@ -13,96 +13,122 @@ document.addEventListener('DOMContentLoaded', function () {
     /**
      * Handle form submission to show spinner.
      */
-    var homeworkForm = document.getElementById('fa-homework-form');
-    if (homeworkForm) {
-        homeworkForm.addEventListener('submit', function (e) {
-            // Hide the form container
-            var homeworkContainer = document.getElementById('fa-homework-container');
-            if (homeworkContainer) {
-                homeworkContainer.style.display = 'none';
-            }
+    var homeworkForms = [
+        {
+            formId: 'fa-homework-form',
+            containerId: 'fa-homework-container'
+        },
+        {
+            formId: 'fa-admin-homework-form',
+            containerId: null // No container to hide for admin form
+        }
+    ];
 
-            // Show spinner
-            var spinnerDiv = document.createElement('div');
-            spinnerDiv.innerHTML = faLMS.spinnerHTML;
-            homeworkContainer.parentNode.appendChild(spinnerDiv);
-        });
-    }
+    homeworkForms.forEach(function (formConfig) {
+        var form = document.getElementById(formConfig.formId);
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                if (formConfig.containerId) {
+                    var container = document.getElementById(formConfig.containerId);
+                    if (container) {
+                        container.style.display = 'none';
+                    }
+                }
+
+                // Show spinner
+                var spinnerDiv = document.createElement('div');
+                spinnerDiv.innerHTML = faLMS.spinnerHTML;
+                form.parentNode.insertBefore(spinnerDiv, form.nextSibling);
+            });
+        }
+    });
 
     /**
-     * Handle file uploads: Preview and removal.
+     * Function to initialize file upload preview and removal.
+     * @param {string} fileInputId - The ID of the file input element.
+     * @param {string} previewContainerId - The ID of the preview container element.
      */
-    var fileInput = document.getElementById('homework_files');
-    var filePreview = document.getElementById('file_preview');
+    function initializeFileUploadPreview(fileInputId, previewContainerId) {
+        var fileInput = document.getElementById(fileInputId);
+        var filePreview = document.getElementById(previewContainerId);
 
-    if (fileInput && filePreview) {
-        // Initialize a DataTransfer object to manage the files
-        var dt = new DataTransfer();
+        if (fileInput && filePreview) {
+            // Find the form that contains the fileInput
+            var form = fileInput.closest('form');
+            if (!form) {
+                console.warn('Form not found for file input:', fileInputId);
+                return;
+            }
 
-        // Handle new file selections
-        fileInput.addEventListener('change', function () {
-            var files = Array.from(this.files);
+            // Initialize a DataTransfer object to manage the files
+            var dt = new DataTransfer();
 
-            files.forEach(function (file) {
-                // Check for duplicates in the DataTransfer
-                var duplicate = Array.from(dt.files).some(function (f) {
-                    return f.name === file.name &&
-                        f.size === file.size &&
-                        f.lastModified === file.lastModified;
-                });
+            // Handle new file selections
+            fileInput.addEventListener('change', function () {
+                var files = Array.from(this.files);
 
-                if (!duplicate) {
-                    // Add the file to the DataTransfer
-                    dt.items.add(file);
-
-                    // Append the preview
-                    var fileDiv = document.createElement('div');
-                    fileDiv.className = 'fa-file-preview';
-
-                    var fileName = document.createElement('span');
-                    fileName.textContent = file.name;
-                    fileDiv.appendChild(fileName);
-
-                    var removeButton = document.createElement('button');
-                    removeButton.type = 'button';
-                    removeButton.className = 'fa-remove-file';
-                    removeButton.textContent = faLMS.removeButtonText; // Use localized text
-
-                    // Attach event listener to remove files
-                    removeButton.addEventListener('click', function () {
-                        var fileIndex = Array.from(dt.files).findIndex(function (f) {
-                            return f.name === file.name &&
-                                f.size === file.size &&
-                                f.lastModified === file.lastModified;
-                        });
-
-                        if (fileIndex > -1) {
-                            dt.items.remove(fileIndex); // Remove from DataTransfer
-                            fileInput.files = dt.files; // Update input's FileList
-                            fileDiv.remove(); // Remove preview
-                        }
+                files.forEach(function (file) {
+                    // Check for duplicates in the DataTransfer
+                    var duplicate = Array.from(dt.files).some(function (f) {
+                        return f.name === file.name &&
+                            f.size === file.size &&
+                            f.lastModified === file.lastModified;
                     });
 
-                    fileDiv.appendChild(removeButton);
-                    filePreview.appendChild(fileDiv);
-                }
+                    if (!duplicate) {
+                        // Add the file to the DataTransfer
+                        dt.items.add(file);
+
+                        // Append the preview
+                        var fileDiv = document.createElement('div');
+                        fileDiv.className = 'fa-file-preview';
+
+                        var fileName = document.createElement('span');
+                        fileName.textContent = file.name;
+                        fileDiv.appendChild(fileName);
+
+                        var removeButton = document.createElement('button');
+                        removeButton.type = 'button';
+                        removeButton.className = 'fa-remove-file';
+                        removeButton.textContent = faLMS.removeButtonText; // Use localized text
+
+                        // Attach event listener to remove files
+                        removeButton.addEventListener('click', function () {
+                            var fileIndex = Array.from(dt.files).findIndex(function (f) {
+                                return f.name === file.name &&
+                                    f.size === file.size &&
+                                    f.lastModified === file.lastModified;
+                            });
+
+                            if (fileIndex > -1) {
+                                dt.items.remove(fileIndex); // Remove from DataTransfer
+                                fileInput.files = dt.files; // Update input's FileList
+                                fileDiv.remove(); // Remove preview
+                            }
+                        });
+
+                        fileDiv.appendChild(removeButton);
+                        filePreview.appendChild(fileDiv);
+                    }
+                });
+
+                // Sync DataTransfer with file input
+                fileInput.files = dt.files;
+
+                // Clear the file input value to allow re-selecting the same file
+                this.value = '';
             });
 
-            // Sync DataTransfer with file input
-            fileInput.files = dt.files;
-
-            // Clear the file input value to allow re-selecting the same file
-            this.value = '';
-        });
-
-        // Ensure files are properly synced before form submission
-        var form = document.getElementById('fa-homework-form');
-        if (form) {
+            // Ensure files are properly synced before form submission
             form.addEventListener('submit', function () {
                 fileInput.files = dt.files; // Update file input with DataTransfer files
             });
         }
     }
+
+    // Initialize file upload previews for both student and admin forms
+    initializeFileUploadPreview('homework_files', 'file_preview');
+    initializeFileUploadPreview('instructor_files', 'admin_file_preview');
 
     /**
      * Handle AJAX polling for submission status.

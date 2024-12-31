@@ -73,8 +73,12 @@ class FA_Frontend
             true // Load in footer
         );
 
-        // Localize script for static data
-        wp_localize_script('fa-frontend-script', 'faLMS', $this->get_translated_script_data());
+
+        // Prepare localized data
+        $localized_data = $this->get_translated_script_data();
+
+        // Localize script with all necessary data
+        wp_localize_script('fa-frontend-script', 'faLMS', $localized_data);
     }
 
 
@@ -451,6 +455,13 @@ class FA_Frontend
                 echo '</ul>';
             }
 
+            // Display Admin Notes if any
+            $admin_notes = !empty($submission->admin_notes) ? $submission->admin_notes : '';
+            if (!empty($admin_notes)) {
+                echo '<h4>' . __('ملاحظات المدرس:', 'fashion-academy-lms') . '</h4>';
+                echo '<p>' . esc_html($admin_notes) . '</p>';
+            }
+
             // Retake button
             echo '<button class="fa-retake-button" onclick="retakeHomework(' . intval($submission->id) . ')">'
                 . __('إعادة المحاولة', 'fashion-academy-lms') . '</button>';
@@ -631,6 +642,7 @@ class FA_Frontend
     }
 
     // Single homework detail + grading
+    // Single homework detail + grading
     private function render_admin_homework_detail($submission_id)
     {
         global $wpdb;
@@ -644,13 +656,31 @@ class FA_Frontend
             return;
         }
 
-        // If form submitted to grade + attach instructor files
+        // If form submitted to grade + attach instructor files + add notes
         if (isset($_POST['fa_grade_submission']) && $_POST['fa_grade_submission'] === 'true') {
+            // Verify nonce for security
+            if (!isset($_POST['fa_grade_submission_nonce_field']) ||
+                !wp_verify_nonce($_POST['fa_grade_submission_nonce_field'], 'fa_grade_submission_nonce')) {
+                wp_die(__('فشل التحقق الأمني', 'fashion-academy-lms'));
+            }
+
             $new_grade = floatval($_POST['grade']);
             $passing_grade = 75;
             $new_status = ($new_grade >= $passing_grade) ? 'passed' : 'graded';
 
-            // 1) Handle instructor files
+            // 1) Handle instructor files removal
+            $files_to_remove = isset($_POST['remove_instructor_files']) ? $_POST['remove_instructor_files'] : array();
+            $current_instructor_files = json_decode($submission->instructor_files, true);
+            if (!is_array($current_instructor_files)) {
+                $current_instructor_files = array();
+            }
+
+            // Remove selected files
+            if (!empty($files_to_remove)) {
+                $current_instructor_files = array_diff($current_instructor_files, $files_to_remove);
+            }
+
+            // 2) Handle new instructor files uploads
             $instructor_files = array();
             if (!empty($_FILES['instructor_files']['name'][0])) {
                 require_once(ABSPATH . 'wp-admin/includes/file.php');
@@ -673,24 +703,24 @@ class FA_Frontend
                 }
             }
 
-            // 2) Merge with existing instructor_files if we want to keep them
-            $existing_ifiles = json_decode($submission->instructor_files, true);
-            if (!is_array($existing_ifiles)) {
-                $existing_ifiles = [];
-            }
-            $all_ifiles = array_merge($existing_ifiles, $instructor_files);
+            // Merge with existing instructor_files
+            $all_ifiles = array_merge($current_instructor_files, $instructor_files);
             $json_ifiles = wp_json_encode($all_ifiles);
 
-            // 3) Update submission
+            // 3) Handle admin notes
+            $admin_notes = isset($_POST['admin_notes']) ? sanitize_textarea_field($_POST['admin_notes']) : '';
+
+            // 4) Update submission
             $res = $wpdb->update(
                 $submission_table,
                 [
                     'grade'            => $new_grade,
                     'status'           => $new_status,
-                    'instructor_files' => $json_ifiles
+                    'instructor_files' => $json_ifiles,
+                    'admin_notes'      => $admin_notes
                 ],
                 ['id'=>$submission_id],
-                ['%f','%s','%s'],
+                ['%f','%s','%s','%s'],
                 ['%d']
             );
             if ($res === false) {
@@ -701,7 +731,7 @@ class FA_Frontend
                     $this->mark_lesson_as_passed($submission->user_id, $submission->lesson_id);
                     $this->unlock_next_lesson($submission->user_id, $submission->lesson_id);
                 }
-                echo '<div class="notice notice-success"><p>' . __('تم حفظ التقييم وملفات المعلم!', 'fashion-academy-lms') . '</p></div>';
+                echo '<div class="notice notice-success"><p>' . __('تم حفظ التقييم وملفات المعلم والملاحظات!', 'fashion-academy-lms') . '</p></div>';
 
                 // Refresh submission object
                 $submission = $wpdb->get_row($wpdb->prepare(
@@ -710,10 +740,11 @@ class FA_Frontend
             }
         }
 
-        // Now display the submission details, including any instructor_files
+        // Now display the submission details, including any instructor_files and admin_notes
         $uploaded_files = json_decode($submission->uploaded_files, true);
         $notes = $submission->notes;
         $instructor_files = json_decode($submission->instructor_files, true);
+        $admin_notes = $submission->admin_notes;
 
         echo '<hr>';
         echo '<h4>' . sprintf(__('تفاصيل الواجب: #%d', 'fashion-academy-lms'), $submission_id) . '</h4>';
@@ -729,31 +760,49 @@ class FA_Frontend
             echo '</ul>';
         }
 
-        // Show instructor_files if any
+        // Show existing instructor_files if any, with remove options
         if (!empty($instructor_files)) {
-            echo '<h5>' . __('ملفات المدرس المرفقة سابقاً:', 'fashion-academy-lms') . '</h5><ul>';
+            echo '<h5>' . __('ملفات المدرس المرفقة سابقاً:', 'fashion-academy-lms') . '</h5>';
+            echo '<ul>';
             foreach ($instructor_files as $ifile_url) {
-                echo '<li><a href="' . esc_url($ifile_url) . '" target="_blank">'
-                    . esc_html(basename($ifile_url)) . '</a></li>';
+                echo '<li>';
+                echo '<a href="' . esc_url($ifile_url) . '" target="_blank">' . esc_html(basename($ifile_url)) . '</a>';
+                echo ' <label><input type="checkbox" name="remove_instructor_files[]" value="' . esc_attr($ifile_url) . '"> ' . __('إزالة', 'fashion-academy-lms') . '</label>';
+                echo '</li>';
             }
             echo '</ul>';
+        } else {
+            echo '<p>' . __('لا توجد ملفات مدرسية مرفقة سابقاً.', 'fashion-academy-lms') . '</p>';
         }
 
-        // Grading form with new input for instructor_files
+        // Grading form with new input for instructor_files and admin_notes
         ?>
-        <form method="post" enctype="multipart/form-data" style="margin-top:15px;">
+        <h4><?php _e('إضافة / تعديل ملفات المدرس والملاحظات', 'fashion-academy-lms'); ?></h4>
+        <form method="post" enctype="multipart/form-data" id="fa-admin-homework-form">
+            <?php wp_nonce_field('fa_grade_submission_nonce', 'fa_grade_submission_nonce_field'); ?>
+            <input type="hidden" name="fa_grade_submission" value="true"/>
+
             <p>
                 <label for="grade"><?php _e('التقييم (%):', 'fashion-academy-lms'); ?></label>
                 <input type="number" name="grade" id="grade" step="1" min="0" max="100"
                        value="<?php echo esc_attr($submission->grade); ?>" required>
             </p>
+
             <p>
-                <label for="instructor_files"><?php _e('رفع ملفات التصحيح / التعليق (اختياري):', 'fashion-academy-lms'); ?></label>
-                <input type="file" name="instructor_files[]" id="instructor_files" multiple />
+                <label for="instructor_files"><?php _e('ارفع ملفات المدرس (صور، PDF، إلخ):', 'fashion-academy-lms'); ?></label><br/>
+                <input type="file" name="instructor_files[]" id="instructor_files" multiple accept=".jpg,.jpeg,.png,.pdf"/>
             </p>
-            <input type="hidden" name="fa_grade_submission" value="true" />
+
+            <div id="admin_file_preview"></div>
+
+            <p>
+                <label for="admin_notes"><?php _e('ملاحظات المدرس (اختياري):', 'fashion-academy-lms'); ?></label><br/>
+                <textarea name="admin_notes" id="admin_notes" rows="4" cols="50" placeholder="<?php _e('أضف ملاحظاتك هنا...', 'fashion-academy-lms'); ?>"><?php echo esc_textarea($admin_notes); ?></textarea>
+            </p>
+
             <button type="submit" class="button button-primary"><?php _e('حفظ التقييم', 'fashion-academy-lms'); ?></button>
         </form>
+        <p><a href="?admin_page=homeworks" class="button"><?php _e('عودة إلى الواجبات', 'fashion-academy-lms'); ?></a></p>
         <?php
     }
 
@@ -1681,6 +1730,7 @@ class FA_Frontend
     }
 
 
+
     /**
      * 2) Handle form submission (runs on 'init')
      */
@@ -2066,6 +2116,7 @@ class FA_Frontend
             'removeButtonText'  => __('إزالة', 'fashion-academy-lms'), // Localized text for 'Remove' button
         );
     }
+
 
 
 }
