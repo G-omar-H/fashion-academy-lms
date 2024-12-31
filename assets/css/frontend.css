@@ -1051,17 +1051,6 @@ input[type="submit"]:active {
     letter-spacing: 1px;
 }
 
-.fa-student-dashboard-container h2::after {
-    content: '';
-    position: absolute;
-    bottom: -var(--spacing-md);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px; /* Wider underline */
-    height: 4px; /* Thicker underline */
-    background: linear-gradient(45deg, var(--secondary-color), var(--accent-color)); /* Gradient effect */
-    border-radius: 2px;
-}
 
 /* 8.3 Dashboard Layout Flexbox */
 .fa-student-dashboard-layout {
@@ -1290,18 +1279,6 @@ input[type="submit"]:active {
     position: relative;
     text-transform: uppercase; /* Make headings stand out */
     letter-spacing: 1px;
-}
-
-.fa-admin-dashboard-wrapper h2::after {
-    content: '';
-    position: absolute;
-    bottom: -var(--spacing-md);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 120px; /* Wider underline */
-    height: 4px; /* Thicker underline */
-    background: linear-gradient(90deg, var(--secondary-color), var(--accent-color)); /* Horizontal gradient */
-    border-radius: 2px;
 }
 
 /* 9.3 Admin Navigation */

@@ -20,8 +20,6 @@ class FA_Frontend
         // 4) ADMIN DASHBOARD (Milestone 3)
         add_shortcode('fa_admin_dashboard', array($this, 'render_admin_dashboard'));
 
-        // 5) CHAT INTERFACE (Milestone 4)
-        add_shortcode('fa_chat', array($this, 'render_chat_interface'));
 
         // ===========[ Form Submissions ]===========
 
@@ -35,15 +33,11 @@ class FA_Frontend
         // Restrict lesson access
         add_action('template_redirect', array($this, 'restrict_lesson_access'));
 
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_styles'));
-
-        // chat functionalities
-        add_action('wp_ajax_fa_send_message', array($this, 'fa_send_message'));
-        add_action('wp_ajax_fa_fetch_messages', array($this, 'fa_fetch_messages'));
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
 
     }
 
-    public function enqueue_styles()
+    public function enqueue_assets()
     {
         // Enqueue the main frontend stylesheet
         wp_enqueue_style(
@@ -52,41 +46,6 @@ class FA_Frontend
             array(),
             '1.2.0',
             'all'
-        );
-
-        // Enqueue Chat CSS
-        wp_enqueue_style(
-            'fa-chat-style',
-            plugin_dir_url(__FILE__) . '../assets/css/fa-chat.css',
-            array(),
-            '1.0.0',
-            'all'
-        );
-
-        // Enqueue Chat JavaScript
-        wp_enqueue_script(
-            'fa-chat-script',
-            plugin_dir_url(__FILE__) . '../assets/js/fa-chat.js',
-            array('jquery'),
-            '1.0.0',
-            true
-        );
-
-        // Localize Script to pass AJAX URL, nonce, and user data
-        wp_localize_script(
-            'fa-chat-script',
-            'faChat',
-            array(
-                'ajax_url'               => admin_url('admin-ajax.php'),
-                'nonce'                  => wp_create_nonce('fa_chat_nonce'),
-                'current_user_id'        => get_current_user_id(),
-                'current_user_display_name' => wp_get_current_user()->display_name,
-                'lesson_id'              => get_the_ID(),
-                // Add Pusher credentials if integrating Pusher (optional)
-                //'pusher_key'             => 'YOUR_PUSHER_APP_KEY', // Replace with actual key
-                //'pusher_cluster'         => 'YOUR_PUSHER_CLUSTER', // Replace with actual cluster
-
-            )
         );
 
         // Enqueue Google Fonts and Font Awesome
@@ -104,7 +63,20 @@ class FA_Frontend
             '6.4.0',
             'all'
         );
+
+        // Enqueue the frontend JavaScript
+        wp_enqueue_script(
+            'fa-frontend-script',
+            plugin_dir_url(__FILE__) . '../assets/js/frontend.js',
+            array('jquery'), // Dependencies
+            '1.2.0',
+            true // Load in footer
+        );
+
+        // Localize script for static data
+        wp_localize_script('fa-frontend-script', 'faLMS', $this->get_translated_script_data());
     }
+
 
 
 
@@ -439,7 +411,7 @@ class FA_Frontend
             echo '<div id="fa-homework-container">';
             echo do_shortcode('[fa_homework_form lesson_id="' . $lesson_id . '"]');
             echo '</div>';
-            // We'll add a small JS snippet to hide the form and show spinner on submit
+            // Spinner is handled via external JS on form submission
         }
         // 2) If submission is "pending," remove the form, show spinner
         elseif ($submission->status === 'pending') {
@@ -448,47 +420,15 @@ class FA_Frontend
             echo '<p class="fa-waiting-msg">'
                 . __('تم إرسال الواجب. بانتظار تصحيح الأستاذ...', 'fashion-academy-lms') . '</p>';
             echo '</div>';
-            ?>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const submissionId  = <?php echo (int) $submission->id; ?>;
-                    const currentStatus = "<?php echo esc_js($submission->status); ?>";
-                    const pollInterval  = 15000; // 15 seconds
 
-                    // We only poll if the current status is 'pending'
-                    if (currentStatus === 'pending') {
-                        setInterval(checkSubmissionStatus, pollInterval);
-                    }
-
-                    function checkSubmissionStatus() {
-                        // Request via admin-ajax
-                        const ajaxUrl  = "<?php echo admin_url('admin-ajax.php'); ?>";
-                        const endpoint = ajaxUrl + '?action=fa_check_submission&submission_id=' + submissionId;
-
-                        fetch(endpoint, { credentials: 'same-origin' })
-                            .then(response => response.json())
-                            .then(data => {
-                                // Log the response for debugging
-                                console.log('AJAX Response:', data);
-
-                                // Check if the request was successful
-                                if (!data.success) {
-                                    console.warn('AJAX Error:', data.data);
-                                    return;
-                                }
-
-                                const newStatus = data.data.status;
-
-                                if (newStatus !== currentStatus) {
-                                    // If the status changed (pending->graded or passed), reload the page
-                                    window.location.reload();
-                                }
-                            })
-                            .catch(err => console.log('Fetch error:', err));
-                    }
-                });
-            </script>
-            <?php
+            // Localize dynamic data for JavaScript
+            wp_localize_script('fa-frontend-script', 'faLMS', array_merge(
+                $this->get_translated_script_data(),
+                array(
+                    'currentStatus' => 'pending',
+                    'submissionId'  => (int) $submission->id,
+                )
+            ));
         }
         // 3) If submission is "graded" or "passed," show results
         else {
@@ -500,7 +440,7 @@ class FA_Frontend
                 echo '<p>' . sprintf(__('أحسنت! لقد تجاوزت هذا الواجب بنجاح. درجتك: %s%%', 'fashion-academy-lms'), $submission->grade) . '</p>';
             }
 
-            // If you want to display the instructor feedback files, do so here:
+            // Display instructor feedback files if any
             $instructor_files = json_decode($submission->instructor_files, true);
             if (!empty($instructor_files)) {
                 echo '<h4>' . __('مرفقات الأستاذ / التصحيح:', 'fashion-academy-lms') . '</h4><ul>';
@@ -516,46 +456,21 @@ class FA_Frontend
                 . __('إعادة المحاولة', 'fashion-academy-lms') . '</button>';
 
             echo '</div>';
+
+            // Localize retake confirmation message
+            wp_localize_script('fa-frontend-script', 'faLMS', array_merge(
+                $this->get_translated_script_data(),
+                array(
+                    'retakeConfirm' => __('هل أنت متأكد من إعادة الواجب؟', 'fashion-academy-lms'),
+                )
+            ));
         }
-
-        echo '<div class="fa-chat-header">';
-        echo '<h2 class="fa-chat-title">' . __('💬 مرحباً بك في قسم الأسئلة والنقاش', 'fashion-academy-lms') . '</h2>';
-        echo '<p class="fa-chat-desc">'
-            . __('هل لديك أي أسئلة حول الدرس؟ لا تتردد في طرحها هنا وسنكون سعداء بمساعدتك!', 'fashion-academy-lms')
-            . '</p>';
-        echo '</div>';
-
-
-        // chat section
-        echo do_shortcode('[fa_chat]');
-      
-        // Add some small JS to handle "Retake" + the spinner on submission
-        ?>
-        <script>
-            function retakeHomework(submissionId) {
-                if (!confirm('<?php echo esc_js(__('هل أنت متأكد من إعادة الواجب؟', 'fashion-academy-lms')); ?>')) return;
-                window.location.href = '?retake_homework=' + submissionId;
-            }
-
-            // On form submit => hide the form, show spinner
-            document.addEventListener('DOMContentLoaded', function() {
-                var homeworkForm = document.getElementById('fa-homework-form');
-                if (homeworkForm) {
-                    homeworkForm.addEventListener('submit', function(e) {
-                        // Hide the form container
-                        document.getElementById('fa-homework-container').style.display='none';
-                        // Show a quick inline spinner:
-                        var spinnerDiv = document.createElement('div');
-                        spinnerDiv.innerHTML = '<img src="<?php echo esc_url(plugin_dir_url(__FILE__) . 'assets/img/spinner.gif'); ?>" ' +
-                            'class="fa-spinner-img" alt="Spinner">' +
-                            '<p class="fa-waiting-msg"><?php echo esc_js(__('جاري إرسال الواجب...', 'fashion-academy-lms')); ?></p>';
-                        document.getElementById('fa-homework-container').parentNode.appendChild(spinnerDiv);
-                    });
-                }
-            });
-        </script>
-        <?php
     }
+
+
+
+
+
 
 
     /**
@@ -604,8 +519,6 @@ class FA_Frontend
                         <?php _e('إدارة المواد', 'fashion-academy-lms'); ?></a></li>
                 <li><a href="?admin_page=students" class="<?php echo is_active_tab('students') ? 'active-tab' : ''; ?>">
                         <?php _e('البحث عن الطلاب', 'fashion-academy-lms'); ?></a></li>
-                <li><a href="?admin_page=chats" class="<?php echo is_active_tab('chats') ? 'active-tab' : ''; ?>">
-                        <?php _e('إدارة الدردشة', 'fashion-academy-lms'); ?></a></li>
 
             </ul>
 
@@ -623,9 +536,6 @@ class FA_Frontend
                         break;
                     case 'students':
                         $this->render_admin_students_page();
-                        break;
-                    case 'chats':
-                        $this->render_admin_chats_page();
                         break;
                     default:
                         $this->render_admin_homeworks_page();
@@ -1675,102 +1585,6 @@ class FA_Frontend
         <?php
     }
 
-    private function render_admin_chats_page() {
-        global $wpdb;
-
-        // Handle message sending (if submitted)
-        if (isset($_POST['fa_send_admin_message'])) {
-            check_admin_referer('fa_admin_chat_nonce', 'fa_admin_chat_nonce_field');
-
-            $lesson_id = intval($_POST['lesson_id']);
-            $message = sanitize_textarea_field($_POST['message']);
-
-            if (!empty($lesson_id) && !empty($message)) {
-                $wpdb->insert(
-                    $wpdb->prefix . 'fa_chat_messages',
-                    [
-                        'lesson_id' => $lesson_id,
-                        'sender_id' => get_current_user_id(), // Admin ID
-                        'message' => $message,
-                        'sent_at' => current_time('mysql')
-                    ],
-                    ['%d', '%d', '%s', '%s']
-                );
-
-                echo '<div class="notice notice-success"><p>' . __('تم إرسال الرسالة!', 'fashion-academy-lms') . '</p></div>';
-            } else {
-                echo '<div class="notice notice-error"><p>' . __('يجب تحديد درس وكتابة رسالة.', 'fashion-academy-lms') . '</p></div>';
-            }
-        }
-
-        // Fetch lessons and messages
-        $lessons = get_posts([
-            'post_type' => 'lesson',
-            'numberposts' => -1,
-            'orderby' => 'title',
-            'order' => 'ASC',
-        ]);
-
-        $selected_lesson = isset($_GET['lesson_id']) ? intval($_GET['lesson_id']) : 0;
-
-        $messages = [];
-        if ($selected_lesson) {
-            $messages = $wpdb->get_results($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}fa_chat_messages WHERE lesson_id = %d ORDER BY sent_at ASC",
-                $selected_lesson
-            ));
-        }
-
-        ?>
-        <h3><?php _e('إدارة الدردشة', 'fashion-academy-lms'); ?></h3>
-        <form method="get">
-            <input type="hidden" name="admin_page" value="chats"/>
-            <label for="lesson_id"><?php _e('اختر درس:', 'fashion-academy-lms'); ?></label>
-            <select name="lesson_id" id="lesson_id">
-                <option value="0"><?php _e('-- اختر --', 'fashion-academy-lms'); ?></option>
-                <?php foreach ($lessons as $lesson) {
-                    $selected = $lesson->ID == $selected_lesson ? 'selected' : '';
-                    echo '<option value="' . esc_attr($lesson->ID) . '" ' . $selected . '>' . esc_html($lesson->post_title) . '</option>';
-                } ?>
-            </select>
-            <button type="submit" class="button"><?php _e('عرض', 'fashion-academy-lms'); ?></button>
-        </form>
-
-        <?php if ($selected_lesson) : ?>
-            <h4><?php _e('الرسائل:', 'fashion-academy-lms'); ?></h4>
-            <div class="fa-chat-messages">
-                <?php if ($messages) : ?>
-                    <ul>
-                        <?php foreach ($messages as $message) :
-                            $user = get_userdata($message->sender_id);
-                            $user_name = $user ? $user->display_name : __('غير معروف', 'fashion-academy-lms');
-                            ?>
-                            <li>
-                                <strong><?php echo esc_html($user_name); ?>:</strong>
-                                <span><?php echo esc_html($message->message); ?></span>
-                                <em>(<?php echo esc_html($message->sent_at); ?>)</em>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php else : ?>
-                    <p><?php _e('لا توجد رسائل.', 'fashion-academy-lms'); ?></p>
-                <?php endif; ?>
-            </div>
-
-            <h4><?php _e('إرسال رسالة:', 'fashion-academy-lms'); ?></h4>
-            <form method="post">
-                <?php wp_nonce_field('fa_admin_chat_nonce', 'fa_admin_chat_nonce_field'); ?>
-                <input type="hidden" name="lesson_id" value="<?php echo esc_attr($selected_lesson); ?>"/>
-                <textarea name="message" rows="4" style="width:100%;"></textarea><br/>
-                <button type="submit" name="fa_send_admin_message" class="button button-primary"><?php _e('إرسال', 'fashion-academy-lms'); ?></button>
-            </form>
-        <?php endif;
-    }
-
-
-    /**
-     * 1) Render the homework form on the front end
-     */
     public function render_homework_form($atts = [])
     {
         // Ensure user is logged in
@@ -1813,127 +1627,59 @@ class FA_Frontend
         // Build the form HTML with file preview and removal option
         ob_start();
         ?>
-      <form method="post" enctype="multipart/form-data" class="fa-homework-form" id="fa-homework-form">
-    <?php wp_nonce_field('fa_homework_submission', 'fa_homework_nonce'); ?>
-    <input type="hidden" name="fa_action" value="submit_homework"/>
-    <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id); ?>"/>
-    <input type="hidden" name="course_id" value="<?php echo esc_attr($course_id); ?>"/>
+        <form method="post" enctype="multipart/form-data" class="fa-homework-form" id="fa-homework-form">
+            <?php wp_nonce_field('fa_homework_submission', 'fa_homework_nonce'); ?>
+            <input type="hidden" name="fa_action" value="submit_homework"/>
+            <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id); ?>"/>
+            <input type="hidden" name="course_id" value="<?php echo esc_attr($course_id); ?>"/>
 
-    <p>
-        <label for="homework_files"><?php _e('ارفع إبداعك الفني (صور، ملفات PDF، وغيرها):', 'fashion-academy-lms'); ?></label><br>
-        <input type="file" name="homework_files[]" id="homework_files" multiple="multiple"
-               accept=".jpg,.jpeg,.png,.pdf"/>
-    </p>
+            <p>
+                <label for="homework_files"><?php _e('ارفع إبداعك الفني (صور، ملفات PDF، وغيرها):', 'fashion-academy-lms'); ?></label><br>
+                <input type="file" name="homework_files[]" id="homework_files" multiple="multiple"
+                       accept=".jpg,.jpeg,.png,.pdf"/>
+            </p>
 
-    <div id="file_preview">
-        <?php if (!empty($uploaded_files) && is_array($uploaded_files)) : ?>
-            <?php foreach ($uploaded_files as $index => $file_url) : ?>
-                <div class="fa-file-preview">
-                    <span><?php echo esc_html(basename($file_url)); ?></span>
-                    <button type="button" class="fa-remove-file" data-index="<?php echo esc_attr($index); ?>">
-                        <?php _e('إزالة', 'fashion-academy-lms'); ?>
-                    </button>
-                    <input type="hidden" name="existing_files[]" value="<?php echo esc_attr($file_url); ?>"/>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
+            <div id="file_preview">
+                <?php if (!empty($uploaded_files) && is_array($uploaded_files)) : ?>
+                    <?php foreach ($uploaded_files as $index => $file_url) : ?>
+                        <div class="fa-file-preview">
+                            <span><?php echo esc_html(basename($file_url)); ?></span>
+                            <button type="button" class="fa-remove-file" data-index="<?php echo esc_attr($index); ?>">
+                                <?php _e('إزالة', 'fashion-academy-lms'); ?>
+                            </button>
+                            <input type="hidden" name="existing_files[]" value="<?php echo esc_attr($file_url); ?>"/>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
 
-    <p>
-        <label for="homework_notes"><?php _e('دع كلماتك تروي جمال تصميمك وقصته:', 'fashion-academy-lms'); ?></label><br>
-        <textarea name="homework_notes" id="homework_notes" rows="4"
-                  cols="50" placeholder="<?php _e('اخبرنا بفكرتك أو الرسالة وراء تصميمك...', 'fashion-academy-lms'); ?>"><?php echo esc_textarea($notes); ?></textarea>
-    </p>
+            <p>
+                <label for="homework_notes"><?php _e('دع كلماتك تروي جمال تصميمك وقصته:', 'fashion-academy-lms'); ?></label><br>
+                <textarea name="homework_notes" id="homework_notes" rows="4"
+                          cols="50" placeholder="<?php _e('اخبرنا بفكرتك أو الرسالة وراء تصميمك...', 'fashion-academy-lms'); ?>"><?php echo esc_textarea($notes); ?></textarea>
+            </p>
 
-    <p>
-        <input type="submit" value="<?php _e('قدم واجبك بكل أناقة!', 'fashion-academy-lms'); ?>"/>
-    </p>
-</form>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const fileInput = document.getElementById('homework_files');
-                const filePreview = document.getElementById('file_preview');
-
-                // Initialize a DataTransfer object to manage the files
-                const dt = new DataTransfer();
-
-                // Handle new file selections
-                fileInput.addEventListener('change', function () {
-                    const files = Array.from(this.files);
-
-                    files.forEach((file) => {
-                        // Check for duplicates in the DataTransfer
-                        const duplicate = Array.from(dt.files).some(
-                            (f) =>
-                                f.name === file.name &&
-                                f.size === file.size &&
-                                f.lastModified === file.lastModified
-                        );
-
-                        if (!duplicate) {
-                            // Add the file to the DataTransfer
-                            dt.items.add(file);
-
-                            // Append the preview
-                            const fileDiv = document.createElement('div');
-                            fileDiv.className = 'fa-file-preview';
-
-                            const fileName = document.createElement('span');
-                            fileName.textContent = file.name;
-                            fileDiv.appendChild(fileName);
-
-                            const removeButton = document.createElement('button');
-                            removeButton.type = 'button';
-                            removeButton.className = 'fa-remove-file';
-                            removeButton.textContent = 'Remove';
-
-                            // Attach event listener to remove files
-                            removeButton.addEventListener('click', function () {
-                                const fileIndex = Array.from(dt.files).findIndex(
-                                    (f) =>
-                                        f.name === file.name &&
-                                        f.size === file.size &&
-                                        f.lastModified === file.lastModified
-                                );
-
-                                if (fileIndex > -1) {
-                                    dt.items.remove(fileIndex); // Remove from DataTransfer
-                                    fileInput.files = dt.files; // Update input's FileList
-                                    fileDiv.remove(); // Remove preview
-                                }
-                            });
-
-                            fileDiv.appendChild(removeButton);
-                            filePreview.appendChild(fileDiv);
-                        }
-                    });
-
-                    // Sync DataTransfer with file input
-                    fileInput.files = dt.files;
-
-                    // Clear the file input value to allow re-selecting the same file
-                    this.value = '';
-                });
-
-                // Ensure files are properly synced before form submission
-                const form = document.getElementById('fa-homework-form');
-                if (form) {
-                    form.addEventListener('submit', function () {
-                        fileInput.files = dt.files; // Update file input with DataTransfer files
-                    });
-                }
-            });
-        </script>
-
+            <p>
+                <input type="submit" value="<?php _e('قدم واجبك بكل أناقة!', 'fashion-academy-lms'); ?>"/>
+            </p>
+        </form>
         <?php
 
+        // Localize dynamic data for JavaScript
+        wp_localize_script('fa-frontend-script', 'faLMS', array_merge(
+            $this->get_translated_script_data(),
+            array(
+                'removeButtonText' => __('إزالة', 'fashion-academy-lms'), // Localized text for 'Remove' button
+            )
+        ));
+
         if (isset($_GET['homework_submitted']) && $_GET['homework_submitted'] === 'true') {
-            echo '<p class="fa-success-message">' . __('Your homework has been submitted successfully!', 'fashion-academy-lms') . '</p>';
+            echo '<p class="fa-success-message">' . __('تم تقديم واجبك بنجاح!', 'fashion-academy-lms') . '</p>';
         }
 
         return ob_get_clean();
     }
+
 
     /**
      * 2) Handle form submission (runs on 'init')
@@ -2303,174 +2049,26 @@ class FA_Frontend
         }
     }
 
-    public function render_chat_interface() {
-        // Ensure user is logged in
-        if (!is_user_logged_in()) {
-            return '<p>' . __('يجب عليك تسجيل الدخول لاستخدام الدردشة.', 'fashion-academy-lms') . '</p>';
-        }
-
-        // Get current lesson ID
-        $lesson_id = get_the_ID();
-
-        // Chat Container
-        ob_start();
-        ?>
-
-        <section class="fa-chat-section">
-            <!-- Chat Section Header -->
-            <header class="fa-chat-header">
-                <h3><?php _e('مراسلة الأستاذ', 'fashion-academy-lms'); ?></h3>
-                <p class="fa-chat-description"><?php _e('يمكنك هنا إرسال أسئلتك أو استفساراتك المتعلقة بالدرس إلى الأستاذ. يرجى استخدام هذه المساحة للاستفسارات الأكاديمية فقط.', 'fashion-academy-lms'); ?></p>
-            </header>
-
-            <!-- Chat Container -->
-            <div class="fa-chat-container" data-lesson-id="<?php echo esc_attr($lesson_id); ?>">
-                <!-- Messages Area -->
-                <div class="fa-chat-messages" id="fa-chat-messages">
-                    <!-- Messages will be dynamically loaded here -->
-                </div>
-
-                <!-- Chat Input -->
-                <div class="fa-chat-input">
-            <textarea id="fa-chat-message"
-                      placeholder="<?php _e('اكتب رسالتك هنا بوضوح واحترافية...', 'fashion-academy-lms'); ?>"
-                      maxlength="1000"></textarea>
-                    <button id="fa-send-message"><?php _e('إرسال الرسالة', 'fashion-academy-lms'); ?></button>
-                </div>
-            </div>
-        </section>
-
-
-        <?php
-        return ob_get_clean();
-    }
-
-    // AJAX handler methods (fa_send_message and fa_fetch_messages)
-
-    public function fa_send_message() {
-        // Check if user is logged in
-        if ( ! is_user_logged_in() ) {
-            wp_send_json_error( __('You must be logged in to send messages.', 'fashion-academy-lms') );
-        }
-
-        // Verify nonce
-        check_ajax_referer( 'fa_chat_nonce', 'nonce' );
-
-        // Get and sanitize POST data
-        $lesson_id = isset( $_POST['lesson_id'] ) ? intval( $_POST['lesson_id'] ) : 0;
-        $message   = isset( $_POST['message'] ) ? sanitize_textarea_field( $_POST['message'] ) : '';
-
-        if ( $lesson_id <= 0 || empty( $message ) ) {
-            wp_send_json_error( __('Invalid data provided.', 'fashion-academy-lms') );
-        }
-
-        // Check if the user has access to the lesson
-        if ( ! $this->user_has_access_to_lesson( get_current_user_id(), $lesson_id ) ) {
-            wp_send_json_error( __('You do not have access to this lesson.', 'fashion-academy-lms') );
-        }
-
-        global $wpdb;
-        $table = $wpdb->prefix . 'chat_messages';
-
-        // Insert the message into the database
-        $inserted = $wpdb->insert(
-            $table,
-            array(
-                'lesson_id' => $lesson_id,
-                'sender_id' => get_current_user_id(),
-                'message'   => $message,
-                'timestamp' => current_time( 'mysql' ),
-            ),
-            array(
-                '%d',
-                '%d',
-                '%s',
-                '%s',
-            )
-        );
-
-        if ( false === $inserted ) {
-            wp_send_json_error( __('Failed to send message. Please try again.', 'fashion-academy-lms') );
-        }
-
-        wp_send_json_success( __('Message sent successfully.', 'fashion-academy-lms') );
-    }
-
     /**
-     * Check if the user has access to the specified lesson
-     *
-     * @param int $user_id
-     * @param int $lesson_id
-     * @return bool
+     * Helper function to get localized data without overwriting existing 'faLMS' data.
+     * This ensures that multiple calls to wp_localize_script don't overwrite previous data.
      */
-    private function user_has_access_to_lesson( $user_id, $lesson_id ) {
-        // Implement your access logic here
-        // For example, check if the user is enrolled in the course associated with the lesson
-        // Placeholder: Always return true for now
-        return true;
-    }
-
-    // Inside the FA_Frontend class
-
-    public function fa_fetch_messages() {
-        // Check if user is logged in
-        if ( ! is_user_logged_in() ) {
-            wp_send_json_error( __('You must be logged in to fetch messages.', 'fashion-academy-lms') );
-        }
-
-        // Verify nonce
-        check_ajax_referer( 'fa_chat_nonce', 'nonce' );
-
-        // Get and sanitize POST data
-        $lesson_id = isset( $_POST['lesson_id'] ) ? intval( $_POST['lesson_id'] ) : 0;
-
-        if ( $lesson_id <= 0 ) {
-            wp_send_json_error( __('Invalid lesson ID.', 'fashion-academy-lms') );
-        }
-
-        // Check if the user has access to the lesson
-        if ( ! $this->user_has_access_to_lesson( get_current_user_id(), $lesson_id ) ) {
-            wp_send_json_error( __('You do not have access to this lesson.', 'fashion-academy-lms') );
-        }
-
-        global $wpdb;
-        $table = $wpdb->prefix . 'chat_messages';
-
-        // Fetch messages ordered by timestamp ascending
-        $messages = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT cm.*, u.display_name, um.meta_value as user_avatar 
-             FROM $table cm
-             JOIN {$wpdb->users} u ON cm.sender_id = u.ID
-             LEFT JOIN {$wpdb->usermeta} um ON cm.sender_id = um.user_id AND um.meta_key = 'user_avatar'
-             WHERE cm.lesson_id = %d
-             ORDER BY cm.timestamp ASC",
-                $lesson_id
-            )
+    private function get_translated_script_data()
+    {
+        return array(
+            'ajaxUrl'           => admin_url('admin-ajax.php'),
+            'retakeConfirm'     => __('هل أنت متأكد من إعادة الواجب؟', 'fashion-academy-lms'),
+            'submitConfirm'     => __('جاري إرسال الواجب...', 'fashion-academy-lms'),
+            'spinnerHTML'       => '<img decoding="async" src="' . esc_url(plugin_dir_url(__FILE__) . 'assets/img/spinner.gif') . '" ' .
+                'class="fa-spinner-img" alt="Spinner">' .
+                '<p class="fa-waiting-msg">' . esc_js(__('جاري إرسال الواجب...', 'fashion-academy-lms')) . '</p>',
+            'pollInterval'      => 15000, // 15 seconds
+            'removeButtonText'  => __('إزالة', 'fashion-academy-lms'), // Localized text for 'Remove' button
         );
-
-        if ( empty( $messages ) ) {
-            wp_send_json_success( array( 'messages' => array() ) );
-        }
-
-        // Format messages
-        $formatted_messages = array();
-        foreach ( $messages as $msg ) {
-            $formatted_messages[] = array(
-                'id'           => $msg->id,
-                'sender_id'    => $msg->sender_id,
-                'display_name' => $msg->display_name,
-                'user_avatar'  => get_avatar_url( $msg->sender_id, array( 'size' => 40 ) ), // Using WordPress avatar
-                'message'      => $msg->message,
-                'timestamp'    => $msg->timestamp,
-                'attachment_url'=> esc_url( $msg->attachment_url ),
-            );
-        }
-
-        wp_send_json_success( array( 'messages' => $formatted_messages ) );
     }
 
 
 }
+
 
 ?>
