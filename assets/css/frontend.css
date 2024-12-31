@@ -1179,6 +1179,111 @@ input[type="submit"]:active {
     letter-spacing: 0.3px;
 }
 
+/* frontend.css */
+
+/* Student Dashboard Container */
+.fa-student-dashboard-container {
+    padding: 20px;
+}
+
+/* Layout Styling */
+.fa-student-dashboard-layout {
+    display: flex;
+}
+
+/* Lessons Sidebar */
+.fa-lessons-sidebar {
+    width: 25%;
+    margin-right: 20px;
+}
+
+.fa-lessons-sidebar h3 {
+    margin-bottom: 10px;
+}
+
+/* Modules List */
+.fa-modules-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.fa-module-item {
+    margin-bottom: 10px;
+}
+
+/* Module Toggle Button */
+.fa-module-toggle {
+    width: 100%;
+    text-align: left;
+    background: #f1f1f1;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    position: relative;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.fa-module-toggle:hover {
+    background: #e2e2e2;
+}
+
+/* Toggle Icon */
+.fa-toggle-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+    font-size: 18px;
+    transition: transform 0.3s;
+}
+
+/* Lessons Sublist */
+.fa-lessons-sublist {
+    list-style-type: none;
+    padding-left: 20px;
+    margin-top: 5px;
+}
+
+/* Lesson Items */
+.fa-lesson-item {
+    margin-bottom: 5px;
+}
+
+.fa-lesson-item a {
+    text-decoration: none;
+    color: #0073aa;
+    transition: color 0.3s;
+}
+
+.fa-lesson-item a:hover {
+    color: #005177;
+}
+
+.fa-lesson-item a.active-lesson {
+    font-weight: bold;
+    color: #00a0d2;
+}
+
+/* Rotate Icon when Expanded */
+.fa-module-toggle[aria-expanded="true"] .fa-toggle-icon {
+    transform: translateY(-50%) rotate(45deg); /* Changes "+" to "x" */
+}
+
+/* Spinner Styling (if not already present) */
+.fa-spinner-img {
+    width: 50px;
+    height: 50px;
+}
+
+.fa-waiting-msg {
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+
 /* ===================================================
    Responsive Dashboard Layout for Mobile
    =================================================== */
@@ -1938,6 +2043,7 @@ input[type="file"]:hover {
     font-size: 16px;
     margin-top: 10px;
 }
+
 
 
 

@@ -167,4 +167,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Fetch error:', err);
             });
     }
+
+    /**
+     * Add event listeners for module toggle buttons
+     */
+    var moduleToggles = document.querySelectorAll('.fa-module-toggle');
+
+    moduleToggles.forEach(function(toggle) {
+        toggle.addEventListener('click', function() {
+            var isExpanded = this.getAttribute('aria-expanded') === 'true';
+            var targetId = this.getAttribute('aria-controls');
+            var target = document.getElementById(targetId);
+
+            if (target) {
+                if (isExpanded) {
+                    // Collapse the module
+                    target.hidden = true;
+                    this.setAttribute('aria-expanded', 'false');
+                } else {
+                    // Expand the module
+                    target.hidden = false;
+                    this.setAttribute('aria-expanded', 'true');
+                }
+            }
+
+            // Toggle the icon
+            var icon = this.querySelector('.fa-toggle-icon');
+            if (icon) {
+                icon.textContent = isExpanded ? '+' : '-';
+            }
+        });
+    });
 });

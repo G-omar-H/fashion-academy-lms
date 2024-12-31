@@ -285,20 +285,39 @@ class FA_Frontend
             }
         }
 
+        // Determine the module ID of the currently selected lesson
+        $current_lesson_id = isset($_GET['lesson_id']) ? (int)$_GET['lesson_id'] : 0;
+        $selected_module_id = 0;
+
+        if ($current_lesson_id) {
+            $selected_module_id = get_post_meta($current_lesson_id, 'lesson_module_id', true);
+        }
+
         ob_start(); ?>
         <div class="fa-student-dashboard-container">
             <h2><?php _e('لوحة تحكم الطالب', 'fashion-academy-lms'); ?></h2>
             <div class="fa-student-dashboard-layout">
                 <div class="fa-lessons-sidebar">
                     <h3><?php _e('المواد والدروس المتاحة', 'fashion-academy-lms'); ?></h3>
-                    <ul>
+                    <ul class="fa-modules-list">
                         <?php
-                        $current_lesson_id = isset($_GET['lesson_id']) ? (int)$_GET['lesson_id'] : 0;
-
                         // Iterate through each module
                         foreach ($modules as $module) {
-                            echo '<li><strong>' . esc_html($module->post_title) . '</strong>';
-                            echo '<ul>';
+                            // Determine if this module should be expanded
+                            $is_expanded = ($module->ID == $selected_module_id);
+                            $aria_expanded = $is_expanded ? 'true' : 'false';
+                            $toggle_icon = $is_expanded ? '-' : '+';
+                            $sublist_hidden = $is_expanded ? '' : 'hidden';
+
+                            echo '<li class="fa-module-item">';
+                            // Module Toggle Button
+                            echo '<button type="button" class="fa-module-toggle" aria-expanded="' . esc_attr($aria_expanded) . '" aria-controls="module-' . esc_attr($module->ID) . '">';
+                            echo '<span class="fa-module-title">' . esc_html($module->post_title) . '</span>';
+                            echo '<span class="fa-toggle-icon">' . esc_html($toggle_icon) . '</span>'; // Icon indicating collapsed/expanded state
+                            echo '</button>';
+
+                            // Lessons Sublist
+                            echo '<ul id="module-' . esc_attr($module->ID) . '" class="fa-lessons-sublist" ' . ($sublist_hidden ? 'hidden' : '') . '>';
 
                             if (isset($lessons_by_module[$module->ID])) {
                                 foreach ($lessons_by_module[$module->ID] as $lesson) {
@@ -306,7 +325,7 @@ class FA_Frontend
                                     $locked = $this->is_lesson_locked_for_current_user($lesson->ID);
                                     $is_active = ($lesson->ID == $current_lesson_id);
 
-                                    echo '<li>';
+                                    echo '<li class="fa-lesson-item">';
                                     if (!$locked) {
                                         $active_class = $is_active ? ' active-lesson' : '';
                                         echo '<a href="?lesson_id=' . esc_attr($lesson->ID) . '" class="' . esc_attr($active_class) . '">';
@@ -324,16 +343,36 @@ class FA_Frontend
                             echo '</ul></li>';
                         }
 
-                        // List unassigned lessons under a separate heading
+                        // List unassigned lessons under a separate heading as a module
                         if (!empty($unassigned_lessons)) {
-                            echo '<li><strong>' . __('دروس بدون مادة', 'fashion-academy-lms') . '</strong>';
-                            echo '<ul>';
+                            // Determine if the unassigned module should be expanded
+                            $is_expanded = false; // By default, collapsed
+                            if ($current_lesson_id) {
+                                foreach ($unassigned_lessons as $lesson) {
+                                    if ($lesson->ID == $current_lesson_id) {
+                                        $is_expanded = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            $aria_expanded = $is_expanded ? 'true' : 'false';
+                            $toggle_icon = $is_expanded ? '-' : '+';
+                            $sublist_hidden = $is_expanded ? '' : 'hidden';
+
+                            echo '<li class="fa-module-item">';
+                            echo '<button type="button" class="fa-module-toggle" aria-expanded="' . esc_attr($aria_expanded) . '" aria-controls="module-unassigned">';
+                            echo '<span class="fa-module-title">' . __('دروس بدون مادة', 'fashion-academy-lms') . '</span>';
+                            echo '<span class="fa-toggle-icon">' . esc_html($toggle_icon) . '</span>'; // Icon indicating collapsed/expanded state
+                            echo '</button>';
+
+                            echo '<ul id="module-unassigned" class="fa-lessons-sublist" ' . ($sublist_hidden ? 'hidden' : '') . '>';
+
                             foreach ($unassigned_lessons as $lesson) {
                                 $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
                                 $locked = $this->is_lesson_locked_for_current_user($lesson->ID);
                                 $is_active = ($lesson->ID == $current_lesson_id);
 
-                                echo '<li>';
+                                echo '<li class="fa-lesson-item">';
                                 if (!$locked) {
                                     $active_class = $is_active ? ' active-lesson' : '';
                                     echo '<a href="?lesson_id=' . esc_attr($lesson->ID) . '" class="' . esc_attr($active_class) . '">';
@@ -344,6 +383,7 @@ class FA_Frontend
                                 }
                                 echo '</li>';
                             }
+
                             echo '</ul></li>';
                         }
                         ?>
@@ -352,7 +392,6 @@ class FA_Frontend
 
                 <div class="fa-lesson-content">
                     <?php
-                    $current_lesson_id = isset($_GET['lesson_id']) ? (int)$_GET['lesson_id'] : 0;
                     if ($current_lesson_id) {
                         if ($this->is_lesson_locked_for_current_user($current_lesson_id)) {
                             echo '<p>' . __('هذا الدرس مغلق حالياً. الرجاء إكمال الدروس السابقة أو الدفع.', 'fashion-academy-lms') . '</p>';
@@ -369,6 +408,7 @@ class FA_Frontend
         <?php
         return ob_get_clean();
     }
+
 
 
     // If user hasn't paid or hasn't passed a prior lesson, return true. (Placeholder)
