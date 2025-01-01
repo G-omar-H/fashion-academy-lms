@@ -1,0 +1,160 @@
+/* Chat Pop-Up Styles */
+.fa-chat-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.fa-chat-toggle:hover {
+    background-color: #005177;
+}
+
+.fa-chat-popup {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 300px;
+    max-height: 400px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.fa-chat-header {
+    background-color: #0073aa;
+    color: #fff;
+    padding: 10px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fa-chat-title {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.fa-chat-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.fa-chat-messages {
+    padding: 10px;
+    overflow-y: auto;
+    flex-grow: 1;
+    background-color: #f9f9f9;
+}
+
+.fa-chat-form {
+    display: flex;
+    border-top: 1px solid #ddd;
+}
+
+.fa-chat-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: none;
+    border-bottom-left-radius: 10px;
+}
+
+.fa-chat-send {
+    background-color: #0073aa;
+    border: none;
+    color: #fff;
+    padding: 0 15px;
+    cursor: pointer;
+    border-bottom-right-radius: 10px;
+}
+
+.fa-chat-send:hover {
+    background-color: #005177;
+}
+
+/* Admin Chat Interface Styles */
+.fa-admin-chat-box {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.fa-admin-chat-messages {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+.fa-admin-message {
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    position: relative;
+    max-width: 80%;
+}
+
+.fa-admin-sent {
+    background-color: #0073aa;
+    color: #fff;
+    margin-left: auto;
+}
+
+.fa-admin-received {
+    background-color: #f1f1f1;
+    color: #000;
+}
+
+.fa-chat-timestamp {
+    font-size: 10px;
+    position: absolute;
+    bottom: -15px;
+    right: 10px;
+}
+
+.fa-admin-chat-form {
+    display: flex;
+}
+
+.fa-admin-chat-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px 0 0 5px;
+}
+
+.fa-admin-chat-send {
+    background-color: #28a745;
+    border: none;
+    color: #fff;
+    padding: 0 15px;
+    cursor: pointer;
+    border-radius: 0 5px 5px 0;
+}
+
+.fa-admin-chat-send:hover {
+    background-color: #218838;
+}
+
+/* Unread Conversation Highlight */
+.fa-unread-message {
+    background-color: #ffeeba;
+}

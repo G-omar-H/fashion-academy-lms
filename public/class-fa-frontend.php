@@ -20,6 +20,9 @@ class FA_Frontend
         // 4) ADMIN DASHBOARD (Milestone 3)
         add_shortcode('fa_admin_dashboard', array($this, 'render_admin_dashboard'));
 
+        // 5) Chat Shortcode
+        add_shortcode('fa_student_chat', array($this, 'render_student_chat'));
+
 
         // ===========[ Form Submissions ]===========
 
@@ -35,6 +38,13 @@ class FA_Frontend
 
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
 
+
+        // 6) Chat AJAX Actions
+        add_action('wp_ajax_fa_send_chat_message', array($this, 'fa_send_chat_message'));
+        add_action('wp_ajax_nopriv_fa_send_chat_message', array($this, 'fa_send_chat_message')); // For logged-in users only
+        add_action('wp_ajax_fa_fetch_chat_messages', array($this, 'fa_fetch_chat_messages'));
+        add_action('wp_ajax_nopriv_fa_fetch_chat_messages', array($this, 'fa_fetch_chat_messages')); // For logged-in users only
+
     }
 
     public function enqueue_assets()
@@ -42,7 +52,7 @@ class FA_Frontend
         // Enqueue the main frontend stylesheet
         wp_enqueue_style(
             'fa-frontend-style',
-            plugin_dir_url(__FILE__) . '../assets/css/frontend.css', // Ensure the path matches
+            plugin_dir_url(__FILE__) . '../assets/css/frontend.css',
             array(),
             '1.2.0',
             'all'
@@ -68,20 +78,67 @@ class FA_Frontend
         wp_enqueue_script(
             'fa-frontend-script',
             plugin_dir_url(__FILE__) . '../assets/js/frontend.js',
-            array('jquery'), // Dependencies
+            array('jquery'),
             '1.2.0',
-            true // Load in footer
+            true
         );
 
+        // Enqueue Chat CSS and JS
+        wp_enqueue_style(
+            'fa-chat-style',
+            plugin_dir_url(__FILE__) . '../assets/css/chat.css',
+            array(),
+            '1.0.0',
+            'all'
+        );
 
-        // Prepare localized data
+        wp_enqueue_script(
+            'fa-chat-script',
+            plugin_dir_url(__FILE__) . '../assets/js/chat.js',
+            array('jquery'),
+            '1.0.0',
+            true
+        );
+
+        // Localize Chat Script for Students
+        wp_localize_script('fa-chat-script', 'faChat', array(
+            'ajaxUrl'        => admin_url('admin-ajax.php'),
+            'nonce'          => wp_create_nonce('fa_chat_nonce'),
+            'currentUserId'  => get_current_user_id(),
+            'adminUserId'    => get_option('fa_admin_user_id'), // Correct Option Name
+            'errorMessage'   => __('حدث خطأ أثناء الاتصال بالدردشة.', 'fashion-academy-lms')
+        ));
+
+        // Enqueue Admin Chat CSS and JS if on admin chat page
+        if (is_admin() && isset($_GET['admin_page']) && $_GET['admin_page'] === 'chats') {
+            wp_enqueue_style(
+                'fa-admin-chat-style',
+                plugin_dir_url(__FILE__) . '../assets/css/admin-chat.css',
+                array(),
+                '1.0.0',
+                'all'
+            );
+
+            wp_enqueue_script(
+                'fa-admin-chat-script',
+                plugin_dir_url(__FILE__) . '../assets/js/admin-chat.js',
+                array('jquery'),
+                '1.0.0',
+                true
+            );
+
+            wp_localize_script('fa-admin-chat-script', 'faChat', array(
+                'ajaxUrl'        => admin_url('admin-ajax.php'),
+                'nonce'          => wp_create_nonce('fa_chat_nonce'),
+                'currentUserId'  => get_current_user_id(),
+                'adminUserId'    => get_option('fa_admin_user_id')
+            ));
+        }
+
+        // Localize frontend script with general data
         $localized_data = $this->get_translated_script_data();
-
-        // Localize script with all necessary data
         wp_localize_script('fa-frontend-script', 'faLMS', $localized_data);
     }
-
-
 
 
     /* ------------------------------------------------------------------------ */
@@ -589,6 +646,7 @@ class FA_Frontend
             </div>
         </div>
         <?php
+        echo do_shortcode('[fa_student_chat]');
         return ob_get_clean();
     }
 
@@ -903,6 +961,32 @@ class FA_Frontend
     }
 
 
+    public function render_student_chat()
+    {
+        if (!is_user_logged_in() || !current_user_can('student')) {
+            return ''; // Only students can see the chat
+        }
+
+        ob_start(); ?>
+        <div id="fa-chat-popup" class="fa-chat-popup">
+            <div class="fa-chat-header">
+                <span class="fa-chat-title"><?php _e('دردشة الدعم', 'fashion-academy-lms'); ?></span>
+                <button id="fa-chat-close" class="fa-chat-close">&times;</button>
+            </div>
+            <div id="fa-chat-messages" class="fa-chat-messages">
+                <!-- Messages will be loaded here -->
+            </div>
+            <form id="fa-chat-form" class="fa-chat-form">
+                <input type="text" id="fa-chat-input" class="fa-chat-input" placeholder="<?php _e('اكتب رسالتك هنا...', 'fashion-academy-lms'); ?>" required />
+                <button type="submit" class="fa-chat-send"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+        <button id="fa-chat-toggle" class="fa-chat-toggle"><i class="fas fa-comments"></i></button>
+        <?php
+        return ob_get_clean();
+    }
+
+
     /* ------------------------------------------------------------------------ */
     /* (3) ADMIN DASHBOARD (MILESTONE 3)
     /* ------------------------------------------------------------------------ */
@@ -934,7 +1018,8 @@ class FA_Frontend
                         <?php _e('إدارة المواد', 'fashion-academy-lms'); ?></a></li>
                 <li><a href="?admin_page=students" class="<?php echo is_active_tab('students') ? 'active-tab' : ''; ?>">
                         <?php _e('البحث عن الطلاب', 'fashion-academy-lms'); ?></a></li>
-
+                <li><a href="?admin_page=chats" class="<?php echo is_active_tab('chats') ? 'active-tab' : ''; ?>">
+                        <?php _e('إدارة الدردشة', 'fashion-academy-lms'); ?></a></li>
             </ul>
 
             <div class="fa-admin-content">
@@ -952,9 +1037,11 @@ class FA_Frontend
                     case 'students':
                         $this->render_admin_students_page();
                         break;
+                    case 'chats':
+                        $this->render_admin_chats_page();
+                        break;
                     default:
                         $this->render_admin_homeworks_page();
-
                 }
                 ?>
             </div>
@@ -962,6 +1049,7 @@ class FA_Frontend
         <?php
         return ob_get_clean();
     }
+
 
 
     // Homeworks
@@ -2202,7 +2290,179 @@ class FA_Frontend
         <?php
     }
 
+    private function render_admin_chats_page()
+    {
+        global $wpdb;
+        $chat_table = $wpdb->prefix . 'chat_messages';
 
+        // Handle sending a new message
+        if (isset($_POST['fa_admin_send_message']) && $_POST['fa_admin_send_message'] === 'send_message') {
+            check_admin_referer('fa_admin_chat_nonce', 'fa_admin_chat_nonce_field');
+
+            $recipient_id = intval($_POST['recipient_id'] ?? 0);
+            $message = sanitize_textarea_field($_POST['admin_chat_message'] ?? '');
+
+            if ($recipient_id > 0 && !empty($message)) {
+                $admin_id = get_option('fa_admin_user_id');
+                if (!$admin_id) {
+                    echo '<p style="color:red;">' . __('لم يتم تعيين معرف المشرف.', 'fashion-academy-lms') . '</p>';
+                } else {
+                    $wpdb->insert(
+                        $chat_table,
+                        array(
+                            'user_id'      => $recipient_id,
+                            'sender_id'    => $admin_id,
+                            'message'      => $message,
+                            'timestamp'    => current_time('mysql'),
+                            'read_status'  => 0,
+                            'attachment_url' => ''
+                        ),
+                        array(
+                            '%d',
+                            '%d',
+                            '%s',
+                            '%s',
+                            '%d',
+                            '%s'
+                        )
+                    );
+                    echo '<div class="notice notice-success"><p>' . __('تم إرسال الرسالة بنجاح!', 'fashion-academy-lms') . '</p></div>';
+                }
+            } else {
+                echo '<p style="color:red;">' . __('يرجى تحديد مستلم وكتابة رسالة.', 'fashion-academy-lms') . '</p>';
+            }
+        }
+
+        // Fetch all students
+        $students = get_users(array(
+            'role' => 'student',
+            'orderby' => 'display_name',
+            'order' => 'ASC'
+        ));
+
+        if (!$students) {
+            echo '<p>' . __('لا يوجد طلاب لإدارة الدردشة معهم.', 'fashion-academy-lms') . '</p>';
+            return;
+        }
+
+        // Fetch latest messages per student
+        $conversations = array();
+        foreach ($students as $student) {
+            $latest_message = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $chat_table WHERE user_id = %d ORDER BY timestamp DESC LIMIT 1",
+                $student->ID
+            ));
+            if ($latest_message) {
+                $conversations[] = $latest_message;
+            }
+        }
+
+        ?>
+        <h3><?php _e('إدارة الدردشة مع الطلاب', 'fashion-academy-lms'); ?></h3>
+
+        <table class="widefat">
+            <thead>
+            <tr>
+                <th><?php _e('الطالب', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('آخر رسالة', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('التاريخ', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('الحالة', 'fashion-academy-lms'); ?></th>
+                <th><?php _e('إجراءات', 'fashion-academy-lms'); ?></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($conversations as $message): ?>
+                <?php
+                $student = get_userdata($message->user_id);
+                if (!$student) continue;
+
+                // Determine if the latest message is unread by admin
+                $is_unread = ($message->sender_id != get_option('fa_admin_user_id')) && !$message->read_status;
+                ?>
+                <tr class="<?php echo $is_unread ? 'fa-unread-message' : ''; ?>">
+                    <td><?php echo esc_html($student->display_name); ?></td>
+                    <td><?php echo esc_html(wp_trim_words($message->message, 10, '...')); ?></td>
+                    <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($message->timestamp))); ?></td>
+                    <td><?php echo $is_unread ? __('غير مقروء', 'fashion-academy-lms') : __('مقروء', 'fashion-academy-lms'); ?></td>
+                    <td>
+                        <a href="?admin_page=chats&chat_with=<?php echo esc_attr($student->ID); ?>" class="button button-primary">
+                            <i class="fas fa-comments"></i> <?php _e('دردشة', 'fashion-academy-lms'); ?>
+                        </a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <?php
+
+        // If viewing a specific chat
+        if (isset($_GET['chat_with'])) {
+            $this->render_admin_chat_interface(intval($_GET['chat_with']));
+        }
+    }
+
+    private function render_admin_chat_interface($student_id)
+    {
+        global $wpdb;
+        $chat_table = $wpdb->prefix . 'chat_messages';
+        $admin_id = get_option('fa_admin_user_id');
+        $student = get_userdata($student_id);
+
+        if (!$student) {
+            echo '<p style="color:red;">' . __('الطالب غير موجود.', 'fashion-academy-lms') . '</p>';
+            return;
+        }
+
+        // Mark all unread messages from student as read
+        $wpdb->update(
+            $chat_table,
+            array('read_status' => 1),
+            array(
+                'user_id'   => $student_id,
+                'sender_id' => $student_id,
+                'read_status' => 0
+            ),
+            array('%d'),
+            array('%d', '%d', '%d')
+        );
+
+        // Fetch all messages between admin and student
+        $messages = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $chat_table 
+         WHERE user_id = %d AND (sender_id = %d OR sender_id = %d) 
+         ORDER BY timestamp ASC",
+            $student_id,
+            $admin_id,
+            $student_id
+        ));
+
+        ?>
+        <h4><?php echo sprintf(__('دردشة مع %s', 'fashion-academy-lms'), esc_html($student->display_name)); ?></h4>
+        <div id="fa-admin-chat-box" class="fa-admin-chat-box">
+            <div id="fa-admin-chat-messages" class="fa-admin-chat-messages">
+                <?php foreach ($messages as $msg): ?>
+                    <?php if ($msg->sender_id == $admin_id): ?>
+                        <div class="fa-admin-message fa-admin-sent">
+                            <span><?php echo esc_html($msg->message); ?></span>
+                            <span class="fa-chat-timestamp"><?php echo esc_html(date_i18n(get_option('time_format'), strtotime($msg->timestamp))); ?></span>
+                        </div>
+                    <?php else: ?>
+                        <div class="fa-admin-message fa-admin-received">
+                            <span><?php echo esc_html($msg->message); ?></span>
+                            <span class="fa-chat-timestamp"><?php echo esc_html(date_i18n(get_option('time_format'), strtotime($msg->timestamp))); ?></span>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+            <form id="fa-admin-chat-form" class="fa-admin-chat-form" data-recipient="<?php echo esc_attr($student_id); ?>">
+                <?php wp_nonce_field('fa_admin_send_chat_nonce', 'fa_admin_send_chat_nonce_field'); ?>
+                <input type="text" id="fa-admin-chat-input" class="fa-admin-chat-input" placeholder="<?php _e('اكتب رسالتك هنا...', 'fashion-academy-lms'); ?>" required />
+                <button type="submit" class="fa-admin-chat-send"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+        <?php
+    }
 
     public function render_homework_form($atts = [])
     {
@@ -2682,6 +2942,121 @@ class FA_Frontend
         }
     }
 
+    /* ------------------------------------------------------------------------ */
+    /* (6) Chat AJAX Handlers
+    /* ------------------------------------------------------------------------ */
+
+    public function fa_send_chat_message()
+    {
+        check_ajax_referer('fa_chat_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(__('غير مصرح لك بأداء هذا الإجراء.', 'fashion-academy-lms'));
+        }
+
+        $user_id = get_current_user_id();
+        $admin_id = get_option('fa_admin_user_id');
+        fa_plugin_log('admin==' . $admin_id);
+        $recipient_id = isset($_POST['recipient_id']) ? intval($_POST['recipient_id']) : 0;
+        $message = isset($_POST['message']) ? sanitize_textarea_field($_POST['message']) : '';
+
+        if (empty($message) || $recipient_id <= 0) {
+            wp_send_json_error(__('الرسالة أو المستلم غير صالح.', 'fashion-academy-lms'));
+        }
+
+        // Determine sender and recipient
+        if (current_user_can('manage_options')) {
+            // Admin sending message to student
+            $sender_id = $admin_id;
+            $recipient_user_id = $recipient_id;
+        } else {
+            // Student sending message to admin
+            $sender_id = $user_id;
+            $recipient_user_id = $admin_id;
+        }
+
+        global $wpdb;
+        $chat_table = $wpdb->prefix . 'chat_messages';
+
+        $wpdb->insert(
+            $chat_table,
+            array(
+                'user_id'       => $recipient_user_id, // Conversation tied to the student
+                'sender_id'     => $sender_id,
+                'message'       => $message,
+                'timestamp'     => current_time('mysql'),
+                'read_status'   => 0,
+                'attachment_url'=> ''
+            ),
+            array(
+                '%d',
+                '%d',
+                '%s',
+                '%s',
+                '%d',
+                '%s'
+            )
+        );
+
+        if ($wpdb->insert_id) {
+            wp_send_json_success(__('تم إرسال الرسالة بنجاح.', 'fashion-academy-lms'));
+        } else {
+            wp_send_json_error(__('فشل في إرسال الرسالة.', 'fashion-academy-lms'));
+        }
+    }
+
+    public function fa_fetch_chat_messages()
+    {
+        check_ajax_referer('fa_chat_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(__('غير مصرح لك بأداء هذا الإجراء.', 'fashion-academy-lms'));
+        }
+
+        $user_id = get_current_user_id();
+        $admin_id = get_option('fa_admin_user_id');
+        $recipient_id = isset($_POST['recipient_id']) ? intval($_POST['recipient_id']) : 0;
+        $last_timestamp = isset($_POST['last_timestamp']) ? sanitize_text_field($_POST['last_timestamp']) : '';
+
+        if ($recipient_id <= 0) {
+            wp_send_json_error(__('المستلم غير صالح.', 'fashion-academy-lms'));
+        }
+
+        // Determine conversation based on user roles
+        if (current_user_can('manage_options')) {
+            // Admin fetching messages with a specific student
+            $conversation_user_id = $recipient_id;
+        } else {
+            // Student fetching messages with admin
+            $conversation_user_id = $admin_id;
+        }
+
+        global $wpdb;
+        $chat_table = $wpdb->prefix . 'chat_messages';
+
+        $query = $wpdb->prepare(
+            "SELECT * FROM $chat_table 
+         WHERE user_id = %d 
+         AND (sender_id = %d OR sender_id = %d)",
+            $conversation_user_id,
+            $conversation_user_id,
+            get_current_user_id()
+        );
+
+        if (!empty($last_timestamp)) {
+            $query .= $wpdb->prepare(" AND timestamp > %s", $last_timestamp);
+        }
+
+        $messages = $wpdb->get_results($query);
+
+        if ($messages) {
+            wp_send_json_success($messages);
+        } else {
+            wp_send_json_success(array()); // No new messages
+        }
+    }
+
+
     /**
      * Helper function to get localized data without overwriting existing 'faLMS' data.
      * This ensures that multiple calls to wp_localize_script don't overwrite previous data.
@@ -2700,9 +3075,6 @@ class FA_Frontend
         );
     }
 
-
-
 }
-
 
 ?>

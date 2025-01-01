@@ -1,0 +1,66 @@
+/* Admin Chat Interface Styles */
+.fa-admin-chat-box {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.fa-admin-chat-messages {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+.fa-admin-message {
+    padding: 5px 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    position: relative;
+    max-width: 80%;
+}
+
+.fa-admin-sent {
+    background-color: #0073aa;
+    color: #fff;
+    margin-left: auto;
+}
+
+.fa-admin-received {
+    background-color: #f1f1f1;
+    color: #000;
+}
+
+.fa-chat-timestamp {
+    font-size: 10px;
+    position: absolute;
+    bottom: -15px;
+    right: 10px;
+}
+
+.fa-admin-chat-form {
+    display: flex;
+}
+
+.fa-admin-chat-input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px 0 0 5px;
+}
+
+.fa-admin-chat-send {
+    background-color: #28a745;
+    border: none;
+    color: #fff;
+    padding: 0 15px;
+    cursor: pointer;
+    border-radius: 0 5px 5px 0;
+}
+
+.fa-admin-chat-send:hover {
+    background-color: #218838;
+}
