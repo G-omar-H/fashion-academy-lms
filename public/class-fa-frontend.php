@@ -151,6 +151,9 @@ class FA_Frontend
             $user = new WP_User($user_id);
             $user->set_role('student');
 
+            // Initialize user progress
+            $this->initialize_user_progress($user_id);
+
             // Auto Login
             $this->auto_login_user($name, $password);
 
@@ -159,6 +162,79 @@ class FA_Frontend
             exit;
         }
     }
+
+    /**
+     * Initialize user progress by unlocking the first lesson.
+     *
+     * @param int $user_id The ID of the newly registered user.
+     */
+    private function initialize_user_progress($user_id)
+    {
+        global $wpdb;
+
+        // Assuming there's only one course
+        $courses = get_posts([
+            'post_type'      => 'course',
+            'posts_per_page' => 1,
+            'post_status'    => 'publish'
+        ]);
+
+        if (empty($courses)) {
+            // No courses found, cannot initialize progress
+            fa_plugin_log('No courses found to initialize user progress.');
+            return;
+        }
+
+        $course_id = $courses[0]->ID;
+
+        // Get the first lesson based on lesson_order
+        $first_lesson = get_posts([
+            'post_type'      => 'lesson',
+            'posts_per_page' => 1,
+            'post_status'    => 'publish',
+            'meta_key'       => 'lesson_order',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'ASC',
+            'meta_query'     => [
+                [
+                    'key'     => 'lesson_course_id',
+                    'value'   => $course_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC'
+                ]
+            ]
+        ]);
+
+        if (empty($first_lesson)) {
+            fa_plugin_log('No lessons found for the course to initialize user progress.');
+            return;
+        }
+
+        $first_lesson_id = $first_lesson[0]->ID;
+
+        // Insert progress for the first lesson as 'incomplete' (available to access)
+        $progress_table = $wpdb->prefix . 'course_progress';
+        $existing_progress = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $progress_table WHERE user_id=%d AND lesson_id=%d",
+            $user_id,
+            $first_lesson_id
+        ));
+
+        if (!$existing_progress) {
+            $wpdb->insert(
+                $progress_table,
+                [
+                    'user_id'         => $user_id,
+                    'course_id'       => $course_id,
+                    'lesson_id'       => $first_lesson_id,
+                    'progress_status' => 'incomplete'
+                ],
+                ['%d','%d','%d','%s']
+            );
+        }
+    }
+
+
 
     private function auto_login_user($username, $password)
     {
@@ -245,10 +321,29 @@ class FA_Frontend
     /* ------------------------------------------------------------------------ */
 
 // Shortcode: [fa_student_dashboard]
+
     public function render_student_dashboard()
     {
         if (!is_user_logged_in()) {
             return '<p>' . __('الرجاء تسجيل الدخول', 'fashion-academy-lms') . '</p>';
+        }
+
+        $user_id = get_current_user_id();
+
+        // Determine the current lesson
+        $current_lesson = $this->get_current_lesson_for_user($user_id);
+
+        if ($current_lesson) {
+            // If a specific lesson is not selected via GET, redirect to current lesson
+            if (!isset($_GET['lesson_id'])) {
+                wp_redirect('?lesson_id=' . $current_lesson->ID);
+                exit;
+            }
+
+            $current_lesson_id = intval($_GET['lesson_id']);
+        } else {
+            // No progress found, possibly new user without initialized progress
+            return '<p>' . __('لا توجد دروس متاحة.', 'fashion-academy-lms') . '</p>';
         }
 
         // Fetch all modules ordered by 'module_order'
@@ -409,12 +504,147 @@ class FA_Frontend
         return ob_get_clean();
     }
 
+    /**
+     * Get the current lesson for the user.
+     *
+     * @param int $user_id The ID of the user.
+     * @return WP_Post|false The current lesson post or false if none found.
+     */
+    private function get_current_lesson_for_user($user_id)
+    {
+        global $wpdb;
+
+        // Assuming there's only one course
+        $courses = get_posts([
+            'post_type'      => 'course',
+            'posts_per_page' => 1,
+            'post_status'    => 'publish'
+        ]);
+
+        if (empty($courses)) {
+            return false;
+        }
+
+        $course_id = $courses[0]->ID;
+
+        // Get all lessons in order
+        $lessons = get_posts([
+            'post_type'      => 'lesson',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'orderby'        => 'meta_value_num',
+            'meta_key'       => 'lesson_order',
+            'order'          => 'ASC',
+            'meta_query'     => [
+                [
+                    'key'     => 'lesson_course_id',
+                    'value'   => $course_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC'
+                ]
+            ]
+        ]);
+
+        if (empty($lessons)) {
+            return false;
+        }
+
+        // Iterate through lessons to find the first incomplete one
+        foreach ($lessons as $lesson) {
+            $progress = $wpdb->get_var($wpdb->prepare(
+                "SELECT progress_status FROM {$wpdb->prefix}course_progress WHERE user_id = %d AND lesson_id = %d",
+                $user_id,
+                $lesson->ID
+            ));
+
+            if ($progress === 'incomplete') {
+                return $lesson;
+            } elseif ($progress === 'passed') {
+                continue;
+            } else {
+                // If no progress entry, treat as locked
+                continue;
+            }
+        }
+
+        // If all lessons are passed, return the last lesson
+        return end($lessons);
+    }
 
 
     // If user hasn't paid or hasn't passed a prior lesson, return true. (Placeholder)
+
+    /**
+     * Check if a lesson is locked for the current user.
+     *
+     * @param int $lesson_id The ID of the lesson to check.
+     * @return bool True if the lesson is locked, false otherwise.
+     */
     private function is_lesson_locked_for_current_user($lesson_id)
     {
-        return false; // placeholder => everything unlocked
+        if (!is_user_logged_in()) {
+            return true; // Non-logged-in users cannot access
+        }
+
+        $user_id = get_current_user_id();
+
+        // Get the course ID from the lesson
+        $course_id = get_post_meta($lesson_id, 'lesson_course_id', true);
+        if (!$course_id) {
+            return false; // If no course is associated, allow access
+        }
+
+        // Get the current lesson's order
+        $current_order = get_post_meta($lesson_id, 'lesson_order', true);
+        if (!$current_order) {
+            return false; // If no order is set, allow access
+        }
+
+        global $wpdb;
+        $progress_table = $wpdb->prefix . 'course_progress';
+
+        // Fetch all lessons in the course with order less than current_order
+        $required_lessons = get_posts(array(
+            'post_type'      => 'lesson',
+            'posts_per_page' => -1,
+            'meta_key'       => 'lesson_order',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'ASC',
+            'meta_query'     => array(
+                array(
+                    'key'     => 'lesson_course_id',
+                    'value'   => $course_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC'
+                ),
+                array(
+                    'key'     => 'lesson_order',
+                    'value'   => intval($current_order) - 1,
+                    'compare' => '<=',
+                    'type'    => 'NUMERIC'
+                )
+            )
+        ));
+
+        foreach ($required_lessons as $lesson) {
+            $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
+            if ($lesson_order >= $current_order) {
+                continue; // Skip lessons at or beyond the current lesson
+            }
+
+            // Check if the user has passed this lesson
+            $passed = $wpdb->get_var($wpdb->prepare(
+                "SELECT progress_status FROM $progress_table WHERE user_id = %d AND lesson_id = %d",
+                $user_id,
+                $lesson->ID
+            ));
+
+            if ($passed !== 'passed') {
+                return true; // If any previous lesson is not passed, lock the current lesson
+            }
+        }
+
+        return false; // All previous lessons are passed, unlock the current lesson
     }
 
     // Show lesson details (video + homework form)
@@ -515,14 +745,16 @@ class FA_Frontend
                     'retakeConfirm' => __('هل أنت متأكد من إعادة الواجب؟', 'fashion-academy-lms'),
                 )
             ));
+
+            $user_id = get_current_user_id();
+
+            // If submission is 'passed', unlock the next lesson
+            if ($submission->status === 'passed') {
+                $this->mark_lesson_as_passed($user_id, $lesson_id);
+                $this->unlock_next_lesson($user_id, $lesson_id);
+            }
         }
     }
-
-
-
-
-
-
 
     /**
      * Helper to fetch the current submission for user + lesson.
@@ -880,15 +1112,24 @@ class FA_Frontend
         }
     }
 
+/**
+* Unlock the next lesson for the user.
+*
+* @param int $user_id The ID of the user.
+* @param int $current_lesson_id The ID of the current lesson.
+*/
     private function unlock_next_lesson($user_id, $current_lesson_id)
     {
         global $wpdb;
         $progress_table = $wpdb->prefix . 'course_progress';
 
-        $current_order = get_post_meta($current_lesson_id, 'lesson_order', true);
+        // Fetch course ID and current lesson order
         $course_id     = get_post_meta($current_lesson_id, 'lesson_course_id', true);
+        $current_order = get_post_meta($current_lesson_id, 'lesson_order', true);
+
         if (!$course_id || !$current_order) return;
 
+        // Get the next lesson based on lesson_order
         $next_lesson = get_posts([
             'post_type'      => 'lesson',
             'posts_per_page' => 1,
@@ -896,27 +1137,45 @@ class FA_Frontend
             'orderby'        => 'meta_value_num',
             'order'          => 'ASC',
             'meta_query'     => [
-                ['key' => 'lesson_course_id','value' => $course_id],
-                ['key' => 'lesson_order','value' => intval($current_order)+1, 'compare' => '=', 'type' => 'NUMERIC']
+                [
+                    'key'     => 'lesson_course_id',
+                    'value'   => $course_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC'
+                ],
+                [
+                    'key'     => 'lesson_order',
+                    'value'   => intval($current_order) + 1,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC'
+                ]
             ]
         ]);
-        if (empty($next_lesson)) return;
+
+        if (empty($next_lesson)) return; // No next lesson found
 
         $next_lesson_id = $next_lesson[0]->ID;
+
+        // Check if the user already has progress for the next lesson
         $existing_progress = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $progress_table WHERE user_id=%d AND lesson_id=%d",
             $user_id,
             $next_lesson_id
         ));
+
         if ($existing_progress) {
-            $wpdb->update(
-                $progress_table,
-                ['progress_status'=>'incomplete'],
-                ['id'=>$existing_progress->id],
-                ['%s'],
-                ['%d']
-            );
+            // Update progress_status to 'incomplete' if not already set
+            if ($existing_progress->progress_status !== 'incomplete') {
+                $wpdb->update(
+                    $progress_table,
+                    ['progress_status' => 'incomplete'],
+                    ['id' => $existing_progress->id],
+                    ['%s'],
+                    ['%d']
+                );
+            }
         } else {
+            // Insert a new progress entry as 'incomplete'
             $wpdb->insert(
                 $progress_table,
                 [
@@ -2045,6 +2304,11 @@ class FA_Frontend
     /**
      * Restrict access to lessons based on user's progress
      */
+    // Inside the FA_Frontend class
+
+    /**
+     * Restrict access to lessons based on user's progress
+     */
     public function restrict_lesson_access()
     {
         if (!is_singular('lesson')) {
@@ -2078,29 +2342,36 @@ class FA_Frontend
 
         // Fetch all lessons in the course up to the current one
         $required_lessons = get_posts(array(
-            'post_type' => 'lesson',
+            'post_type'      => 'lesson',
             'posts_per_page' => -1,
-            'meta_key' => 'lesson_order',
-            'orderby' => 'meta_value_num',
-            'order' => 'ASC',
-            'meta_query' => array(
-                array(
-                    'key' => 'lesson_course_id',
-                    'value' => $course_id,
-                    'compare' => '='
-                ),
-                array(
-                    'key' => 'lesson_order',
-                    'value' => intval($current_order) - 1,
+            'meta_key'       => 'lesson_order',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'ASC',
+            'meta_query'     => [
+                [
+                    'key'     => 'lesson_course_id',
+                    'value'   => $course_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC'
+                ],
+                [
+                    'key'     => 'lesson_order',
+                    'value'   => intval($current_order) - 1,
                     'compare' => '<=',
-                    'type' => 'NUMERIC'
-                )
-            )
+                    'type'    => 'NUMERIC'
+                ]
+            ]
         ));
 
         // Check if all required lessons are marked as 'passed' in course_progress
         foreach ($required_lessons as $lesson) {
-            $progress = $wpdb->get_var(
+            $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
+            if ($lesson_order >= $current_order) {
+                continue; // Skip lessons at or beyond the current lesson
+            }
+
+            // Check if the user has passed this lesson
+            $passed = $wpdb->get_var(
                 $wpdb->prepare(
                     "SELECT progress_status FROM {$wpdb->prefix}course_progress WHERE user_id = %d AND lesson_id = %d",
                     $user_id,
@@ -2108,11 +2379,11 @@ class FA_Frontend
                 )
             );
 
-            if ($progress !== 'passed') {
+            if ($passed !== 'passed') {
                 // If any required lesson is not passed, restrict access
                 // Set a transient to display a notice after redirection
                 set_transient('fa_restricted_lesson_notice_' . $user_id, true, 30);
-                wp_redirect(get_permalink($course_id)); // Redirect to course overview
+                wp_redirect(site_url('/student-dashboard')); // Redirect to student dashboard
                 exit;
             }
         }
@@ -2120,6 +2391,7 @@ class FA_Frontend
         // Display notice if set
         add_action('wp_footer', array($this, 'display_restricted_lesson_notice'));
     }
+
 
     /**
      * Display a notice to the user about restricted access
@@ -2133,8 +2405,8 @@ class FA_Frontend
         $user_id = get_current_user_id();
         if (get_transient('fa_restricted_lesson_notice_' . $user_id)) {
             echo '<div class="notice notice-error is-dismissible fa-restricted-lesson-notice">
-                    <p>' . __('You must complete the previous lessons to access this one.', 'fashion-academy-lms') . '</p>
-                  </div>';
+                <p>' . __('لا يمكنك الوصول إلى هذا الدرس بعد. يرجى إكمال الدروس السابقة.', 'fashion-academy-lms') . '</p>
+              </div>';
             delete_transient('fa_restricted_lesson_notice_' . $user_id);
         }
     }
