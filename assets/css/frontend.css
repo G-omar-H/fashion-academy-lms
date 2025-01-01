@@ -1964,6 +1964,35 @@ input[type="file"]:hover {
     opacity: 0.8; /* Subtle emphasis */
 }
 
+/* داخل ملف frontend.css */
+
+/* إشعار الدفع */
+.fa-payment-notice {
+    background-color: #fff3cd;
+    border-left: 5px solid #ffeeba;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+}
+
+.fa-payment-notice i {
+    color: #856404;
+    margin-right: 10px;
+    font-size: 1.5em;
+}
+
+.fa-locked-lesson i {
+    color: #dc3545;
+    margin-right: 5px;
+}
+
+.fa-unlock-icon {
+    color: #28a745;
+}
+
+
 @media (max-width: 768px) {
     /* Spinner Animation */
     .fa-spin {

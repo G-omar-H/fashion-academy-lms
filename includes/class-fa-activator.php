@@ -3,7 +3,6 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class FA_Activator {
 
-
     public static function activate() {
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
@@ -21,7 +20,7 @@ class FA_Activator {
         uploaded_files TEXT,
         instructor_files TEXT,
         notes TEXT,
-        admin_notes text,
+        admin_notes TEXT,
         PRIMARY KEY (id),
         INDEX (user_id),
         INDEX (lesson_id)
@@ -41,6 +40,20 @@ class FA_Activator {
         INDEX (lesson_id)
     ) $charset_collate;";
 
+        // New table: course_module_payments
+        $table_module_payments = $wpdb->prefix . 'course_module_payments';
+        $sql_module_payments = "CREATE TABLE IF NOT EXISTS $table_module_payments (
+        id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id BIGINT(20) UNSIGNED NOT NULL,
+        module_id BIGINT(20) UNSIGNED NOT NULL,
+        payment_status VARCHAR(20) DEFAULT 'unpaid' NOT NULL,
+        payment_date DATETIME NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY user_module (user_id, module_id),
+        INDEX (user_id),
+        INDEX (module_id)
+    ) $charset_collate;";
+
         // Revised table: chat_messages
         $table_chat = $wpdb->prefix . 'chat_messages';
         $sql_chat = "CREATE TABLE IF NOT EXISTS $table_chat (
@@ -56,13 +69,17 @@ class FA_Activator {
         INDEX (sender_id)
     ) $charset_collate;";
 
+
+
         // Load the dbDelta function
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
         // Run dbDelta for each table
         dbDelta( $sql_homework );
         dbDelta( $sql_progress );
+        dbDelta( $sql_module_payments );
         dbDelta( $sql_chat );
     }
+
 }
 ?>

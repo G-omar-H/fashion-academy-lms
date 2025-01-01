@@ -164,7 +164,7 @@ class FA_Frontend
     }
 
     /**
-     * Initialize user progress by unlocking the first lesson.
+     * Initialize user progress by unlocking the first lesson and setting module payments.
      *
      * @param int $user_id The ID of the newly registered user.
      */
@@ -186,6 +186,57 @@ class FA_Frontend
         }
 
         $course_id = $courses[0]->ID;
+
+        // Get all modules in the course ordered by 'module_order'
+        $modules = get_posts([
+            'post_type'      => 'module',
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'orderby'        => 'meta_value_num',
+            'meta_key'       => 'module_order',
+            'order'          => 'ASC',
+            'meta_query'     => [
+                [
+                    'key'     => 'module_course_id',
+                    'value'   => $course_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC'
+                ]
+            ]
+        ]);
+
+        // Identify the first module
+        $first_module_id = 0;
+        if (!empty($modules)) {
+            $first_module = $modules[0];
+            $first_module_id = $first_module->ID;
+        }
+
+        // Initialize module payments: first module 'paid', others 'unpaid'
+        foreach ($modules as $index => $module) {
+            $module_id = $module->ID;
+            $existing_payment = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}course_module_payments WHERE user_id=%d AND module_id=%d",
+                $user_id,
+                $module_id
+            ));
+
+            if (!$existing_payment) {
+                $payment_status = ($module_id === $first_module_id) ? 'paid' : 'unpaid';
+                $payment_date = ($payment_status === 'paid') ? current_time('mysql') : null;
+
+                $wpdb->insert(
+                    "{$wpdb->prefix}course_module_payments",
+                    [
+                        'user_id'         => $user_id,
+                        'module_id'       => $module_id,
+                        'payment_status'  => $payment_status,
+                        'payment_date'    => $payment_date
+                    ],
+                    ['%d','%d','%s','%s']
+                );
+            }
+        }
 
         // Get the first lesson based on lesson_order
         $first_lesson = get_posts([
@@ -233,6 +284,7 @@ class FA_Frontend
             );
         }
     }
+
 
 
 
@@ -324,6 +376,8 @@ class FA_Frontend
 
     public function render_student_dashboard()
     {
+        global $wpdb;
+
         if (!is_user_logged_in()) {
             return '<p>' . __('الرجاء تسجيل الدخول', 'fashion-academy-lms') . '</p>';
         }
@@ -388,6 +442,13 @@ class FA_Frontend
             $selected_module_id = get_post_meta($current_lesson_id, 'lesson_module_id', true);
         }
 
+        // Identify the first module
+        $first_module_id = 0;
+        if (!empty($modules)) {
+            $first_module = $modules[0];
+            $first_module_id = $first_module->ID;
+        }
+
         ob_start(); ?>
         <div class="fa-student-dashboard-container">
             <h2><?php _e('لوحة تحكم الطالب', 'fashion-academy-lms'); ?></h2>
@@ -404,11 +465,31 @@ class FA_Frontend
                             $toggle_icon = $is_expanded ? '-' : '+';
                             $sublist_hidden = $is_expanded ? '' : 'hidden';
 
+                            // Determine if the module is the first module
+                            $is_first_module = ($module->ID == $first_module_id);
+
+                            // Check payment status for the module (skip for first module)
+                            if ($is_first_module) {
+                                $module_paid = true;
+                            } else {
+                                $payment = $wpdb->get_row($wpdb->prepare(
+                                    "SELECT payment_status FROM {$wpdb->prefix}course_module_payments WHERE user_id=%d AND module_id=%d",
+                                    $user_id,
+                                    $module->ID
+                                ));
+                                $module_paid = $payment && $payment->payment_status === 'paid';
+                            }
+
                             echo '<li class="fa-module-item">';
-                            // Module Toggle Button
+                            // Module Toggle Button with Lock/Unlock Icon
                             echo '<button type="button" class="fa-module-toggle" aria-expanded="' . esc_attr($aria_expanded) . '" aria-controls="module-' . esc_attr($module->ID) . '">';
                             echo '<span class="fa-module-title">' . esc_html($module->post_title) . '</span>';
-                            echo '<span class="fa-toggle-icon">' . esc_html($toggle_icon) . '</span>'; // Icon indicating collapsed/expanded state
+                            // Icon indicating lock/unlock status
+                            if ($module_paid) {
+                                echo '<span class="fa-toggle-icon"><i class="fas fa-unlock-alt" title="' . __('مدفوع', 'fashion-academy-lms') . '"></i></span>';
+                            } else {
+                                echo '<span class="fa-toggle-icon"><i class="fas fa-lock" title="' . __('غير مدفوع', 'fashion-academy-lms') . '"></i></span>';
+                            }
                             echo '</button>';
 
                             // Lessons Sublist
@@ -427,7 +508,9 @@ class FA_Frontend
                                         echo esc_html($lesson_order . '. ' . $lesson->post_title);
                                         echo '</a>';
                                     } else {
-                                        echo esc_html($lesson_order . '. ' . $lesson->post_title . ' (مغلق)');
+                                        echo '<span class="fa-locked-lesson">';
+                                        echo '<i class="fas fa-lock"></i> ' . esc_html($lesson_order . '. ' . $lesson->post_title);
+                                        echo '</span>';
                                     }
                                     echo '</li>';
                                 }
@@ -474,7 +557,9 @@ class FA_Frontend
                                     echo esc_html($lesson_order . '. ' . $lesson->post_title);
                                     echo '</a>';
                                 } else {
-                                    echo esc_html($lesson_order . '. ' . $lesson->post_title . ' (مغلق)');
+                                    echo '<span class="fa-locked-lesson">';
+                                    echo '<i class="fas fa-lock"></i> ' . esc_html($lesson_order . '. ' . $lesson->post_title);
+                                    echo '</span>';
                                 }
                                 echo '</li>';
                             }
@@ -489,7 +574,10 @@ class FA_Frontend
                     <?php
                     if ($current_lesson_id) {
                         if ($this->is_lesson_locked_for_current_user($current_lesson_id)) {
-                            echo '<p>' . __('هذا الدرس مغلق حالياً. الرجاء إكمال الدروس السابقة أو الدفع.', 'fashion-academy-lms') . '</p>';
+                            echo '<div class="fa-payment-notice">
+                            <i class="fas fa-exclamation-triangle fa-warning-icon"></i>
+                            <p>' . __('هذا الدرس مغلق حالياً. الرجاء إكمال الدروس السابقة أو دفع رسوم الوحدة.', 'fashion-academy-lms') . '</p>
+                          </div>';
                         } else {
                             $this->render_lesson_details($current_lesson_id);
                         }
@@ -503,6 +591,8 @@ class FA_Frontend
         <?php
         return ob_get_clean();
     }
+
+
 
     /**
      * Get the current lesson for the user.
@@ -573,7 +663,6 @@ class FA_Frontend
 
 
     // If user hasn't paid or hasn't passed a prior lesson, return true. (Placeholder)
-
     /**
      * Check if a lesson is locked for the current user.
      *
@@ -594,6 +683,44 @@ class FA_Frontend
             return false; // If no course is associated, allow access
         }
 
+        // Get the module ID from the lesson
+        $module_id = get_post_meta($lesson_id, 'lesson_module_id', true);
+        if ($module_id) {
+            // Identify the first module in the course
+            $modules = get_posts([
+                'post_type'      => 'module',
+                'posts_per_page' => 1,
+                'orderby'        => 'meta_value_num',
+                'meta_key'       => 'module_order',
+                'order'          => 'ASC',
+                'meta_query'     => [
+                    [
+                        'key'     => 'module_course_id',
+                        'value'   => $course_id,
+                        'compare' => '=',
+                        'type'    => 'NUMERIC'
+                    ]
+                ]
+            ]);
+            $first_module_id = !empty($modules) ? $modules[0]->ID : 0;
+
+            // If the module is the first module, it's always paid
+            if ($module_id == $first_module_id) {
+                // Proceed to check lesson progression
+            } else {
+                // Check if the module is paid
+                global $wpdb;
+                $payment = $wpdb->get_row($wpdb->prepare(
+                    "SELECT payment_status FROM {$wpdb->prefix}course_module_payments WHERE user_id=%d AND module_id=%d",
+                    $user_id,
+                    $module_id
+                ));
+                if (!$payment || $payment->payment_status !== 'paid') {
+                    return true; // If module not paid, lock the lesson
+                }
+            }
+        }
+
         // Get the current lesson's order
         $current_order = get_post_meta($lesson_id, 'lesson_order', true);
         if (!$current_order) {
@@ -610,22 +737,23 @@ class FA_Frontend
             'meta_key'       => 'lesson_order',
             'orderby'        => 'meta_value_num',
             'order'          => 'ASC',
-            'meta_query'     => array(
-                array(
+            'meta_query'     => [
+                [
                     'key'     => 'lesson_course_id',
                     'value'   => $course_id,
                     'compare' => '=',
                     'type'    => 'NUMERIC'
-                ),
-                array(
+                ],
+                [
                     'key'     => 'lesson_order',
                     'value'   => intval($current_order) - 1,
                     'compare' => '<=',
                     'type'    => 'NUMERIC'
-                )
-            )
+                ]
+            ]
         ));
 
+        // Check if all required lessons are marked as 'passed' in course_progress
         foreach ($required_lessons as $lesson) {
             $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
             if ($lesson_order >= $current_order) {
@@ -633,11 +761,13 @@ class FA_Frontend
             }
 
             // Check if the user has passed this lesson
-            $passed = $wpdb->get_var($wpdb->prepare(
-                "SELECT progress_status FROM $progress_table WHERE user_id = %d AND lesson_id = %d",
-                $user_id,
-                $lesson->ID
-            ));
+            $passed = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT progress_status FROM {$wpdb->prefix}course_progress WHERE user_id = %d AND lesson_id = %d",
+                    $user_id,
+                    $lesson->ID
+                )
+            );
 
             if ($passed !== 'passed') {
                 return true; // If any previous lesson is not passed, lock the current lesson
@@ -646,6 +776,8 @@ class FA_Frontend
 
         return false; // All previous lessons are passed, unlock the current lesson
     }
+
+
 
     // Show lesson details (video + homework form)
     private function render_lesson_details($lesson_id)
@@ -1112,12 +1244,12 @@ class FA_Frontend
         }
     }
 
-/**
-* Unlock the next lesson for the user.
-*
-* @param int $user_id The ID of the user.
-* @param int $current_lesson_id The ID of the current lesson.
-*/
+    /**
+     * Unlock the next lesson for the user.
+     *
+     * @param int $user_id The ID of the user.
+     * @param int $current_lesson_id The ID of the current lesson.
+     */
     private function unlock_next_lesson($user_id, $current_lesson_id)
     {
         global $wpdb;
@@ -1128,6 +1260,24 @@ class FA_Frontend
         $current_order = get_post_meta($current_lesson_id, 'lesson_order', true);
 
         if (!$course_id || !$current_order) return;
+
+        // Identify the first module
+        $first_module = get_posts([
+            'post_type'      => 'module',
+            'posts_per_page' => 1,
+            'orderby'        => 'meta_value_num',
+            'meta_key'       => 'module_order',
+            'order'          => 'ASC',
+            'meta_query'     => [
+                [
+                    'key'     => 'module_course_id',
+                    'value'   => $course_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC'
+                ]
+            ]
+        ]);
+        $first_module_id = !empty($first_module) ? $first_module[0]->ID : 0;
 
         // Get the next lesson based on lesson_order
         $next_lesson = get_posts([
@@ -1155,6 +1305,24 @@ class FA_Frontend
         if (empty($next_lesson)) return; // No next lesson found
 
         $next_lesson_id = $next_lesson[0]->ID;
+
+        // Get the module ID of the next lesson
+        $next_module_id = get_post_meta($next_lesson_id, 'lesson_module_id', true);
+
+        // If the next lesson is in the first module, do not need to check payment
+        if ($next_module_id == $first_module_id) {
+            // Proceed to unlock without checking payment
+        } else {
+            // Check if the module is paid
+            $payment = $wpdb->get_row($wpdb->prepare(
+                "SELECT payment_status FROM {$wpdb->prefix}course_module_payments WHERE user_id=%d AND module_id=%d",
+                $user_id,
+                $next_module_id
+            ));
+            if (!$payment || $payment->payment_status !== 'paid') {
+                return; // Do not unlock if the module is not paid
+            }
+        }
 
         // Check if the user already has progress for the next lesson
         $existing_progress = $wpdb->get_row($wpdb->prepare(
@@ -1188,6 +1356,7 @@ class FA_Frontend
             );
         }
     }
+
 
     /* (B) LESSONS PAGE (CREATE, EDIT, DELETE) */
     /* (B) LESSONS PAGE (CREATE, EDIT, DELETE) */
@@ -1882,36 +2051,69 @@ class FA_Frontend
 
     private function render_admin_student_profile($user_id)
     {
+        global $wpdb;
+
         $user_info = get_userdata($user_id);
         if (!$user_info) {
             echo '<p style="color:red;">' . __('المستخدم غير موجود', 'fashion-academy-lms') . '</p>';
             return;
         }
 
-        if (isset($_POST['fa_update_student_profile']) && $_POST['fa_update_student_profile'] === 'yes') {
-            check_admin_referer('fa_update_student_nonce', 'fa_update_student_nonce_field');
+        // Handle module payment updates
+        if (isset($_POST['fa_update_module_payments']) && $_POST['fa_update_module_payments'] === 'yes') {
+            check_admin_referer('fa_update_module_payments_nonce', 'fa_update_module_payments_nonce_field');
 
-            $display_name = sanitize_text_field($_POST['display_name'] ?? '');
-            $email        = sanitize_email($_POST['email'] ?? '');
+            $modules = get_posts([
+                'post_type'      => 'module',
+                'posts_per_page' => -1,
+                'post_status'    => 'publish',
+                'orderby'        => 'meta_value_num',
+                'meta_key'       => 'module_order',
+                'order'          => 'ASC'
+            ]);
 
-            if (empty($display_name) || empty($email)) {
-                echo '<p style="color:red;">' . __('يرجى تعبئة كافة الحقول.', 'fashion-academy-lms') . '</p>';
-            } else {
-                $res = wp_update_user([
-                    'ID'           => $user_id,
-                    'display_name' => $display_name,
-                    'user_email'   => $email
-                ]);
-                if (is_wp_error($res)) {
-                    echo '<p style="color:red;">' . $res->get_error_message() . '</p>';
-                } else {
-                    echo '<div class="notice notice-success"><p>' . __('تم تحديث بيانات الطالب بنجاح!', 'fashion-academy-lms') . '</p></div>';
-                    $user_info = get_userdata($user_id);
-                }
+            // Identify the first module
+            $first_module_id = 0;
+            if (!empty($modules)) {
+                $first_module = $modules[0];
+                $first_module_id = $first_module->ID;
             }
+
+            foreach ($modules as $module) {
+                $module_id = $module->ID;
+
+                // Skip the first module
+                if ($module_id == $first_module_id) {
+                    continue;
+                }
+
+                $field_name = 'module_payment_' . $module_id;
+                $payment_status = isset($_POST[$field_name]) && $_POST[$field_name] === 'paid' ? 'paid' : 'unpaid';
+                $payment_date = $payment_status === 'paid' ? current_time('mysql') : null;
+
+                // Update the payment status in the database
+                $wpdb->update(
+                    "{$wpdb->prefix}course_module_payments",
+                    [
+                        'payment_status' => $payment_status,
+                        'payment_date'   => $payment_date
+                    ],
+                    [
+                        'user_id'   => $user_id,
+                        'module_id' => $module_id
+                    ],
+                    ['%s', '%s'],
+                    ['%d', '%d']
+                );
+            }
+
+            echo '<div class="notice notice-success"><p>' . __('تم تحديث حالات الدفع بنجاح!', 'fashion-academy-lms') . '</p></div>';
         }
+
+        // Now display the student profile and module payments
         ?>
-        <h3><?php _e('ملف الطالب', 'fashion-academy-lms'); ?>: <?php echo esc_html($user_info->display_name); ?></h3>
+        <hr>
+        <h4><?php _e('تفاصيل الطالب', 'fashion-academy-lms'); ?></h4>
         <form method="post">
             <?php wp_nonce_field('fa_update_student_nonce', 'fa_update_student_nonce_field'); ?>
             <input type="hidden" name="fa_update_student_profile" value="yes"/>
@@ -1929,9 +2131,78 @@ class FA_Frontend
 
             <button type="submit" class="button button-primary"><?php _e('حفظ', 'fashion-academy-lms'); ?></button>
         </form>
-        <p><a href="?admin_page=students" class="button"><?php _e('عودة للبحث', 'fashion-academy-lms'); ?></a></p>
+
+        <hr>
+        <h4><?php _e('حالات دفع الوحدات', 'fashion-academy-lms'); ?></h4>
+        <form method="post">
+            <?php wp_nonce_field('fa_update_module_payments_nonce', 'fa_update_module_payments_nonce_field'); ?>
+            <input type="hidden" name="fa_update_module_payments" value="yes"/>
+
+            <table class="widefat">
+                <thead>
+                <tr>
+                    <th><?php _e('المادة', 'fashion-academy-lms'); ?></th>
+                    <th><?php _e('حالة الدفع', 'fashion-academy-lms'); ?></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+                $modules = get_posts([
+                    'post_type'      => 'module',
+                    'posts_per_page' => -1,
+                    'post_status'    => 'publish',
+                    'orderby'        => 'meta_value_num',
+                    'meta_key'       => 'module_order',
+                    'order'          => 'ASC'
+                ]);
+
+                // Identify the first module
+                $first_module_id = 0;
+                if (!empty($modules)) {
+                    $first_module = $modules[0];
+                    $first_module_id = $first_module->ID;
+                }
+
+                foreach ($modules as $module) {
+                    $module_id = $module->ID;
+                    $payment = $wpdb->get_row($wpdb->prepare(
+                        "SELECT payment_status FROM {$wpdb->prefix}course_module_payments WHERE user_id=%d AND module_id=%d",
+                        $user_id,
+                        $module_id
+                    ));
+                    $current_status = $payment ? $payment->payment_status : 'unpaid';
+                    ?>
+                    <tr>
+                        <td><?php echo esc_html($module->post_title); ?></td>
+                        <td>
+                            <?php if ($module_id == $first_module_id) : ?>
+                                <span><?php _e('مدفوع', 'fashion-academy-lms'); ?></span>
+                            <?php else : ?>
+                                <select name="<?php echo 'module_payment_' . esc_attr($module_id); ?>" style="width:150px;">
+                                    <option value="unpaid" <?php selected($current_status, 'unpaid'); ?>>
+                                        <?php _e('غير مدفوع', 'fashion-academy-lms'); ?>
+                                    </option>
+                                    <option value="paid" <?php selected($current_status, 'paid'); ?>>
+                                        <?php _e('مدفوع', 'fashion-academy-lms'); ?>
+                                    </option>
+                                </select>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php
+                }
+                ?>
+                </tbody>
+            </table>
+
+            <button type="submit" class="button button-primary" style="margin-top:15px;">
+                <?php _e('حفظ حالات الدفع', 'fashion-academy-lms'); ?>
+            </button>
+        </form>
         <?php
     }
+
+
 
     public function render_homework_form($atts = [])
     {
