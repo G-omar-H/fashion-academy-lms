@@ -1285,7 +1285,7 @@ class FA_Frontend
 
     public function render_student_chat()
     {
-        if (!is_user_logged_in() ) {
+        if (!is_user_logged_in() || !current_user_can('student')) {
             return ''; // Only students can see the chat
         }
 
