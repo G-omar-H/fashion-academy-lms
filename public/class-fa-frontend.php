@@ -533,7 +533,6 @@ class FA_Frontend
         }
 
         // Fetch grades for lessons
-        // Assuming there's a table that stores grades: homework_submissions (user_id, lesson_id, grade)
         $grades = $wpdb->get_results($wpdb->prepare(
             "SELECT lesson_id, grade FROM {$wpdb->prefix}homework_submissions WHERE user_id = %d",
             $user_id
@@ -886,6 +885,7 @@ class FA_Frontend
                     $module_id
                 ));
                 if (!$payment || $payment->payment_status !== 'paid') {
+                    fa_plugin_log('is_lesson_locked_for_current_user', 'Module is not paid');
                     return true; // If module not paid, lock the lesson
                 }
             }
@@ -940,6 +940,7 @@ class FA_Frontend
             );
 
             if ($passed !== 'passed') {
+                fa_plugin_log('Lesson ' . $lesson->ID . ' is locked for user ' . $user_id);
                 return true; // If any previous lesson is not passed, lock the current lesson
             }
         }
@@ -2532,6 +2533,58 @@ class FA_Frontend
             echo '<div class="notice notice-success"><p>' . __('تم تحديث بيانات الطالب بنجاح!', 'fashion-academy-lms') . '</p>';
         }
 
+        // Handle module payment updates
+        if (isset($_POST['fa_update_module_payments']) && $_POST['fa_update_module_payments'] === 'yes') {
+            check_admin_referer('fa_update_module_payments_nonce', 'fa_update_module_payments_nonce_field');
+
+            $modules = get_posts([
+                'post_type'      => 'module',
+                'posts_per_page' => -1,
+                'post_status'    => 'publish',
+                'orderby'        => 'meta_value_num',
+                'meta_key'       => 'module_order',
+                'order'          => 'ASC'
+            ]);
+
+            // Identify the first module
+            $first_module_id = 0;
+            if (!empty($modules)) {
+                $first_module = $modules[0];
+                $first_module_id = $first_module->ID;
+            }
+
+            foreach ($modules as $module) {
+                $module_id = $module->ID;
+
+                // Skip the first module
+                if ($module_id == $first_module_id) {
+                    continue;
+                }
+
+                $field_name = 'module_payment_' . $module_id;
+                $payment_status = isset($_POST[$field_name]) && $_POST[$field_name] === 'paid' ? 'paid' : 'unpaid';
+                $payment_date = $payment_status === 'paid' ? current_time('mysql') : null;
+
+                // Update the payment status in the database
+                $wpdb->update(
+                    "{$wpdb->prefix}course_module_payments",
+                    [
+                        'payment_status' => $payment_status,
+                        'payment_date'   => $payment_date
+                    ],
+                    [
+                        'user_id'   => $user_id,
+                        'module_id' => $module_id
+                    ],
+                    ['%s', '%s'],
+                    ['%d', '%d']
+                );
+            }
+
+            echo '<div class="notice notice-success"><p>' . __('تم تحديث حالات الدفع بنجاح!', 'fashion-academy-lms') . '</p></div>';
+        }
+
+        // Now display the student profile and module payments
         ?>
         <hr>
         <h4><?php _e('تفاصيل الطالب', 'fashion-academy-lms'); ?></h4>
@@ -2556,6 +2609,74 @@ class FA_Frontend
             </p>
 
             <button type="submit" class="button button-primary"><?php _e('حفظ', 'fashion-academy-lms'); ?></button>
+        </form>
+
+         <hr>
+        <h4><?php _e('حالات دفع الوحدات', 'fashion-academy-lms'); ?></h4>
+        <form method="post">
+            <?php wp_nonce_field('fa_update_module_payments_nonce', 'fa_update_module_payments_nonce_field'); ?>
+            <input type="hidden" name="fa_update_module_payments" value="yes"/>
+
+            <table class="widefat">
+                <thead>
+                <tr>
+                    <th><?php _e('المادة', 'fashion-academy-lms'); ?></th>
+                    <th><?php _e('حالة الدفع', 'fashion-academy-lms'); ?></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+                $modules = get_posts([
+                    'post_type'      => 'module',
+                    'posts_per_page' => -1,
+                    'post_status'    => 'publish',
+                    'orderby'        => 'meta_value_num',
+                    'meta_key'       => 'module_order',
+                    'order'          => 'ASC'
+                ]);
+
+                // Identify the first module
+                $first_module_id = 0;
+                if (!empty($modules)) {
+                    $first_module = $modules[0];
+                    $first_module_id = $first_module->ID;
+                }
+
+                foreach ($modules as $module) {
+                    $module_id = $module->ID;
+                    $payment = $wpdb->get_row($wpdb->prepare(
+                        "SELECT payment_status FROM {$wpdb->prefix}course_module_payments WHERE user_id=%d AND module_id=%d",
+                        $user_id,
+                        $module_id
+                    ));
+                    $current_status = $payment ? $payment->payment_status : 'unpaid';
+                    ?>
+                    <tr>
+                        <td><?php echo esc_html($module->post_title); ?></td>
+                        <td>
+                            <?php if ($module_id == $first_module_id) : ?>
+                                <span><?php _e('مدفوع', 'fashion-academy-lms'); ?></span>
+                            <?php else : ?>
+                                <select name="<?php echo 'module_payment_' . esc_attr($module_id); ?>" style="width:150px;">
+                                    <option value="unpaid" <?php selected($current_status, 'unpaid'); ?>>
+                                        <?php _e('غير مدفوع', 'fashion-academy-lms'); ?>
+                                    </option>
+                                    <option value="paid" <?php selected($current_status, 'paid'); ?>>
+                                        <?php _e('مدفوع', 'fashion-academy-lms'); ?>
+                                    </option>
+                                </select>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php
+                }
+                ?>
+                </tbody>
+            </table>
+
+            <button type="submit" class="button button-primary" style="margin-top:15px;">
+                <?php _e('حفظ حالات الدفع', 'fashion-academy-lms'); ?>
+            </button>
         </form>
         <?php
     }
