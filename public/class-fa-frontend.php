@@ -151,6 +151,11 @@ class FA_Frontend
                 <label for="reg_password"><?php _e('كلمة المرور', 'fashion-academy-lms'); ?></label><br/>
                 <input type="password" name="reg_password" id="reg_password" required/>
             </p>
+            <p>
+                <label for="reg_whatsapp"><?php _e('رقم واتساب', 'fashion-academy-lms'); ?></label><br/>
+                <input type="tel" name="reg_whatsapp" id="reg_whatsapp" required
+                       pattern="[0-9]+" title="<?php esc_attr_e('يرجى إدخال رقم صحيح بدون أي أحرف.', 'fashion-academy-lms'); ?>"/>
+            </p>
 
             <input type="hidden" name="fa_registration_action" value="fa_register_user"/>
             <?php wp_nonce_field('fa_register_nonce', 'fa_register_nonce_field'); ?>
@@ -163,43 +168,57 @@ class FA_Frontend
         return ob_get_clean();
     }
 
-    // Process Registration Form
     public function process_registration_form()
     {
         if (isset($_POST['fa_registration_action']) && $_POST['fa_registration_action'] === 'fa_register_user') {
+            // Verify nonce for security
             if (!isset($_POST['fa_register_nonce_field']) ||
                 !wp_verify_nonce($_POST['fa_register_nonce_field'], 'fa_register_nonce')) {
                 wp_die(__('فشل التحقق الأمني', 'fashion-academy-lms'));
             }
 
+            // Sanitize input fields
             $name     = sanitize_text_field($_POST['reg_name'] ?? '');
             $email    = sanitize_email($_POST['reg_email'] ?? '');
             $password = sanitize_text_field($_POST['reg_password'] ?? '');
+            $whatsapp = sanitize_text_field($_POST['reg_whatsapp'] ?? '');
 
-            if (empty($name) || empty($email) || empty($password)) {
+            // Check if all required fields are filled
+            if (empty($name) || empty($email) || empty($password) || empty($whatsapp)) {
                 wp_die(__('يجب تعبئة كافة الحقول المطلوبة', 'fashion-academy-lms'));
             }
+
+            // Validate WhatsApp number
+            // Must match an international format: +1234567890
+            if (!preg_match('/^\+?[1-9][0-9]{9,14}$/', $whatsapp)) {
+                wp_die(__('يرجى إدخال رقم واتساب صالح بصيغة دولية (مثل: +1234567890)', 'fashion-academy-lms'));
+            }
+
+            // Check if username or email exists
             if (username_exists($name) || email_exists($email)) {
                 wp_die(__('اسم المستخدم أو البريد الإلكتروني مستخدم مسبقًا', 'fashion-academy-lms'));
             }
 
-            // Create user
+            // Attempt to create a new user
             $user_id = wp_create_user($name, $password, $email);
             if (is_wp_error($user_id)) {
                 wp_die($user_id->get_error_message());
             }
 
-            // Assign 'student' role
+            // Save WhatsApp number as user meta
+            update_user_meta($user_id, 'whatsapp_number', $whatsapp);
+
+            // Assign the 'student' role to the new user
             $user = new WP_User($user_id);
             $user->set_role('student');
 
             // Initialize user progress
             $this->initialize_user_progress($user_id);
 
-            // Auto Login
+            // Automatically log in the new user
             $this->auto_login_user($name, $password);
 
-            // Redirect to student dashboard
+            // Redirect to the student dashboard
             wp_redirect(site_url('/student-dashboard'));
             exit;
         }
@@ -2416,17 +2435,22 @@ class FA_Frontend
                 <tr>
                     <th><?php _e('اسم المستخدم', 'fashion-academy-lms'); ?></th>
                     <th><?php _e('البريد الإلكتروني', 'fashion-academy-lms'); ?></th>
+                    <th><?php _e('رقم الواتساب', 'fashion-academy-lms'); ?></th>
                     <th><?php _e('إدارة', 'fashion-academy-lms'); ?></th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php
                 foreach ($users as $user) {
+                    // Retrieve the WhatsApp number from user meta
+                    $whatsapp_number = get_user_meta($user->ID, 'whatsapp_number', true);
+
                     echo '<tr>';
                     echo '<td>' . esc_html($user->display_name) . '</td>';
                     echo '<td>' . esc_html($user->user_email) . '</td>';
+                    echo '<td>' . esc_html($whatsapp_number ?: __('غير متوفر', 'fashion-academy-lms')) . '</td>';
                     echo '<td>
-                    <a href="?admin_page=students&view_student='. esc_attr($user->ID) .'" class="button">'
+                <a href="?admin_page=students&view_student='. esc_attr($user->ID) .'" class="button">'
                         . __('عرض الملف', 'fashion-academy-lms') . '</a></td>';
                     echo '</tr>';
                 }
@@ -2460,58 +2484,30 @@ class FA_Frontend
             return;
         }
 
-        // Handle module payment updates
-        if (isset($_POST['fa_update_module_payments']) && $_POST['fa_update_module_payments'] === 'yes') {
-            check_admin_referer('fa_update_module_payments_nonce', 'fa_update_module_payments_nonce_field');
+        // Retrieve the WhatsApp number
+        $whatsapp_number = get_user_meta($user_id, 'whatsapp_number', true);
 
-            $modules = get_posts([
-                'post_type'      => 'module',
-                'posts_per_page' => -1,
-                'post_status'    => 'publish',
-                'orderby'        => 'meta_value_num',
-                'meta_key'       => 'module_order',
-                'order'          => 'ASC'
+        // Handle profile updates
+        if (isset($_POST['fa_update_student_profile']) && $_POST['fa_update_student_profile'] === 'yes') {
+            check_admin_referer('fa_update_student_nonce', 'fa_update_student_nonce_field');
+
+            $display_name   = sanitize_text_field($_POST['display_name']);
+            $email          = sanitize_email($_POST['email']);
+            $new_whatsapp   = sanitize_text_field($_POST['whatsapp']);
+
+            // Validate and update user data
+            wp_update_user([
+                'ID'           => $user_id,
+                'display_name' => $display_name,
+                'user_email'   => $email,
             ]);
 
-            // Identify the first module
-            $first_module_id = 0;
-            if (!empty($modules)) {
-                $first_module = $modules[0];
-                $first_module_id = $first_module->ID;
-            }
+            // Update WhatsApp number
+            update_user_meta($user_id, 'whatsapp_number', $new_whatsapp);
 
-            foreach ($modules as $module) {
-                $module_id = $module->ID;
-
-                // Skip the first module
-                if ($module_id == $first_module_id) {
-                    continue;
-                }
-
-                $field_name = 'module_payment_' . $module_id;
-                $payment_status = isset($_POST[$field_name]) && $_POST[$field_name] === 'paid' ? 'paid' : 'unpaid';
-                $payment_date = $payment_status === 'paid' ? current_time('mysql') : null;
-
-                // Update the payment status in the database
-                $wpdb->update(
-                    "{$wpdb->prefix}course_module_payments",
-                    [
-                        'payment_status' => $payment_status,
-                        'payment_date'   => $payment_date
-                    ],
-                    [
-                        'user_id'   => $user_id,
-                        'module_id' => $module_id
-                    ],
-                    ['%s', '%s'],
-                    ['%d', '%d']
-                );
-            }
-
-            echo '<div class="notice notice-success"><p>' . __('تم تحديث حالات الدفع بنجاح!', 'fashion-academy-lms') . '</p></div>';
+            echo '<div class="notice notice-success"><p>' . __('تم تحديث بيانات الطالب بنجاح!', 'fashion-academy-lms') . '</p>';
         }
 
-        // Now display the student profile and module payments
         ?>
         <hr>
         <h4><?php _e('تفاصيل الطالب', 'fashion-academy-lms'); ?></h4>
@@ -2529,76 +2525,13 @@ class FA_Frontend
                 <input type="email" name="email" id="email" style="width:300px;"
                        value="<?php echo esc_attr($user_info->user_email); ?>"/>
             </p>
+            <p>
+                <label for="whatsapp"><?php _e('رقم الواتساب', 'fashion-academy-lms'); ?>:</label><br/>
+                <input type="text" name="whatsapp" id="whatsapp" style="width:300px;"
+                       value="<?php echo esc_attr($whatsapp_number); ?>"/>
+            </p>
 
             <button type="submit" class="button button-primary"><?php _e('حفظ', 'fashion-academy-lms'); ?></button>
-        </form>
-
-        <hr>
-        <h4><?php _e('حالات دفع الوحدات', 'fashion-academy-lms'); ?></h4>
-        <form method="post">
-            <?php wp_nonce_field('fa_update_module_payments_nonce', 'fa_update_module_payments_nonce_field'); ?>
-            <input type="hidden" name="fa_update_module_payments" value="yes"/>
-
-            <table class="widefat">
-                <thead>
-                <tr>
-                    <th><?php _e('المادة', 'fashion-academy-lms'); ?></th>
-                    <th><?php _e('حالة الدفع', 'fashion-academy-lms'); ?></th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php
-                $modules = get_posts([
-                    'post_type'      => 'module',
-                    'posts_per_page' => -1,
-                    'post_status'    => 'publish',
-                    'orderby'        => 'meta_value_num',
-                    'meta_key'       => 'module_order',
-                    'order'          => 'ASC'
-                ]);
-
-                // Identify the first module
-                $first_module_id = 0;
-                if (!empty($modules)) {
-                    $first_module = $modules[0];
-                    $first_module_id = $first_module->ID;
-                }
-
-                foreach ($modules as $module) {
-                    $module_id = $module->ID;
-                    $payment = $wpdb->get_row($wpdb->prepare(
-                        "SELECT payment_status FROM {$wpdb->prefix}course_module_payments WHERE user_id=%d AND module_id=%d",
-                        $user_id,
-                        $module_id
-                    ));
-                    $current_status = $payment ? $payment->payment_status : 'unpaid';
-                    ?>
-                    <tr>
-                        <td><?php echo esc_html($module->post_title); ?></td>
-                        <td>
-                            <?php if ($module_id == $first_module_id) : ?>
-                                <span><?php _e('مدفوع', 'fashion-academy-lms'); ?></span>
-                            <?php else : ?>
-                                <select name="<?php echo 'module_payment_' . esc_attr($module_id); ?>" style="width:150px;">
-                                    <option value="unpaid" <?php selected($current_status, 'unpaid'); ?>>
-                                        <?php _e('غير مدفوع', 'fashion-academy-lms'); ?>
-                                    </option>
-                                    <option value="paid" <?php selected($current_status, 'paid'); ?>>
-                                        <?php _e('مدفوع', 'fashion-academy-lms'); ?>
-                                    </option>
-                                </select>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <?php
-                }
-                ?>
-                </tbody>
-            </table>
-
-            <button type="submit" class="button button-primary" style="margin-top:15px;">
-                <?php _e('حفظ حالات الدفع', 'fashion-academy-lms'); ?>
-            </button>
         </form>
         <?php
     }
