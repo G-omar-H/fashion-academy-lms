@@ -11,6 +11,7 @@
 
 /* 23.1 Ensure Chat Messages are Flex Containers */
 .fa-chat-message {
+    direction: ltr;
     display: flex;
     align-items: flex-end;
     margin-bottom: 15px;
