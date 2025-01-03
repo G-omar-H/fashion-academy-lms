@@ -1,51 +1,127 @@
-/* Chat Pop-Up Styles */
+/* ============================================================
+   FA_Frontend Enhanced Stylesheet
+   Modern Futurist Design for Arabic Fashion Academy LMS
+   ============================================================ */
+
+/* [Existing CSS above remains unchanged] */
+
+/* ============================================================
+   23. Chat Styles Enhancements
+   ============================================================ */
+
+/* 23.1 Ensure Chat Messages are Flex Containers */
+.fa-chat-message {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 15px;
+}
+
+/* 23.2 Align Admin Messages (Received) to the Left */
+.fa-chat-message-received {
+    flex-direction: row; /* Avatar on left, message on right */
+}
+
+/* 23.3 Align Student Messages (Sent) to the Right */
+.fa-chat-message-sent {
+    flex-direction: row-reverse; /* Avatar on right, message on left */
+    justify-content: flex-end;
+}
+
+/* 23.4 Adjust Chat Content for Sent Messages */
+.fa-chat-message-sent .fa-chat-content {
+    background-color: #0073aa;
+    color: #fff;
+    margin-left: 10px;
+}
+
+/* 23.5 Adjust Chat Content for Received Messages */
+.fa-chat-message-received .fa-chat-content {
+    background-color: #e0e0e0;
+    color: #000;
+}
+
+/* 23.6 Modify Tail for Chat Bubbles */
+
+.fa-chat-message-received .fa-chat-content::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: -8px;
+    border-width: 8px 8px 8px 0;
+    border-style: solid;
+    border-color: transparent #e0e0e0 transparent transparent;
+}
+
+.fa-chat-message-sent .fa-chat-content::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: -8px;
+    border-width: 8px 0 8px 8px;
+    border-style: solid;
+    border-color: transparent transparent transparent #0073aa;
+}
+
+/* 23.7 Ensure Chat Toggle Button is on the Right */
 .fa-chat-toggle {
     position: fixed;
     bottom: 20px;
-    right: 20px;
+    right: 20px; /* Keeps it on the right side */
     background-color: #0073aa;
     color: #fff;
     border: none;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     cursor: pointer;
     z-index: 1000;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 .fa-chat-toggle:hover {
     background-color: #005177;
 }
 
+.fa-chat-toggle i {
+    font-size: 24px;
+}
+
+/* Chat Popup Container */
 .fa-chat-popup {
     position: fixed;
-    bottom: 80px;
+    bottom: 90px;
     right: 20px;
-    width: 300px;
-    max-height: 400px;
+    width: 350px;
+    max-height: 500px;
     background-color: #fff;
     border: 1px solid #ddd;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     display: none;
     flex-direction: column;
     z-index: 1000;
+    overflow: hidden;
+    font-family: 'Tajawal', sans-serif;
 }
 
+/* Chat Header */
 .fa-chat-header {
     background-color: #0073aa;
     color: #fff;
-    padding: 10px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    padding: 15px;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .fa-chat-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
 }
 
@@ -53,108 +129,140 @@
     background: none;
     border: none;
     color: #fff;
-    font-size: 20px;
+    font-size: 24px;
     cursor: pointer;
 }
 
+/* Chat Messages Container */
 .fa-chat-messages {
-    padding: 10px;
+    padding: 15px;
     overflow-y: auto;
     flex-grow: 1;
-    background-color: #f9f9f9;
+    background-color: #f4f4f4;
 }
 
+/* Chat Message */
+.fa-chat-message {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 15px;
+}
+
+/* 23.2 Align Admin Messages (Received) to the Left */
+.fa-chat-message-received {
+    flex-direction: row; /* Avatar on left, message on right */
+}
+
+/* 23.3 Align Student Messages (Sent) to the Right */
+.fa-chat-message-sent {
+    flex-direction: row-reverse; /* Avatar on right, message on left */
+    justify-content: flex-end;
+}
+
+/* 23.4 Adjust Chat Content for Sent Messages */
+.fa-chat-message-sent .fa-chat-content {
+    background-color: #0073aa;
+    color: #fff;
+    margin-left: 10px;
+}
+
+/* 23.5 Adjust Chat Content for Received Messages */
+.fa-chat-message-received .fa-chat-content {
+    background-color: #e0e0e0;
+    color: #000;
+}
+
+/* Tail for Chat Bubbles */
+.fa-chat-message-received .fa-chat-content::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: -8px;
+    border-width: 8px 8px 8px 0;
+    border-style: solid;
+    border-color: transparent #e0e0e0 transparent transparent;
+}
+
+.fa-chat-message-sent .fa-chat-content::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: -8px;
+    border-width: 8px 0 8px 8px;
+    border-style: solid;
+    border-color: transparent transparent transparent #0073aa;
+}
+
+/* Chat Avatar */
+.fa-chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.fa-chat-content {
+    max-width: 70%;
+    padding: 10px 15px;
+    border-radius: 20px;
+    position: relative;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Chat Form */
 .fa-chat-form {
     display: flex;
     border-top: 1px solid #ddd;
+    padding: 10px 15px;
+    background-color: #fff;
 }
 
 .fa-chat-input {
     flex-grow: 1;
-    padding: 10px;
-    border: none;
-    border-bottom-left-radius: 10px;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+    outline: none;
 }
 
 .fa-chat-send {
-    background-color: #0073aa;
-    border: none;
-    color: #fff;
-    padding: 0 15px;
-    cursor: pointer;
-    border-bottom-right-radius: 10px;
-}
-
-.fa-chat-send:hover {
-    background-color: #005177;
-}
-
-/* Admin Chat Interface Styles */
-.fa-admin-chat-box {
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin-top: 20px;
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-.fa-admin-chat-messages {
-    max-height: 400px;
-    overflow-y: auto;
-    margin-bottom: 10px;
-}
-
-.fa-admin-message {
-    padding: 5px 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    position: relative;
-    max-width: 80%;
-}
-
-.fa-admin-sent {
-    background-color: #0073aa;
-    color: #fff;
-    margin-left: auto;
-}
-
-.fa-admin-received {
-    background-color: #f1f1f1;
-    color: #000;
-}
-
-.fa-chat-timestamp {
-    font-size: 10px;
-    position: absolute;
-    bottom: -15px;
-    right: 10px;
-}
-
-.fa-admin-chat-form {
-    display: flex;
-}
-
-.fa-admin-chat-input {
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px 0 0 5px;
-}
-
-.fa-admin-chat-send {
     background-color: #28a745;
     border: none;
     color: #fff;
-    padding: 0 15px;
+    padding: 0 20px;
+    margin-left: 10px;
     cursor: pointer;
-    border-radius: 0 5px 5px 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.fa-admin-chat-send:hover {
+.fa-chat-send:hover {
     background-color: #218838;
 }
 
-/* Unread Conversation Highlight */
-.fa-unread-message {
-    background-color: #ffeeba;
+.fa-chat-send i {
+    font-size: 16px;
+}
+
+/* Scrollbar Styling (Optional) */
+.fa-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.fa-chat-messages::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 3px;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 400px) {
+    .fa-chat-popup {
+        width: 90%;
+        right: 5%;
+    }
 }

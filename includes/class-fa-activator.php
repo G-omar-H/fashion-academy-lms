@@ -4,6 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class FA_Activator {
 
     public static function activate() {
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
 
@@ -70,20 +72,24 @@ class FA_Activator {
             INDEX (timestamp)
         ) $charset_collate;";
 
+
         // Set admin user ID
-        $admin_user = get_user_by('role', 'administrator');
-        if ($admin_user) {
-            update_option('fa_admin_user_id', $admin_user->ID);
+        $admin_users = get_users(array(
+            'role'    => 'administrator',
+            'number'  => 1,
+            'orderby' => 'ID',
+            'order'   => 'ASC'
+        ));
+
+        if (!empty($admin_users)) {
+            update_option('fa_admin_user_id', $admin_users[0]->ID);
+            fa_plugin_log('FA Plugin Activation: Admin User ID set to ' . $admin_users[0]->ID);
         } else {
             // Handle cases where no admin exists
-            // You might want to create a default admin or notify the site admin
-            error_log('FA Plugin Activation: No administrator found.');
+            fa_plugin_log('FA Plugin Activation: No administrator found.');
         }
 
-        // Load the dbDelta function
-        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-
-        // Run dbDelta for each table
+        // Run dbDelta for tables
         dbDelta( $sql_homework );
         dbDelta( $sql_progress );
         dbDelta( $sql_module_payments );
@@ -91,11 +97,11 @@ class FA_Activator {
 
         // Initialize admin user ID if not set
         if (!get_option('fa_admin_user_id')) {
-            if ($admin_user) {
-                update_option('fa_admin_user_id', $admin_user->ID);
+            if ($admin_users) {
+                update_option('fa_admin_user_id', $admin_users[0]->ID);
+                fa_plugin_log('FA Plugin Activation: Admin User ID set to ' . $admin_users[0]->ID);
             }
         }
     }
 
 }
-?>

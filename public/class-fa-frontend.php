@@ -3,49 +3,32 @@ if (!defined('ABSPATH')) exit;
 
 class FA_Frontend
 {
+    // Inside class FA_Frontend
     public function __construct()
     {
-        // ===========[ Shortcodes ]===========
-
-        // 1) Homework Form (existing)
+        // Shortcodes
         add_shortcode('fa_homework_form', array($this, 'render_homework_form'));
-
-        // 2) Registration & Login (Milestone 1)
         add_shortcode('fa_custom_register', array($this, 'render_registration_form'));
         add_shortcode('fa_custom_login', array($this, 'render_login_form'));
-
-        // 3) STUDENT DASHBOARD (Milestone 2)
         add_shortcode('fa_student_dashboard', array($this, 'render_student_dashboard'));
-
-        // 4) ADMIN DASHBOARD (Milestone 3)
         add_shortcode('fa_admin_dashboard', array($this, 'render_admin_dashboard'));
-
-        // 5) Chat Shortcode
         add_shortcode('fa_student_chat', array($this, 'render_student_chat'));
 
-
-        // ===========[ Form Submissions ]===========
-
-        // Registration & Login
+        // Form Submissions
         add_action('init', array($this, 'process_registration_form'));
         add_action('init', array($this, 'process_login_form'));
-
-        // Homework submission
         add_action('init', array($this, 'handle_homework_submission'));
-
-        // Restrict lesson access
         add_action('template_redirect', array($this, 'restrict_lesson_access'));
 
+        // Enqueue Scripts and Styles
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
 
-
-        // 6) Chat AJAX Actions
+        // AJAX Actions for Chat
         add_action('wp_ajax_fa_send_chat_message', array($this, 'fa_send_chat_message'));
-        add_action('wp_ajax_nopriv_fa_send_chat_message', array($this, 'fa_send_chat_message')); // For logged-in users only
         add_action('wp_ajax_fa_fetch_chat_messages', array($this, 'fa_fetch_chat_messages'));
-        add_action('wp_ajax_nopriv_fa_fetch_chat_messages', array($this, 'fa_fetch_chat_messages')); // For logged-in users only
-
+        add_action('wp_ajax_fa_fetch_unread_count', array($this, 'fa_fetch_unread_count'));
     }
+
 
     public function enqueue_assets()
     {
@@ -66,6 +49,8 @@ class FA_Frontend
             null
         );
 
+
+
         wp_enqueue_style(
             'fa-font-awesome',
             'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
@@ -83,7 +68,7 @@ class FA_Frontend
             true
         );
 
-        // Enqueue Chat CSS and JS
+        // Enqueue Chat CSS
         wp_enqueue_style(
             'fa-chat-style',
             plugin_dir_url(__FILE__) . '../assets/css/chat.css',
@@ -92,6 +77,7 @@ class FA_Frontend
             'all'
         );
 
+        // Enqueue Chat JavaScript
         wp_enqueue_script(
             'fa-chat-script',
             plugin_dir_url(__FILE__) . '../assets/js/chat.js',
@@ -100,12 +86,12 @@ class FA_Frontend
             true
         );
 
-        // Localize Chat Script for Students
+        // Localize script with chat-specific data
         wp_localize_script('fa-chat-script', 'faChat', array(
             'ajaxUrl'        => admin_url('admin-ajax.php'),
             'nonce'          => wp_create_nonce('fa_chat_nonce'),
             'currentUserId'  => get_current_user_id(),
-            'adminUserId'    => get_option('fa_admin_user_id'), // Correct Option Name
+            'adminUserId'    => get_option('fa_admin_user_id'),
             'errorMessage'   => __('حدث خطأ أثناء الاتصال بالدردشة.', 'fashion-academy-lms')
         ));
 
@@ -139,7 +125,6 @@ class FA_Frontend
         $localized_data = $this->get_translated_script_data();
         wp_localize_script('fa-frontend-script', 'faLMS', $localized_data);
     }
-
 
     /* ------------------------------------------------------------------------ */
     /* (1) REGISTRATION & LOGIN (MILESTONE 1)
@@ -425,12 +410,6 @@ class FA_Frontend
     /* ------------------------------------------------------------------------ */
 
     // Shortcode: [fa_student_dashboard]
-    /* ------------------------------------------------------------------------ */
-    /* (2) STUDENT DASHBOARD (MILESTONE 1)
-    /* ------------------------------------------------------------------------ */
-
-// Shortcode: [fa_student_dashboard]
-
     public function render_student_dashboard()
     {
         global $wpdb;
@@ -440,6 +419,10 @@ class FA_Frontend
         }
 
         $user_id = get_current_user_id();
+
+        // Get user information for greeting
+        $current_user = wp_get_current_user();
+        $user_name = $current_user->display_name;
 
         // Determine the current lesson
         $current_lesson = $this->get_current_lesson_for_user($user_id);
@@ -506,12 +489,21 @@ class FA_Frontend
             $first_module_id = $first_module->ID;
         }
 
+        // Fetch grades for lessons
+        // Assuming there's a table that stores grades: homework_submissions (user_id, lesson_id, grade)
+        $grades = $wpdb->get_results($wpdb->prepare(
+            "SELECT lesson_id, grade FROM {$wpdb->prefix}homework_submissions WHERE user_id = %d",
+            $user_id
+        ), OBJECT_K); // KEY BY lesson_id
+
         ob_start(); ?>
         <div class="fa-student-dashboard-container">
-            <h2><?php _e('لوحة تحكم الطالب', 'fashion-academy-lms'); ?></h2>
             <div class="fa-student-dashboard-layout">
-                <div class="fa-lessons-sidebar">
-                    <h3><?php _e('المواد والدروس المتاحة', 'fashion-academy-lms'); ?></h3>
+                <aside class="fa-lessons-sidebar" aria-label="<?php _e('قائمة الدروس', 'fashion-academy-lms'); ?>">
+                    <div class="fa-dashboard-greeting">
+                        <h2><?php echo sprintf(__('مرحباً، %s!', 'fashion-academy-lms'), esc_html($user_name)); ?></h2>
+                    </div>
+                    <h3><?php _e('المحتوى التعليمي', 'fashion-academy-lms'); ?></h3>
                     <ul class="fa-modules-list">
                         <?php
                         // Iterate through each module
@@ -519,8 +511,6 @@ class FA_Frontend
                             // Determine if this module should be expanded
                             $is_expanded = ($module->ID == $selected_module_id);
                             $aria_expanded = $is_expanded ? 'true' : 'false';
-                            $toggle_icon = $is_expanded ? '-' : '+';
-                            $sublist_hidden = $is_expanded ? '' : 'hidden';
 
                             // Determine if the module is the first module
                             $is_first_module = ($module->ID == $first_module_id);
@@ -537,36 +527,80 @@ class FA_Frontend
                                 $module_paid = $payment && $payment->payment_status === 'paid';
                             }
 
-                            echo '<li class="fa-module-item">';
+                            // Assign classes based on payment status
+                            $module_item_classes = 'fa-module-item';
+                            if (!$module_paid) {
+                                $module_item_classes .= ' fa-module-locked';
+                            }
+
+                            echo '<li class="' . esc_attr($module_item_classes) . '">';
                             // Module Toggle Button with Lock/Unlock Icon
                             echo '<button type="button" class="fa-module-toggle" aria-expanded="' . esc_attr($aria_expanded) . '" aria-controls="module-' . esc_attr($module->ID) . '">';
                             echo '<span class="fa-module-title">' . esc_html($module->post_title) . '</span>';
+
                             // Icon indicating lock/unlock status
                             if ($module_paid) {
-                                echo '<span class="fa-toggle-icon"><i class="fas fa-unlock-alt" title="' . __('مدفوع', 'fashion-academy-lms') . '"></i></span>';
+                                // Unlocked module: show '-' if expanded, '+' if collapsed
+                                $initial_icon_class = $is_expanded ? 'fas fa-minus' : 'fas fa-plus';
+                                echo '<span class="fa-toggle-icon"><i class="' . esc_attr($initial_icon_class) . '" title="' . __('مدفوع', 'fashion-academy-lms') . '"></i></span>';
                             } else {
+                                // Locked module: always show lock icon with badge
                                 echo '<span class="fa-toggle-icon"><i class="fas fa-lock" title="' . __('غير مدفوع', 'fashion-academy-lms') . '"></i></span>';
+                                echo '<span class="fa-module-badge">' . __('مغلق', 'fashion-academy-lms') . '</span>';
                             }
                             echo '</button>';
 
                             // Lessons Sublist
-                            echo '<ul id="module-' . esc_attr($module->ID) . '" class="fa-lessons-sublist" ' . ($sublist_hidden ? 'hidden' : '') . '>';
+                            echo '<ul id="module-' . esc_attr($module->ID) . '" class="fa-lessons-sublist" ' . ($is_expanded ? '' : 'hidden') . '>';
 
                             if (isset($lessons_by_module[$module->ID])) {
                                 foreach ($lessons_by_module[$module->ID] as $lesson) {
                                     $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
                                     $locked = $this->is_lesson_locked_for_current_user($lesson->ID);
                                     $is_active = ($lesson->ID == $current_lesson_id);
+                                    $lesson_grade = isset($grades[$lesson->ID]->grade) ? $grades[$lesson->ID]->grade : null;
+                                    $is_passed = ($lesson_grade !== null && $lesson_grade >= 75);
+                                    $is_outstanding = ($lesson_grade !== null && $lesson_grade >= 90);
+                                    $is_failed = ($lesson_grade !== null && $lesson_grade < 75); // New condition
+
+                                    // Determine the grade class based on the grade
+                                    if ($is_outstanding) {
+                                        $grade_class = 'fa-grade-outstanding';
+                                        $icon_class = 'fas fa-star';
+                                        $icon_title = __('ممتاز', 'fashion-academy-lms');
+                                    } elseif ($is_passed) {
+                                        $grade_class = 'fa-grade-passed';
+                                        $icon_class = 'fas fa-check-circle';
+                                        $icon_title = __('تم التجاوز', 'fashion-academy-lms');
+                                    } elseif ($is_failed) {
+                                        $grade_class = 'fa-grade-failed';
+                                        $icon_class = 'fas fa-exclamation-triangle';
+                                        $icon_title = __('فشل', 'fashion-academy-lms');
+                                    } else {
+                                        $grade_class = '';
+                                        $icon_class = '';
+                                        $icon_title = '';
+                                    }
 
                                     echo '<li class="fa-lesson-item">';
                                     if (!$locked) {
                                         $active_class = $is_active ? ' active-lesson' : '';
                                         echo '<a href="?lesson_id=' . esc_attr($lesson->ID) . '" class="' . esc_attr($active_class) . '">';
-                                        echo esc_html($lesson_order . '. ' . $lesson->post_title);
+                                        // **New Layout: Grade Icon and Percentage to the Left**
+                                        if ($lesson_grade !== null) {
+                                            echo '<span class="fa-grade-info ' . esc_attr($grade_class) . '">';
+                                            if ($icon_class) {
+                                                echo '<i class="' . esc_attr($icon_class) . ' fa-grade-icon" title="' . esc_attr($icon_title) . '"></i> ';
+                                            }
+                                            echo intval($lesson_grade) . '%';
+                                            echo '</span> ';
+                                        }
+                                        // Lesson Title without order number
+                                        echo esc_html($lesson->post_title);
                                         echo '</a>';
                                     } else {
                                         echo '<span class="fa-locked-lesson">';
-                                        echo '<i class="fas fa-lock"></i> ' . esc_html($lesson_order . '. ' . $lesson->post_title);
+                                        echo '<i class="fas fa-lock"></i> ' . esc_html($lesson->post_title);
                                         echo '</span>';
                                     }
                                     echo '</li>';
@@ -591,13 +625,14 @@ class FA_Frontend
                                 }
                             }
                             $aria_expanded = $is_expanded ? 'true' : 'false';
-                            $toggle_icon = $is_expanded ? '-' : '+';
+                            $toggle_icon_class = $is_expanded ? 'fas fa-minus' : 'fas fa-plus';
                             $sublist_hidden = $is_expanded ? '' : 'hidden';
 
+                            // Since unassigned lessons are always unlocked, no need to check payment
                             echo '<li class="fa-module-item">';
                             echo '<button type="button" class="fa-module-toggle" aria-expanded="' . esc_attr($aria_expanded) . '" aria-controls="module-unassigned">';
                             echo '<span class="fa-module-title">' . __('دروس بدون مادة', 'fashion-academy-lms') . '</span>';
-                            echo '<span class="fa-toggle-icon">' . esc_html($toggle_icon) . '</span>'; // Icon indicating collapsed/expanded state
+                            echo '<span class="fa-toggle-icon"><i class="' . esc_attr($toggle_icon_class) . '" title="' . __('دروس بدون مادة', 'fashion-academy-lms') . '"></i></span>'; // Consistent Font Awesome icon
                             echo '</button>';
 
                             echo '<ul id="module-unassigned" class="fa-lessons-sublist" ' . ($sublist_hidden ? 'hidden' : '') . '>';
@@ -606,16 +641,49 @@ class FA_Frontend
                                 $lesson_order = get_post_meta($lesson->ID, 'lesson_order', true);
                                 $locked = $this->is_lesson_locked_for_current_user($lesson->ID);
                                 $is_active = ($lesson->ID == $current_lesson_id);
+                                $lesson_grade = isset($grades[$lesson->ID]->grade) ? $grades[$lesson->ID]->grade : null;
+                                $is_passed = ($lesson_grade !== null && $lesson_grade >= 75);
+                                $is_outstanding = ($lesson_grade !== null && $lesson_grade >= 90);
+                                $is_failed = ($lesson_grade !== null && $lesson_grade < 75); // New condition
+
+                                // Determine the grade class based on the grade
+                                if ($is_outstanding) {
+                                    $grade_class = 'fa-grade-outstanding';
+                                    $icon_class = 'fas fa-star';
+                                    $icon_title = __('ممتاز', 'fashion-academy-lms');
+                                } elseif ($is_passed) {
+                                    $grade_class = 'fa-grade-passed';
+                                    $icon_class = 'fas fa-check-circle';
+                                    $icon_title = __('تم التجاوز', 'fashion-academy-lms');
+                                } elseif ($is_failed) {
+                                    $grade_class = 'fa-grade-failed';
+                                    $icon_class = 'fas fa-exclamation-triangle';
+                                    $icon_title = __('فشل', 'fashion-academy-lms');
+                                } else {
+                                    $grade_class = '';
+                                    $icon_class = '';
+                                    $icon_title = '';
+                                }
 
                                 echo '<li class="fa-lesson-item">';
                                 if (!$locked) {
                                     $active_class = $is_active ? ' active-lesson' : '';
                                     echo '<a href="?lesson_id=' . esc_attr($lesson->ID) . '" class="' . esc_attr($active_class) . '">';
-                                    echo esc_html($lesson_order . '. ' . $lesson->post_title);
+                                    // **New Layout: Grade Icon and Percentage to the Left**
+                                    if ($lesson_grade !== null) {
+                                        echo '<span class="fa-grade-info ' . esc_attr($grade_class) . '">';
+                                        if ($icon_class) {
+                                            echo '<i class="' . esc_attr($icon_class) . ' fa-grade-icon" title="' . esc_attr($icon_title) . '"></i> ';
+                                        }
+                                        echo intval($lesson_grade) . '%';
+                                        echo '</span> ';
+                                    }
+                                    // Lesson Title without order number
+                                    echo esc_html($lesson->post_title);
                                     echo '</a>';
                                 } else {
                                     echo '<span class="fa-locked-lesson">';
-                                    echo '<i class="fas fa-lock"></i> ' . esc_html($lesson_order . '. ' . $lesson->post_title);
+                                    echo '<i class="fas fa-lock"></i> ' . esc_html($lesson->post_title);
                                     echo '</span>';
                                 }
                                 echo '</li>';
@@ -625,9 +693,9 @@ class FA_Frontend
                         }
                         ?>
                     </ul>
-                </div>
+                </aside>
 
-                <div class="fa-lesson-content">
+                <main class="fa-lesson-content">
                     <?php
                     if ($current_lesson_id) {
                         if ($this->is_lesson_locked_for_current_user($current_lesson_id)) {
@@ -642,13 +710,14 @@ class FA_Frontend
                         echo '<p>' . __('مرحباً! اختر أحد الدروس من القائمة على اليسار.', 'fashion-academy-lms') . '</p>';
                     }
                     ?>
-                </div>
+                </main>
             </div>
         </div>
         <?php
         echo do_shortcode('[fa_student_chat]');
         return ob_get_clean();
     }
+
 
 
 
@@ -851,7 +920,7 @@ class FA_Frontend
 
         $video_url = get_post_meta($lesson_id, 'lesson_video_url', true);
         if ($video_url) {
-            echo '<div class="fa-lesson-video" style="margin-bottom:20px; text-align:center;">';
+            echo '<div class="fa-lesson-video">';
             echo '<video width="600" controls>';
             echo '<source src="' . esc_url($video_url) . '" type="video/mp4">';
             _e('متصفحك لا يدعم فيديو.', 'fashion-academy-lms');
@@ -863,11 +932,15 @@ class FA_Frontend
         $submission = $this->get_current_submission_for_user(get_current_user_id(), $lesson_id);
 
         echo '<div class="fa-homework-header">';
-        echo '<h2 class="fa-homework-title">' . __('📚 الواجب المنزلي الخاص بك', 'fashion-academy-lms') . '</h2>';
-        echo '<p class="fa-homework-desc">'
-            . __('تم تعيين هذا الواجب في نهاية الدرس. يرجى مراجعة محتوى الدرس قبل إرساله، واتباع التعليمات أدناه لإتمام عملية التسليم.', 'fashion-academy-lms')
-            . '</p>';
-        echo '</div>';
+        if (!$submission || $submission->status === 'retake') {
+            echo '<h2 class="fa-homework-title">' . __('واجبتك الإبداعية:', 'fashion-academy-lms') . '</h2>';
+            echo '<p class="fa-homework-desc">'
+                . __('أنتهيت من الدرس! الآن، أظهر لنا لمساتك الفنية من خلال الواجب المنزلي التالي. قم بمراجعة الدرس وابدأ بالإبداع.', 'fashion-academy-lms')
+                . '</p>';
+            echo '</div>';
+        } else {
+            echo '<h2>' . __('نتيجة تقييم الواجب:', 'fashion-academy-lms') . '</h2>';
+        }
 
         // 1) If no submission or submission is 'retake', show the form
         if (!$submission || $submission->status === 'retake') {
@@ -877,12 +950,21 @@ class FA_Frontend
             echo '</div>';
             // Spinner is handled via external JS on form submission
         }
-        // 2) If submission is "pending," remove the form, show spinner
+        // 2) If submission is "pending," remove the form, show spinner/logo
         elseif ($submission->status === 'pending') {
+            // Get the academy logo URL from WP media
+            $logo_id = get_option('fa_academy_logo_id'); // Ensure this option is set with the logo's attachment ID
+            if ($logo_id) {
+                $logo_url = wp_get_attachment_image_url($logo_id, 'thumbnail'); // Adjust size as needed
+            } else {
+                // Fallback if logo not set
+                $logo_url = 'http://fashion-academy.local/wp-content/uploads/2024/12/minilogof.png'; // Placeholder image
+            }
+
             echo '<div class="fa-spinner-section">';
-            echo '<div class="fa-spinner"></div>'; // Replacing spinner.gif with a CSS spinner
+            echo '<img src="' . esc_url($logo_url) . '" alt="' . __('Logo', 'fashion-academy-lms') . '" class="fa-academy-logo-spinner">';
             echo '<p class="fa-waiting-msg">'
-                . __('تم إرسال الواجب. بانتظار تصحيح الأستاذ...', 'fashion-academy-lms') . '</p>';
+                . __('تم إرسال الواجب! استرخي قليلاً بينما نقوم بتقييم إبداعك...', 'fashion-academy-lms') . '</p>';
             echo '</div>';
 
             // Localize dynamic data for JavaScript
@@ -899,40 +981,107 @@ class FA_Frontend
             echo '<div class="fa-homework-results">';
 
             if ($submission->status === 'graded') {
-                echo '<p>' . sprintf(__('تم تصحيح الواجب. درجتك: %s%%', 'fashion-academy-lms'), $submission->grade) . '</p>';
+                echo '<p>' . sprintf(__('لقد تم تقييم واجبك! درجتك: <strong>%s%%</strong>', 'fashion-academy-lms'), $submission->grade) . '</p>';
+                if ($submission->grade >= 90) {
+                    echo '<p class="fa-outstanding-msg">' . __('🌟 ممتاز! استمر في التألق.', 'fashion-academy-lms') . '</p>';
+                }
+                if ($submission->grade < 75) {
+                    echo '<p class="fa-fail-msg">' . __('⚠️ لم يتم تجاوز الواجب. جرب مرة أخرى لتحقيق النجاح.', 'fashion-academy-lms') . '</p>';
+                }
             } elseif ($submission->status === 'passed') {
-                echo '<p>' . sprintf(__('أحسنت! لقد تجاوزت هذا الواجب بنجاح. درجتك: %s%%', 'fashion-academy-lms'), $submission->grade) . '</p>';
+                echo '<p>' . sprintf(__('🎉 أحسنت! لقد تجاوزت هذا الواجب بنجاح. درجتك: <strong>%s%%</strong>', 'fashion-academy-lms'), $submission->grade) . '</p>';
+                if ($submission->grade >= 90) {
+                    echo '<p class="fa-outstanding-msg">' . __('🌟 رائع! أنت مبدع حقًا.', 'fashion-academy-lms') . '</p>';
+                }
             }
 
             // Display instructor feedback files if any
             $instructor_files = json_decode($submission->instructor_files, true);
             if (!empty($instructor_files)) {
-                echo '<h4>' . __('مرفقات الأستاذ / التصحيح:', 'fashion-academy-lms') . '</h4><ul>';
+                echo '<h4>' . __('ملاحظات الأستاذ والتعليقات:', 'fashion-academy-lms') . '</h4>';
+                echo '<div class="fa-gallery">';
                 foreach ($instructor_files as $ifile) {
-                    echo '<li><a href="' . esc_url($ifile) . '" target="_blank">'
-                        . esc_html(basename($ifile)) . '</a></li>';
+                    echo '<a href="' . esc_url($ifile) . '" class="fa-gallery-item" target="_blank">';
+                    echo '<img src="' . esc_url($ifile) . '" alt="' . __('ملاحظات الأستاذ', 'fashion-academy-lms') . '">';
+                    echo '</a>';
                 }
-                echo '</ul>';
+                echo '</div>';
+            }
+
+            // Display student submitted files as gallery if any
+            $student_files = json_decode($submission->uploaded_files, true);
+            if (!empty($student_files)) {
+                echo '<h4>' . __('محتويات إبداعك:', 'fashion-academy-lms') . '</h4>';
+                echo '<div class="fa-gallery">';
+                foreach ($student_files as $sfile) {
+                    echo '<a href="' . esc_url($sfile) . '" class="fa-gallery-item" target="_blank">';
+                    echo '<img src="' . esc_url($sfile) . '" alt="' . __('إبداعك المرسل', 'fashion-academy-lms') . '">';
+                    echo '</a>';
+                }
+                echo '</div>';
             }
 
             // Display Admin Notes if any
             $admin_notes = !empty($submission->admin_notes) ? $submission->admin_notes : '';
             if (!empty($admin_notes)) {
-                echo '<h4>' . __('ملاحظات المدرس:', 'fashion-academy-lms') . '</h4>';
+                echo '<h4>' . __('ملاحظات إضافية:', 'fashion-academy-lms') . '</h4>';
                 echo '<p>' . esc_html($admin_notes) . '</p>';
             }
 
-            // Retake button
-            echo '<button class="fa-retake-button" onclick="retakeHomework(' . intval($submission->id) . ')">'
-                . __('إعادة المحاولة', 'fashion-academy-lms') . '</button>';
+            // Conditional Buttons based on grade and status
+            if ($submission->status === 'graded') {
+                if ($submission->grade < 75) {
+                    // Show Retake Homework Button
+                    echo '<button class="fa-retake-button" onclick="retakeHomework(' . intval($submission->id) . ')">'
+                        . __('✨ أعد المحاولة مع لمسة جديدة!', 'fashion-academy-lms') . '</button>';
+                } else {
+                    // Show Navigate to Next Lesson Button
+                    $next_lesson_id = $this->get_next_lesson_id($lesson_id);
+                    if ($next_lesson_id) {
+                        $next_lesson = get_post($next_lesson_id);
+                        if ($next_lesson) {
+                            // Get the student dashboard page by slug
+                            $student_dashboard_page = get_page_by_path('student-dashboard'); // Replace 'student-dashboard' with your actual slug
+                            if ($student_dashboard_page) {
+                                $student_dashboard_url = get_permalink($student_dashboard_page->ID);
+                                $next_lesson_url = add_query_arg('lesson_id', $next_lesson_id, $student_dashboard_url);
+                                echo '<a href="' . esc_url($next_lesson_url) . '" class="button-primary fa-next-lesson-button">'
+                                    . __('🌈 استكشف الدرس التالي: ' . esc_html($next_lesson->post_title), 'fashion-academy-lms') . '</a>';
+                            } else {
+                                echo '<p>' . __('صفحة لوحة التحكم للطلاب غير موجودة.', 'fashion-academy-lms') . '</p>';
+                            }
+                        }
+                    }
+                }
+            } elseif ($submission->status === 'passed') {
+                // Show Navigate to Next Lesson Button
+                $next_lesson_id = $this->get_next_lesson_id($lesson_id);
+                if ($next_lesson_id) {
+                    $next_lesson = get_post($next_lesson_id);
+                    if ($next_lesson) {
+                        // Get the student dashboard page by slug
+                        $student_dashboard_page = get_page_by_path('student-dashboard'); // Replace 'student-dashboard' with your actual slug
+                        if ($student_dashboard_page) {
+                            $student_dashboard_url = get_permalink($student_dashboard_page->ID);
+                            $next_lesson_url = add_query_arg('lesson_id', $next_lesson_id, $student_dashboard_url);
+                            echo '<a href="' . esc_url($next_lesson_url) . '" class="button-primary fa-next-lesson-button">'
+                                . __('🌟 استعد للدرس التالي: ' . esc_html($next_lesson->post_title), 'fashion-academy-lms') . '</a>';
+                        } else {
+                            echo '<p>' . __('صفحة لوحة التحكم للطلاب غير موجودة.', 'fashion-academy-lms') . '</p>';
+                        }
+                    }
+                }
+            }
 
             echo '</div>';
 
-            // Localize retake confirmation message
+            // Localize retake confirmation message and next lesson info
             wp_localize_script('fa-frontend-script', 'faLMS', array_merge(
                 $this->get_translated_script_data(),
                 array(
                     'retakeConfirm' => __('هل أنت متأكد من إعادة الواجب؟', 'fashion-academy-lms'),
+                    'nextLessonUrl' => isset($next_lesson_id) ? add_query_arg('lesson_id', $next_lesson_id, get_permalink(get_page_by_path('student-dashboard')->ID)) : '',
+                    'nextLessonTitle' => isset($next_lesson) ? esc_html($next_lesson->post_title) : '',
                 )
             ));
 
@@ -945,6 +1094,136 @@ class FA_Frontend
             }
         }
     }
+
+
+
+    /**
+     * Retrieves the ID of the next lesson in the course based on the current lesson.
+     *
+     * @param int $current_lesson_id The ID of the current lesson.
+     * @return int|null The ID of the next lesson or null if there is no subsequent lesson.
+     */
+    function get_next_lesson_ID($current_lesson_id) {
+        // Ensure the current lesson exists and is of post type 'lesson'
+        $current_lesson = get_post($current_lesson_id);
+        if (!$current_lesson || $current_lesson->post_type !== 'lesson') {
+            return null;
+        }
+
+        // Retrieve the current lesson's order and associated module ID
+        $current_order = get_post_meta($current_lesson_id, 'lesson_order', true);
+        $current_module_id = get_post_meta($current_lesson_id, 'lesson_module_id', true);
+
+        // Validate that the current lesson is assigned to a module
+        if (!$current_module_id) {
+            // If the lesson isn't assigned to any module, consider global ordering
+            $args = array(
+                'post_type'      => 'lesson',
+                'posts_per_page' => 1,
+                'meta_key'       => 'lesson_order',
+                'orderby'        => 'meta_value_num',
+                'order'          => 'ASC',
+                'meta_query'     => array(
+                    array(
+                        'key'     => 'lesson_order',
+                        'value'   => $current_order,
+                        'compare' => '>',
+                        'type'    => 'NUMERIC',
+                    )
+                )
+            );
+
+            $next_lessons = get_posts($args);
+            if (!empty($next_lessons)) {
+                return $next_lessons[0]->ID;
+            } else {
+                return null; // No next lesson available
+            }
+        }
+
+        // Step 1: Attempt to find the next lesson within the same module
+        $args = array(
+            'post_type'      => 'lesson',
+            'posts_per_page' => 1,
+            'meta_key'       => 'lesson_order',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'ASC',
+            'meta_query'     => array(
+                'relation' => 'AND',
+                array(
+                    'key'     => 'lesson_module_id',
+                    'value'   => $current_module_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ),
+                array(
+                    'key'     => 'lesson_order',
+                    'value'   => $current_order,
+                    'compare' => '>',
+                    'type'    => 'NUMERIC',
+                )
+            )
+        );
+
+        $next_lessons = get_posts($args);
+        if (!empty($next_lessons)) {
+            return $next_lessons[0]->ID;
+        }
+
+        // Step 2: If no next lesson in the current module, find the next module
+        // Retrieve the current module's order
+        $current_module_order = get_post_meta($current_module_id, 'module_order', true);
+
+        // Query for the next module based on 'module_order'
+        $args = array(
+            'post_type'      => 'module',
+            'posts_per_page' => 1,
+            'meta_key'       => 'module_order',
+            'orderby'        => 'meta_value_num',
+            'order'          => 'ASC',
+            'meta_query'     => array(
+                array(
+                    'key'     => 'module_order',
+                    'value'   => $current_module_order,
+                    'compare' => '>',
+                    'type'    => 'NUMERIC',
+                )
+            )
+        );
+
+        $next_modules = get_posts($args);
+        if (!empty($next_modules)) {
+            $next_module = $next_modules[0];
+            $next_module_id = $next_module->ID;
+
+            // Retrieve the first lesson of the next module
+            $args = array(
+                'post_type'      => 'lesson',
+                'posts_per_page' => 1,
+                'meta_key'       => 'lesson_order',
+                'orderby'        => 'meta_value_num',
+                'order'          => 'ASC',
+                'meta_query'     => array(
+                    array(
+                        'key'     => 'lesson_module_id',
+                        'value'   => $next_module_id,
+                        'compare' => '=',
+                        'type'    => 'NUMERIC',
+                    )
+                )
+            );
+
+            $next_lessons = get_posts($args);
+            if (!empty($next_lessons)) {
+                return $next_lessons[0]->ID;
+            }
+        }
+
+        // Step 3: No subsequent lesson found
+        return null;
+    }
+
+
 
     /**
      * Helper to fetch the current submission for user + lesson.
@@ -963,9 +1242,12 @@ class FA_Frontend
 
     public function render_student_chat()
     {
-        if (!is_user_logged_in() || !current_user_can('student')) {
+        if (!is_user_logged_in() ) {
             return ''; // Only students can see the chat
         }
+
+        // Get the admin/institutor's image URL
+        $admin_image_url = 'http://fashion-academy.local/wp-content/uploads/2024/10/Sans_titre_214_202410251931321.png';
 
         ob_start(); ?>
         <div id="fa-chat-popup" class="fa-chat-popup">
@@ -974,7 +1256,14 @@ class FA_Frontend
                 <button id="fa-chat-close" class="fa-chat-close">&times;</button>
             </div>
             <div id="fa-chat-messages" class="fa-chat-messages">
-                <!-- Messages will be loaded here -->
+                <!-- Example of a chat message from admin -->
+                <div class="fa-chat-message fa-chat-message-received">
+                    <img src="<?php echo esc_url($admin_image_url); ?>" alt="<?php _e('Admin', 'fashion-academy-lms'); ?>" class="fa-chat-avatar">
+                    <div class="fa-chat-content">
+                        <?php _e('مرحبا! كيف يمكنني مساعدتك اليوم؟', 'fashion-academy-lms'); ?>
+                    </div>
+                </div>
+                <!-- Student messages will have a different class -->
             </div>
             <form id="fa-chat-form" class="fa-chat-form">
                 <input type="text" id="fa-chat-input" class="fa-chat-input" placeholder="<?php _e('اكتب رسالتك هنا...', 'fashion-academy-lms'); ?>" required />
@@ -985,6 +1274,9 @@ class FA_Frontend
         <?php
         return ob_get_clean();
     }
+
+
+
 
 
     /* ------------------------------------------------------------------------ */
@@ -1007,7 +1299,6 @@ class FA_Frontend
 
         ob_start(); ?>
         <div class="fa-admin-dashboard-wrapper">
-            <h2><?php _e('لوحة تحكم المشرف (Admin Dashboard)', 'fashion-academy-lms'); ?></h2>
 
             <ul class="fa-admin-nav">
                 <li><a href="?admin_page=homeworks" class="<?php echo is_active_tab('homeworks') ? 'active-tab' : ''; ?>">
@@ -1051,8 +1342,7 @@ class FA_Frontend
     }
 
 
-
-    // Homeworks
+// Homeworks
     private function render_admin_homeworks_page()
     {
         global $wpdb;
@@ -1077,7 +1367,7 @@ class FA_Frontend
                 <option value="graded" <?php selected($status_filter, 'graded'); ?>><?php _e('Graded', 'fashion-academy-lms'); ?></option>
                 <option value="passed" <?php selected($status_filter, 'passed'); ?>><?php _e('Passed', 'fashion-academy-lms'); ?></option>
             </select>
-            <button type="submit"><?php _e('تصفية', 'fashion-academy-lms'); ?></button>
+            <button type="submit" class="button button-primary"><?php _e('تصفية', 'fashion-academy-lms'); ?></button>
         </form>
         <?php
 
@@ -1089,7 +1379,7 @@ class FA_Frontend
         <table class="widefat">
             <thead>
             <tr>
-                <th><?php _e('ID', 'fashion-academy-lms'); ?></th>
+                <!-- Removed ID Column -->
                 <th><?php _e('User', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('Lesson', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('Status', 'fashion-academy-lms'); ?></th>
@@ -1107,7 +1397,7 @@ class FA_Frontend
                 $lessonName = $lesson ? $lesson->post_title : __('Unknown Lesson', 'fashion-academy-lms');
                 ?>
                 <tr>
-                    <td><?php echo esc_html($submission->id); ?></td>
+                    <!-- Removed ID Data Cell -->
                     <td><?php echo esc_html($user_name); ?></td>
                     <td><?php echo esc_html($lessonName); ?></td>
                     <td><?php echo esc_html($submission->status); ?></td>
@@ -1115,7 +1405,7 @@ class FA_Frontend
                     <td><?php echo esc_html($submission->submission_date); ?></td>
                     <td>
                         <a href="?admin_page=homeworks&view_submission=<?php echo esc_attr($submission->id); ?>"
-                           class="button button-inline">
+                           class="button button-inline button-primary">
                             <span class="dashicons dashicons-visibility"></span>
                             <span class="button-text"><?php _e('عرض / تصحيح', 'fashion-academy-lms'); ?></span>
                         </a>
@@ -1132,6 +1422,7 @@ class FA_Frontend
             $this->render_admin_homework_detail(intval($_GET['view_submission']));
         }
     }
+
 
     // Single homework detail + grading
     // Single homework detail + grading
@@ -1162,7 +1453,7 @@ class FA_Frontend
 
             // 1) Handle instructor files removal
             $files_to_remove = isset($_POST['remove_instructor_files']) ? $_POST['remove_instructor_files'] : array();
-            $current_instructor_files = json_decode($submission->instructor_files, true);
+            $current_instructor_files = !empty($submission->instructor_files) ? json_decode($submission->instructor_files, true) : [];
             if (!is_array($current_instructor_files)) {
                 $current_instructor_files = array();
             }
@@ -1235,7 +1526,7 @@ class FA_Frontend
         // Now display the submission details, including any instructor_files and admin_notes
         $uploaded_files = json_decode($submission->uploaded_files, true);
         $notes = $submission->notes;
-        $instructor_files = json_decode($submission->instructor_files, true);
+        $instructor_files = !empty($submission->instructor_files) ? json_decode($submission->instructor_files, true) : [];
         $admin_notes = $submission->admin_notes;
 
         echo '<hr>';
@@ -1447,7 +1738,6 @@ class FA_Frontend
 
 
     /* (B) LESSONS PAGE (CREATE, EDIT, DELETE) */
-    /* (B) LESSONS PAGE (CREATE, EDIT, DELETE) */
     private function render_admin_lessons_page()
     {
         // 1) Handle "Add Lesson"
@@ -1593,7 +1883,7 @@ class FA_Frontend
         <table class="widefat">
             <thead>
             <tr>
-                <th><?php _e('ID', 'fashion-academy-lms'); ?></th>
+                <!-- Removed ID Column -->
                 <th><?php _e('عنوان الدرس', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('الكورس', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('المادة', 'fashion-academy-lms'); ?></th>
@@ -1617,7 +1907,7 @@ class FA_Frontend
                 $video      = get_post_meta($lesson->ID, 'lesson_video_url', true);
 
                 echo '<tr>';
-                echo '<td>' . esc_html($lesson->ID) . '</td>';
+                // Removed ID Data Cell
                 echo '<td>' . esc_html($lesson->post_title) . '</td>';
                 echo '<td>' . esc_html($courseName) . '</td>';
                 echo '<td>' . esc_html($moduleName) . '</td>';
@@ -1641,6 +1931,7 @@ class FA_Frontend
         </table>
         <?php
     }
+
 
 
     // The function to handle file uploads (Video)
@@ -1924,7 +2215,7 @@ class FA_Frontend
         <table class="widefat">
             <thead>
             <tr>
-                <th><?php _e('ID', 'fashion-academy-lms'); ?></th>
+                <!-- Removed ID Column -->
                 <th><?php _e('عنوان المادة', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('الكورس', 'fashion-academy-lms'); ?></th>
                 <th><?php _e('الترتيب', 'fashion-academy-lms'); ?></th>
@@ -1940,7 +2231,7 @@ class FA_Frontend
                 $order      = get_post_meta($module->ID, 'module_order', true);
 
                 echo '<tr>';
-                echo '<td>' . esc_html($module->ID) . '</td>';
+                // Removed ID Data Cell
                 echo '<td>' . esc_html($module->post_title) . '</td>';
                 echo '<td>' . esc_html($courseName) . '</td>';
                 echo '<td>' . esc_html($order) . '</td>';
@@ -1962,6 +2253,7 @@ class FA_Frontend
         </table>
         <?php
     }
+
 
     /**
      * Handle File Uploads for Modules (if needed)
@@ -2095,44 +2387,65 @@ class FA_Frontend
             return;
         }
 
-        if (!empty($_GET['student_search'])) {
-            $search = sanitize_text_field($_GET['student_search']);
-            $args = [
-                'role'           => 'student',
-                'search'         => "*{$search}*",
-                'search_columns' => ['user_login','user_email','display_name']
-            ];
-            $users = get_users($args);
+        // Determine if a search query exists
+        $search = sanitize_text_field($_GET['student_search'] ?? '');
+        $args = [
+            'role' => 'student',
+        ];
 
-            if (!$users) {
-                echo '<p>' . __('لا يوجد طلاب مطابقين.', 'fashion-academy-lms') . '</p>';
-            } else {
-                ?>
-                <table class="widefat" style="margin-top:15px;">
-                    <thead>
-                    <tr>
-                        <th><?php _e('ID', 'fashion-academy-lms'); ?></th>
-                        <th><?php _e('اسم المستخدم', 'fashion-academy-lms'); ?></th>
-                        <th><?php _e('البريد الإلكتروني', 'fashion-academy-lms'); ?></th>
-                        <th><?php _e('إدارة', 'fashion-academy-lms'); ?></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php
-                    foreach($users as $u) {
-                        echo '<tr>';
-                        echo '<td>' . esc_html($u->ID) . '</td>';
-                        echo '<td>' . esc_html($u->display_name) . '</td>';
-                        echo '<td>' . esc_html($u->user_email) . '</td>';
-                        echo '<td>
-                            <a href="?admin_page=students&view_student='. esc_attr($u->ID) .'" class="button">'
-                            . __('عرض الملف', 'fashion-academy-lms') . '</a></td>';
-                        echo '</tr>';
-                    }
-                    ?>
-                    </tbody>
-                </table>
+        // If search is performed, customize the query
+        if (!empty($search)) {
+            $args['search'] = "*{$search}*";
+            $args['search_columns'] = ['user_login', 'user_email', 'display_name'];
+        }
+
+        // Pagination setup
+        $paged = isset($_GET['paged']) ? intval($_GET['paged']) : 1;
+        $args['number'] = 10; // Number of students per page
+        $args['paged'] = $paged;
+
+        $user_query = new WP_User_Query($args);
+        $users = $user_query->get_results();
+
+        if (!$users) {
+            echo '<p>' . __('لا يوجد طلاب مطابقين.', 'fashion-academy-lms') . '</p>';
+        } else {
+            ?>
+            <table class="widefat" style="margin-top:15px;">
+                <thead>
+                <tr>
+                    <th><?php _e('اسم المستخدم', 'fashion-academy-lms'); ?></th>
+                    <th><?php _e('البريد الإلكتروني', 'fashion-academy-lms'); ?></th>
+                    <th><?php _e('إدارة', 'fashion-academy-lms'); ?></th>
+                </tr>
+                </thead>
+                <tbody>
                 <?php
+                foreach ($users as $user) {
+                    echo '<tr>';
+                    echo '<td>' . esc_html($user->display_name) . '</td>';
+                    echo '<td>' . esc_html($user->user_email) . '</td>';
+                    echo '<td>
+                    <a href="?admin_page=students&view_student='. esc_attr($user->ID) .'" class="button">'
+                        . __('عرض الملف', 'fashion-academy-lms') . '</a></td>';
+                    echo '</tr>';
+                }
+                ?>
+                </tbody>
+            </table>
+
+            <?php
+            // Add pagination for results
+            $total_pages = ceil($user_query->get_total() / $args['number']);
+            if ($total_pages > 1) {
+                echo '<div class="tablenav"><div class="tablenav-pages">';
+                echo paginate_links([
+                    'base'    => add_query_arg('paged', '%#%'),
+                    'format'  => '',
+                    'current' => $paged,
+                    'total'   => $total_pages,
+                ]);
+                echo '</div></div>';
             }
         }
     }
@@ -2430,8 +2743,8 @@ class FA_Frontend
         // Fetch all messages between admin and student
         $messages = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM $chat_table 
-         WHERE user_id = %d AND (sender_id = %d OR sender_id = %d) 
-         ORDER BY timestamp ASC",
+             WHERE user_id = %d AND (sender_id = %d OR sender_id = %d) 
+             ORDER BY timestamp ASC",
             $student_id,
             $admin_id,
             $student_id
@@ -2464,11 +2777,12 @@ class FA_Frontend
         <?php
     }
 
+
     public function render_homework_form($atts = [])
     {
         // Ensure user is logged in
         if (!is_user_logged_in()) {
-            return '<p>' . __('You must be logged in to submit homework.', 'fashion-academy-lms') . '</p>';
+            return '<p>' . __('يجب أن تكون مسجلاً للدخول لتقديم الواجب.', 'fashion-academy-lms') . '</p>';
         }
 
         $atts = shortcode_atts([
@@ -2524,7 +2838,7 @@ class FA_Frontend
                         <div class="fa-file-preview">
                             <span><?php echo esc_html(basename($file_url)); ?></span>
                             <button type="button" class="fa-remove-file" data-index="<?php echo esc_attr($index); ?>">
-                                <?php _e('إزالة', 'fashion-academy-lms'); ?>
+                                <?php _e('❌ إزالة', 'fashion-academy-lms'); ?>
                             </button>
                             <input type="hidden" name="existing_files[]" value="<?php echo esc_attr($file_url); ?>"/>
                         </div>
@@ -2533,14 +2847,16 @@ class FA_Frontend
             </div>
 
             <p>
-                <label for="homework_notes"><?php _e('دع كلماتك تروي جمال تصميمك وقصته:', 'fashion-academy-lms'); ?></label><br>
-                <textarea name="homework_notes" id="homework_notes" rows="4"
-                          cols="50" placeholder="<?php _e('اخبرنا بفكرتك أو الرسالة وراء تصميمك...', 'fashion-academy-lms'); ?>"><?php echo esc_textarea($notes); ?></textarea>
+                <label for="lesson_difficulties"><?php _e('هل واجهت أي صعوبات أثناء الدرس؟', 'fashion-academy-lms'); ?></label><br>
+                <textarea name="lesson_difficulties" id="lesson_difficulties" rows="4"
+                          placeholder="<?php _e('شاركنا ملاحظاتك لتحسين تجربتك.', 'fashion-academy-lms'); ?>"></textarea>
             </p>
 
-            <p>
-                <input type="submit" value="<?php _e('قدم واجبك بكل أناقة!', 'fashion-academy-lms'); ?>"/>
-            </p>
+
+                <button type="submit" class="fa-submit-button">
+                    <?php _e('✨ قدم واجبك بكل أناقة!', 'fashion-academy-lms'); ?>
+                </button>
+
         </form>
         <?php
 
@@ -2548,16 +2864,17 @@ class FA_Frontend
         wp_localize_script('fa-frontend-script', 'faLMS', array_merge(
             $this->get_translated_script_data(),
             array(
-                'removeButtonText' => __('إزالة', 'fashion-academy-lms'), // Localized text for 'Remove' button
+                'removeButtonText' => __('❌ إزالة', 'fashion-academy-lms'), // Localized text for 'Remove' button with emoji
             )
         ));
 
         if (isset($_GET['homework_submitted']) && $_GET['homework_submitted'] === 'true') {
-            echo '<p class="fa-success-message">' . __('تم تقديم واجبك بنجاح!', 'fashion-academy-lms') . '</p>';
+            echo '<p class="fa-success-message">' . __('🎉 تم تقديم واجبك بنجاح! استمر في التألق.', 'fashion-academy-lms') . '</p>';
         }
 
         return ob_get_clean();
     }
+
 
 
 
@@ -2948,19 +3265,24 @@ class FA_Frontend
 
     public function fa_send_chat_message()
     {
+        fa_plugin_log('fa_send_chat_message AJAX handler triggered.');
+
         check_ajax_referer('fa_chat_nonce', 'nonce');
 
         if (!is_user_logged_in()) {
+            fa_plugin_log('User not logged in.');
             wp_send_json_error(__('غير مصرح لك بأداء هذا الإجراء.', 'fashion-academy-lms'));
         }
 
         $user_id = get_current_user_id();
         $admin_id = get_option('fa_admin_user_id');
-        fa_plugin_log('admin==' . $admin_id);
         $recipient_id = isset($_POST['recipient_id']) ? intval($_POST['recipient_id']) : 0;
         $message = isset($_POST['message']) ? sanitize_textarea_field($_POST['message']) : '';
 
+        fa_plugin_log("User ID: $user_id, Admin ID: $admin_id, Recipient ID: $recipient_id, Message: $message");
+
         if (empty($message) || $recipient_id <= 0) {
+            fa_plugin_log('Invalid message or recipient.');
             wp_send_json_error(__('الرسالة أو المستلم غير صالح.', 'fashion-academy-lms'));
         }
 
@@ -2978,7 +3300,7 @@ class FA_Frontend
         global $wpdb;
         $chat_table = $wpdb->prefix . 'chat_messages';
 
-        $wpdb->insert(
+        $inserted = $wpdb->insert(
             $chat_table,
             array(
                 'user_id'       => $recipient_user_id, // Conversation tied to the student
@@ -2999,17 +3321,25 @@ class FA_Frontend
         );
 
         if ($wpdb->insert_id) {
-            wp_send_json_success(__('تم إرسال الرسالة بنجاح.', 'fashion-academy-lms'));
+            fa_plugin_log('Message inserted successfully with ID: ' . $wpdb->insert_id);
+            wp_send_json_success($message); // Return the actual message content
         } else {
+            fa_plugin_log('Failed to insert message.');
             wp_send_json_error(__('فشل في إرسال الرسالة.', 'fashion-academy-lms'));
         }
+
+        wp_die();
     }
+
 
     public function fa_fetch_chat_messages()
     {
+        fa_plugin_log('fa_fetch_chat_messages AJAX handler triggered.');
+
         check_ajax_referer('fa_chat_nonce', 'nonce');
 
         if (!is_user_logged_in()) {
+            fa_plugin_log('User not logged in.');
             wp_send_json_error(__('غير مصرح لك بأداء هذا الإجراء.', 'fashion-academy-lms'));
         }
 
@@ -3018,7 +3348,10 @@ class FA_Frontend
         $recipient_id = isset($_POST['recipient_id']) ? intval($_POST['recipient_id']) : 0;
         $last_timestamp = isset($_POST['last_timestamp']) ? sanitize_text_field($_POST['last_timestamp']) : '';
 
+        fa_plugin_log("User ID: $user_id, Admin ID: $admin_id, Recipient ID: $recipient_id, Last Timestamp: $last_timestamp");
+
         if ($recipient_id <= 0) {
+            fa_plugin_log('Invalid recipient ID.');
             wp_send_json_error(__('المستلم غير صالح.', 'fashion-academy-lms'));
         }
 
@@ -3037,7 +3370,8 @@ class FA_Frontend
         $query = $wpdb->prepare(
             "SELECT * FROM $chat_table 
          WHERE user_id = %d 
-         AND (sender_id = %d OR sender_id = %d)",
+         AND (sender_id = %d OR sender_id = %d) 
+         ORDER BY timestamp ASC",
             $conversation_user_id,
             $conversation_user_id,
             get_current_user_id()
@@ -3047,13 +3381,67 @@ class FA_Frontend
             $query .= $wpdb->prepare(" AND timestamp > %s", $last_timestamp);
         }
 
+        fa_plugin_log("Executing Query: $query");
+
         $messages = $wpdb->get_results($query);
 
         if ($messages) {
+            fa_plugin_log('Messages retrieved successfully.');
             wp_send_json_success($messages);
         } else {
+            fa_plugin_log('No new messages found.');
             wp_send_json_success(array()); // No new messages
         }
+    }
+
+
+
+    /**
+     * AJAX handler to fetch unread message counts.
+     */
+    public function fa_fetch_unread_count()
+    {
+        fa_plugin_log('fa_fetch_unread_count AJAX handler triggered.');
+
+        check_ajax_referer('fa_chat_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            fa_plugin_log('User not logged in.');
+            wp_send_json_error(__('غير مصرح لك بأداء هذا الإجراء.', 'fashion-academy-lms'));
+        }
+
+        $user_id = get_current_user_id();
+        $admin_id = get_option('fa_admin_user_id');
+
+        if (current_user_can('manage_options')) {
+            // Admin: count unread messages from all students
+            global $wpdb;
+            $chat_table = $wpdb->prefix . 'chat_messages';
+            $unread = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $chat_table 
+                 WHERE user_id = %d 
+                 AND sender_id != %d 
+                 AND read_status = 0",
+                $user_id,
+                $admin_id
+            ));
+        } else {
+            // Student: count unread messages from admin
+            global $wpdb;
+            $chat_table = $wpdb->prefix . 'chat_messages';
+            $unread = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $chat_table 
+                 WHERE user_id = %d 
+                 AND sender_id = %d 
+                 AND read_status = 0",
+                $user_id,
+                $admin_id
+            ));
+        }
+
+        wp_send_json_success(intval($unread));
+
+        wp_die();
     }
 
 
@@ -3076,5 +3464,3 @@ class FA_Frontend
     }
 
 }
-
-?>

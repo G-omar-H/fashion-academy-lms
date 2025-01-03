@@ -23,6 +23,7 @@ jQuery(document).ready(function($) {
         $.ajax({
             url: faChat.ajaxUrl,
             method: 'POST',
+            dataType: 'json', // Ensure response is treated as JSON
             data: {
                 action: 'fa_send_chat_message',
                 nonce: faChat.nonce,
@@ -30,14 +31,16 @@ jQuery(document).ready(function($) {
                 message: message
             },
             success: function(response) {
-                if (response.success) {
-                    appendMessage(response.data, 'sent');
+                if (typeof response === 'object' && response.success) {
+                    appendMessage(response.data, 'sent'); // response.data is the message content
                 } else {
-                    alert(response.data);
+                    alert(faChat.errorMessage || 'An unexpected error occurred.');
+                    console.log('Unexpected AJAX response:', response);
                 }
             },
-            error: function() {
-                alert(faChat.errorMessage || 'An error occurred.');
+            error: function(jqXHR, textStatus, errorThrown) {
+                alert(faChat.errorMessage || 'حدث خطأ أثناء إرسال الرسالة.');
+                console.log('AJAX Error:', textStatus, errorThrown);
             }
         });
     });
@@ -56,6 +59,7 @@ jQuery(document).ready(function($) {
         $.ajax({
             url: faChat.ajaxUrl,
             method: 'POST',
+            dataType: 'json',
             data: {
                 action: 'fa_fetch_chat_messages',
                 nonce: faChat.nonce,
@@ -63,15 +67,15 @@ jQuery(document).ready(function($) {
                 last_timestamp: lastTimestamp
             },
             success: function(response) {
-                if (response.success && response.data.length > 0) {
+                if (typeof response === 'object' && response.success && Array.isArray(response.data) && response.data.length > 0) {
                     response.data.forEach(function(msg) {
                         var sender = msg.sender_id == faChat.adminUserId ? 'sent' : 'received';
                         appendMessage(msg.message, sender);
                     });
                 }
             },
-            error: function() {
-                console.log('Failed to fetch messages.');
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log('Failed to fetch messages:', textStatus, errorThrown);
             }
         });
     }

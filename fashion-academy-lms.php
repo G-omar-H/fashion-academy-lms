@@ -100,4 +100,12 @@ function fa_lms_init() {
     new FA_Frontend();
 }
 
-?>
+fa_plugin_log('Admin User ID: ' . get_option('fa_admin_user_id'));
+
+// In your main plugin file or a separate included file
+add_action('wp_ajax_fa_test_ajax', 'fa_test_ajax_handler');
+add_action('wp_ajax_nopriv_fa_test_ajax', 'fa_test_ajax_handler');
+function fa_test_ajax_handler() {
+    fa_plugin_log('fa_test_ajax_handler triggered.');
+    wp_send_json_success('AJAX is working!');
+}

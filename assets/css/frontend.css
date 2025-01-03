@@ -1,40 +1,40 @@
-/* ===================================================
+/* ============================================================
    FA_Frontend Enhanced Stylesheet
    Modern Futurist Design for Arabic Fashion Academy LMS
-   =================================================== */
+   ============================================================ */
 
-/* ===================================================
+/* ============================================================
    1. Importing Fonts and Icons
-   =================================================== */
+   ============================================================ */
 
 /* 1.1 Google Fonts: Tajawal for body text and Amiri for headings */
 @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap');
 
-/* 1.2 Font Awesome for additional icons */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+/* 1.2 Font Awesome Icons */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'); /* Ensure only one Font Awesome import */
 
-/* ===================================================
+/* ============================================================
    2. CSS Variables (Root Variables) for Theming
-   =================================================== */
+   ============================================================ */
 :root {
     /* 2.1 Enhanced Color Palette */
-    --primary-color: #1B1B1F; /* Slightly deeper charcoal */
-    --secondary-color: #FF385C; /* Rich Crimson */
-    --accent-color: #23C48E; /* Vibrant Teal */
+    --primary-color: #2C3E50; /* Darker, more sophisticated */
+    --secondary-color: #E91E63; /* Vibrant pink for accents */
+    --accent-color: #9C27B0; /* Purple accents */
     --background-color: #F5F5FB; /* Soft White Mist */
     --card-background: #FFFFFF; /* Bright White */
-    --text-color: #2B2B2D; /* Soft Black */
-    --muted-text-color: #A8A8B3; /* Light Gray */
-    --link-color: #FF385C; /* Crimson for links */
-    --link-hover-color: #FF5373; /* Warm Coral */
-    --border-color: #E5E5E5; /* Light Gray */
-    --error-color: #FF6F61; /* Warm Red */
+    --text-color: #34495E; /* Soft Black */
+    --muted-text-color: #7F8C8D; /* Light Gray */
+    --link-color: #E91E63; /* Crimson for links */
+    --link-hover-color: #D81B60; /* Warm Coral */
+    --border-color: #BDC3C7; /* Light Gray */
+    --error-color: #E74C3C; /* Warm Red */
     --success-color: #2ECC71; /* Fresh Green */
 
     /* 2.2 Button Colors */
-    --button-background: linear-gradient(90deg, #FF385C, #FF5373); /* Gradient Crimson */
+    --button-background: linear-gradient(135deg, #E91E63, #9C27B0); /* Gradient Crimson */
     --button-color: #FFFFFF; /* White Text */
-    --button-hover-background: linear-gradient(90deg, #FF5373, #FF385C); /* Reverse Gradient */
+    --button-hover-background: linear-gradient(135deg, #D81B60, #8E24AA); /* Reverse Gradient */
 
     /* 2.3 Input Colors */
     --input-background: #FFFFFF; /* Clean White */
@@ -71,9 +71,9 @@
     --neon-hover: 0 0 15px var(--link-hover-color);
 }
 
-/* ===================================================
+/* ============================================================
    3. Global Styles
-   =================================================== */
+   ============================================================ */
 
 /* 3.1 Box Sizing and Resets */
 *,
@@ -170,116 +170,122 @@ ul ul, ol ol {
     flex-direction: column;
     align-items: center;
 }
-/* ===================================================
-   Responsive Global Styles for Mobile
-   =================================================== */
 
-@media (max-width: 768px) {
-    :root {
-        /* Adjust Font Sizes for Better Readability */
-        --base-font-size: 14px;
-        --line-height-base: 1.5;
+/* ============================================================
+   4. Buttons
+   ============================================================ */
 
-        /* Refine Spacing for Compact Layout */
-        --spacing-md: 12px;
-        --spacing-lg: 16px;
-        --spacing-xl: 24px;
-
-        /* Simplify Shadows for Lightweight Rendering */
-        --shadow-light: 0px 2px 8px rgba(0, 0, 0, 0.05);
-        --shadow-dark: 0px 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Body Styling */
-    body {
-        background-attachment: scroll; /* Optimize for mobile */
-        font-size: var(--base-font-size);
-        line-height: var(--line-height-base);
-        padding: var(--spacing-sm);
-    }
-
-    /* Links */
-    a {
-        font-size: 14px; /* Adjust link size for small screens */
-    }
-
-    a:hover {
-        transform: none; /* Avoid hover animations on touch devices */
-    }
-
-    a::after {
-        height: 1px; /* Subtle underline for hover */
-    }
-
-    /* Headings */
-    h1, h2, h3, h4, h5, h6 {
-        font-size: calc(var(--base-font-size) * 1.2); /* Slight scaling */
-        margin-bottom: var(--spacing-sm);
-        letter-spacing: 0.5px; /* Subtle adjustment for compact view */
-    }
-
-    h1 {
-        font-size: calc(var(--base-font-size) * 2); /* Scale main headings */
-    }
-
-    h2 {
-        font-size: calc(var(--base-font-size) * 1.8);
-    }
-
-    h3 {
-        font-size: calc(var(--base-font-size) * 1.6);
-    }
-
-    /* Paragraphs */
-    p {
-        font-size: var(--base-font-size);
-        margin-bottom: var(--spacing-md); /* Reduce paragraph spacing */
-        line-height: 1.6; /* Enhance readability */
-    }
-
-    /* Lists */
-    ul, ol {
-        margin-bottom: var(--spacing-md);
-        padding-right: var(--spacing-sm);
-    }
-
-    ul ul, ol ol {
-        margin-bottom: var(--spacing-xs);
-    }
-
-    /* Container */
-    .container {
-        width: 95%; /* Use more screen space */
-        padding: var(--spacing-md) var(--spacing-sm);
-    }
-
-    /* Enhance Buttons for Touch Interaction */
-    button,
-    input[type="submit"] {
-        padding: var(--spacing-xs) var(--spacing-md); /* Compact touch-friendly buttons */
-        font-size: 14px;
-        border-radius: var(--border-radius-md); /* Softer edges */
-        box-shadow: var(--shadow-light); /* Lightweight shadow */
-    }
-
-    /* Minimalistic Lists for Compact UI */
-    ul, ol {
-        list-style-position: outside; /* Align bullets */
-        padding-left: var(--spacing-sm);
-    }
+/* 4.1 Base Button Styling */
+button,
+input[type="submit"] {
+    background-color: var(--button-background);
+    color: var(--button-color);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-light);
 }
 
-/* ===================================================
-   4. Typography Enhancements
-   =================================================== */
+button:hover,
+input[type="submit"]:hover {
+    background-color: var(--button-hover-background);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+}
 
-/* 4.1 Form Labels */
+button:active,
+input[type="submit"]:active {
+    transform: translateY(0); /* Reset transform on click */
+    box-shadow: var(--shadow-light); /* Subtle shadow for pressed state */
+    opacity: 0.95; /* Feedback on press */
+}
+
+/* 4.2 Primary Button */
+.button-primary {
+    background: linear-gradient(90deg, var(--button-background), var(--accent-color));
+    color: var(--button-color);
+    box-shadow: var(--shadow-light);
+    transition: all var(--transition-speed);
+}
+
+.button-primary:hover {
+    background: linear-gradient(90deg, var(--accent-color), var(--button-hover-background));
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(33, 161, 121, 0.4); /* Glow on hover */
+}
+
+/* 4.3 Danger Button */
+.button-danger {
+    background: linear-gradient(90deg, #C3073F, #950740);
+    color: #fff;
+    box-shadow: var(--shadow-light);
+}
+
+.button-danger:hover {
+    background: linear-gradient(90deg, #950740, #720022); /* Subtle gradient change */
+    box-shadow: 0 4px 20px rgba(195, 7, 63, 0.5); /* Glow effect for danger buttons */
+}
+
+/* 4.4 Inline Buttons */
+.button-inline {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 14px;
+    border-radius: var(--border-radius-sm);
+    background-color: transparent;
+    color: var(--link-color);
+    cursor: pointer;
+    transition: color var(--transition-speed), transform var(--transition-speed);
+}
+
+.button-inline:hover {
+    color: var(--link-hover-color);
+    transform: translateY(-2px); /* Lift effect */
+    text-decoration: underline; /* Indicate interactivity */
+}
+
+/* 4.5 Additional Button Elements */
+.button-text {
+    margin-left: var(--spacing-xs);
+    font-size: 14px;
+    color: inherit;
+    transition: color var(--transition-speed);
+}
+
+.fa-icon {
+    margin-left: var(--spacing-xs);
+    font-size: 18px;
+    transition: transform var(--transition-speed) ease, color var(--transition-speed);
+    color: inherit;
+}
+
+.button:hover .fa-icon {
+    transform: scale(1.2);
+    color: var(--link-hover-color); /* Icon color follows hover state */
+}
+
+/* ============================================================
+   5. Forms and Inputs
+   ============================================================ */
+
+/* 5.1 Form Labels */
 label {
-    font-weight: 700;
+    font-family: var(--body-font), sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--primary-color);
     display: block;
     margin-bottom: var(--spacing-xs);
-    color: var(--primary-color);
-    font-size: 14px;
     text-transform: capitalize;
     letter-spacing: 0.5px;
     transition: color var(--transition-speed), transform var(--transition-speed);
@@ -290,7 +296,7 @@ label:hover {
     transform: scale(1.05); /* Subtle zoom */
 }
 
-/* 4.2 Input Fields */
+/* 5.2 Input Fields */
 input,
 select,
 textarea {
@@ -328,7 +334,7 @@ textarea:focus::placeholder {
     color: var(--text-color);
 }
 
-/* 4.3 Textarea Specific */
+/* 5.3 Textarea Specific */
 textarea {
     resize: vertical;
     min-height: 120px;
@@ -358,521 +364,612 @@ textarea::-webkit-scrollbar-thumb:hover {
     background: var(--secondary-color); /* Dynamic hover effect */
 }
 
-/* ===================================================
-   Responsive Typography Enhancements for Mobile
-   =================================================== */
+/* ============================================================
+   6. Dashboard Layout
+   ============================================================ */
 
-@media (max-width: 768px) {
-    /* 4.1 Form Labels */
-    label {
-        font-size: 12px; /* Slightly smaller for compact view */
-        margin-bottom: var(--spacing-xs); /* Adjust spacing */
-        text-transform: none; /* Simplify styling for smaller screens */
-        letter-spacing: 0.4px;
-    }
-
-    label:hover {
-        transform: none; /* Remove zoom effect for touch devices */
-    }
-
-    /* 4.2 Input Fields */
-    input,
-    select,
-    textarea {
-        padding: var(--spacing-xs) var(--spacing-sm); /* Compact input padding */
-        font-size: 14px; /* Adjust font size for better alignment */
-        margin-bottom: var(--spacing-md); /* Reduce spacing between fields */
-        border-radius: var(--border-radius-sm); /* Softer edges for smaller screens */
-        transition: box-shadow 0.2s ease; /* Speed up transitions for better responsiveness */
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-        box-shadow: 0 0 8px rgba(35, 196, 142, 0.4); /* Subtle glow for focus */
-        background-color: #F0FFF9; /* Softer green tint */
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-        font-size: 12px; /* Compact placeholder font size */
-        transform: none; /* Keep placeholder stable */
-    }
-
-    input:focus::placeholder,
-    textarea:focus::placeholder {
-        color: var(--muted-text-color); /* Slight contrast on focus */
-    }
-
-    /* 4.3 Textarea Specific */
-    textarea {
-        min-height: 100px; /* Adjust for smaller screens */
-        max-height: 300px; /* Ensure usability */
-        line-height: 1.4; /* Tighter line spacing */
-        scrollbar-width: none; /* Hide scrollbar for mobile */
-    }
-
-    /* Custom Scrollbar for Webkit Browsers */
-    textarea::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    textarea::-webkit-scrollbar-track {
-        background: var(--input-background);
-    }
-
-    textarea::-webkit-scrollbar-thumb {
-        background: var(--accent-color);
-        border-radius: var(--border-radius-sm);
-    }
-
-    textarea::-webkit-scrollbar-thumb:hover {
-        background: var(--secondary-color); /* Dynamic hover effect */
-    }
-
-    /* Adjustments for Touch-Optimized Design */
-    textarea:active {
-        background-color: #EFFFFA; /* Slight color feedback */
-    }
-}
-
-
-/* ===================================================
-   5. Buttons
-   =================================================== */
-
-/* 5.1 Base Button Styling */
-button,
-input[type="submit"] {
-    background-color: var(--button-background);
-    color: var(--button-color);
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-light);
-}
-
-button:hover,
-input[type="submit"]:hover {
-    background-color: var(--button-hover-background);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
-}
-
-button:active,
-input[type="submit"]:active {
-    transform: translateY(0); /* Reset transform on click */
-    box-shadow: var(--shadow-light); /* Subtle shadow for pressed state */
-    opacity: 0.95; /* Feedback on press */
-}
-
-/* 5.2 Primary Button */
-.button-primary {
-    background: linear-gradient(90deg, var(--button-background), var(--accent-color));
-    color: var(--button-color);
-    box-shadow: var(--shadow-light);
-    transition: all var(--transition-speed);
-}
-
-.button-primary:hover {
-    background: linear-gradient(90deg, var(--accent-color), var(--button-hover-background));
-    color: #fff;
-    box-shadow: 0 4px 20px rgba(33, 161, 121, 0.4); /* Glow on hover */
-}
-
-/* 5.3 Danger Button */
-.button-danger {
-    background: linear-gradient(90deg, #C3073F, #950740);
-    color: #fff;
-    box-shadow: var(--shadow-light);
-}
-
-.button-danger:hover {
-    background: linear-gradient(90deg, #950740, #720022); /* Subtle gradient change */
-    box-shadow: 0 4px 20px rgba(195, 7, 63, 0.5); /* Glow effect for danger buttons */
-}
-
-/* 5.4 Inline Buttons */
-.button-inline {
-    display: inline-flex;
-    align-items: center;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 14px;
-    border-radius: var(--border-radius-sm);
-    background-color: transparent;
-    color: var(--link-color);
-    cursor: pointer;
-    transition: color var(--transition-speed), transform var(--transition-speed);
-}
-
-.button-inline:hover {
-    color: var(--link-hover-color);
-    transform: translateY(-2px); /* Lift effect */
-    text-decoration: underline; /* Indicate interactivity */
-}
-
-/* 5.5 Additional Button Elements */
-.button-text {
-    margin-left: var(--spacing-xs);
-    font-size: 14px;
-    color: inherit;
-    transition: color var(--transition-speed);
-}
-
-.fa-icon {
-    margin-left: var(--spacing-xs);
-    font-size: 18px;
-    transition: transform var(--transition-speed) ease, color var(--transition-speed);
-    color: inherit;
-}
-
-.button:hover .fa-icon {
-    transform: scale(1.2);
-    color: var(--link-hover-color); /* Icon color follows hover state */
-}
-
-/* ===================================================
-   Responsive Button Styling for Mobile
-   =================================================== */
-
-@media (max-width: 768px) {
-    /* 5.1 Base Button Styling */
-    button,
-    input[type="submit"] {
-        font-size: 14px; /* Slightly smaller font for compact screens */
-        padding: var(--spacing-xs) var(--spacing-sm); /* Adjust padding for touch devices */
-        border-radius: var(--border-radius-sm); /* Softer edges for smaller screens */
-        box-shadow: none; /* Simplify shadow for mobile */
-        transition: background-color 0.2s ease, transform 0.2s ease; /* Faster transitions for mobile responsiveness */
-    }
-
-    button:hover,
-    input[type="submit"]:hover {
-        transform: none; /* Remove lift effect for better touch experience */
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for hover */
-    }
-
-    button:active,
-    input[type="submit"]:active {
-        transform: scale(0.98); /* Slight shrink effect on press */
-        opacity: 0.9; /* Visual feedback */
-    }
-
-    /* 5.2 Primary Button */
-    .button-primary {
-        font-size: 14px; /* Compact font size */
-        box-shadow: none; /* Minimal shadow on mobile */
-        padding: var(--spacing-xs) var(--spacing-md); /* Optimize padding for thumb-friendly buttons */
-    }
-
-    .button-primary:hover {
-        transform: none; /* Remove hover lift */
-        box-shadow: 0 2px 10px rgba(33, 161, 121, 0.3); /* Subtle glow */
-    }
-
-    /* 5.3 Danger Button */
-    .button-danger {
-        font-size: 14px;
-        padding: var(--spacing-xs) var(--spacing-md);
-        box-shadow: none;
-    }
-
-    .button-danger:hover {
-        box-shadow: 0 2px 10px rgba(195, 7, 63, 0.3); /* Subtle glow for danger buttons */
-    }
-
-    /* 5.4 Inline Buttons */
-    .button-inline {
-        font-size: 12px; /* Smaller font size for inline elements */
-        padding: var(--spacing-xs); /* Minimal padding for compact design */
-        transform: none; /* Remove hover effect for better mobile usability */
-    }
-
-    .button-inline:hover {
-        text-decoration: underline; /* Maintain interactivity indication */
-    }
-
-    /* 5.5 Additional Button Elements */
-    .button-text {
-        font-size: 12px; /* Adjust text size for smaller screens */
-    }
-
-    .fa-icon {
-        font-size: 16px; /* Scale icons proportionally */
-    }
-
-    button:hover .fa-icon {
-        transform: none; /* Simplify hover effects */
-    }
-}
-
-
-/* ===================================================
-   6. Forms
-   =================================================== */
-
-/* 6.1 Registration & Login Forms */
-#fa-register-form,
-#fa-login-form,
-.fa-homework-form {
+/* 6.1 Student Dashboard Container */
+.fa-student-dashboard-container {
     background-color: var(--card-background);
-    padding: var(--spacing-lg);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-light);
-    max-width: 500px;
-    margin: var(--spacing-xl) auto;
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
 }
 
-#fa-register-form:hover,
-#fa-login-form:hover,
-.fa-homework-form:hover {
+.fa-student-dashboard-container:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-dark);
-    background-color: #FFF8F5; /* Subtle background change on hover */
 }
 
-/* 6.2 Form Headings with Underline */
-#fa-register-form h3,
-#fa-login-form h3,
-.fa-homework-form h3 {
+/* 6.2 Dashboard Heading */
+.fa-student-dashboard-container h2 {
     text-align: center;
     margin-bottom: var(--spacing-lg);
-    font-size: 28px;
+    font-size: 36px;
     color: var(--primary-color);
     position: relative;
     text-transform: uppercase; /* Emphasize headings */
     letter-spacing: 1px;
 }
 
-#fa-register-form h3::after,
-#fa-login-form h3::after,
-.fa-homework-form h3::after {
-    content: '';
-    position: absolute;
-    bottom: -var(--spacing-md);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100px; /* Wider underline */
-    height: 4px; /* Thicker underline */
-    background: linear-gradient(90deg, var(--secondary-color), var(--accent-color)); /* Enhanced gradient */
-    border-radius: 2px;
+/* 6.3 Dashboard Layout Flexbox */
+.fa-student-dashboard-layout {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
 }
 
-/* 6.3 Homework Form File Preview */
-.fa-homework-form .fa-file-preview {
+/* 6.4 Lessons Sidebar */
+.fa-lessons-sidebar {
+    background-color: var(--background-color);
+    padding: 2rem;
+    border-radius: var(--border-radius-md);
+    max-height: 800px;
+    overflow-y: auto;
+    box-shadow: var(--shadow-light);
+    transition: box-shadow var(--transition-speed), transform var(--transition-speed), background-color var(--transition-speed);
+}
+
+.fa-lessons-sidebar:hover {
+    box-shadow: var(--shadow-dark);
+}
+
+.fa-lessons-sidebar h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    letter-spacing: 0.5px;
+}
+
+.fa-modules-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+/* ============================================================
+   7. Module Items Enhancements
+   ============================================================ */
+
+/* 7.1 Unlocked Module Item */
+.fa-module-item:not(.fa-module-locked) {
+    background: linear-gradient(135deg, #E91E63, #9C27B0); /* Vibrant gradient */
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 1.5rem;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background var(--transition-speed);
+}
+
+.fa-module-item:not(.fa-module-locked):hover {
+    transform: translateY(-3px); /* Lift effect */
+    box-shadow: var(--shadow-dark);
+    background: linear-gradient(135deg, #D81B60, #8E24AA); /* Slight gradient change on hover */
+}
+
+.fa-module-item:not(.fa-module-locked) .fa-module-toggle {
+    color: #ffffff; /* White text for contrast */
+}
+
+.fa-module-item:not(.fa-module-locked) .fa-toggle-icon i.fa-plus,
+.fa-module-item:not(.fa-module-locked) .fa-toggle-icon i.fa-minus {
+    color: #ffffff; /* White icons */
+    transition: transform var(--transition-speed), color var(--transition-speed);
+}
+
+.fa-module-item:not(.fa-module-locked) .fa-toggle-icon i.fa-plus:hover,
+.fa-module-item:not(.fa-module-locked) .fa-toggle-icon i.fa-minus:hover {
+    color: #FFD700; /* Gold color on hover */
+}
+
+.fa-module-item:not(.fa-module-locked) .fa-toggle-icon i.fa-plus.active,
+.fa-module-item:not(.fa-module-locked) .fa-toggle-icon i.fa-minus.active {
+    transform: rotate(180deg); /* Rotate icons when active */
+    color: #FFD700; /* Gold color when active */
+}
+
+/* 7.2 Locked Module Item */
+.fa-module-item.fa-module-locked {
+    background-color: #F0F0F0; /* Light grey background */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 1.5rem;
+    opacity: 0.6; /* Reduced opacity for dormancy */
+    cursor: not-allowed; /* Indicate non-interactivity */
+    transition: opacity var(--transition-speed), background-color var(--transition-speed);
+}
+
+.fa-module-item.fa-module-locked:hover {
+    background-color: #F0F0F0; /* Maintain background on hover */
+    box-shadow: none; /* No shadow on hover */
+    transform: none; /* No lift effect */
+}
+
+.fa-module-item.fa-module-locked .fa-module-toggle {
+    color: #7F8C8D; /* Muted text color */
+}
+
+.fa-module-item.fa-module-locked .fa-toggle-icon i.fa-lock {
+    color: #E74C3C; /* Prominent red lock icon */
+    transition: color var(--transition-speed);
+}
+
+.fa-module-item.fa-module-locked .fa-toggle-icon i.fa-lock:hover {
+    color: #C0392B; /* Darker red on hover */
+}
+
+.fa-module-item.fa-module-locked .fa-module-badge {
+    background-color: #E74C3C; /* Red badge for locked status */
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-left: 8px;
+}
+
+/* 7.3 Module Toggle Button */
+.fa-module-toggle {
+    width: 100%;
+    text-align: left;
+    background: transparent; /* Remove default background */
+    border: none;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    font-size: 1rem;
+    position: relative;
+    border-radius: var(--border-radius-sm);
     display: flex;
     align-items: center;
-    background-color: #FFF5E5; /* Warm background tone */
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: 1px solid #FFDAB9;
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--spacing-sm);
+    justify-content: space-between;
+    transition: background var(--transition-speed), color var(--transition-speed);
+}
+
+/* 7.4 Unlocked Module Toggle Hover */
+.fa-module-item:not(.fa-module-locked) .fa-module-toggle:hover {
+    background: rgba(255, 255, 255, 0.2); /* Light overlay on hover */
+}
+
+/* 7.5 Locked Module Toggle Styling (Cursor already set to not-allowed in parent) */
+.fa-module-item.fa-module-locked .fa-module-toggle:hover {
+    background: transparent; /* No background change on hover */
+}
+
+/* 7.6 New: Lesson Right Icon */
+.fa-lesson-icon {
+    font-size: 1rem;
+    color: var(--muted-text-color);
+    margin-left: var(--spacing-sm);
+    transition: transform var(--transition-speed), color var(--transition-speed);
+}
+
+.fa-lesson-icon i {
+    color: inherit; /* Inherit color from parent */
+}
+
+.fa-module-item:not(.fa-module-locked) .fa-lesson-icon:hover i,
+.fa-module-item:not(.fa-module-locked) .fa-lesson-icon.active i {
+    color: var(--secondary-color);
+    transform: translateX(5px);
+}
+
+.fa-lessons-sublist {
+    background-color: #FAFAFA;
+    padding: 1rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-light);
+    transition: box-shadow var(--transition-speed), transform var(--transition-speed);
+}
+
+/* ============================================================
+   8. Lesson Items Enhancements
+   ============================================================ */
+
+/* 8.1 Accessible Lesson Links */
+.fa-lesson-item a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color var(--transition-speed), transform var(--transition-speed);
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Added for better alignment */
+}
+
+.fa-lesson-item a:hover,
+.fa-lesson-item a.active-lesson {
+    color: var(--secondary-color);
+    font-weight: 700;
+    text-decoration: underline;
+    transform: translateX(5px);
+}
+
+/* 8.2 Locked Lesson Styling */
+.fa-locked-lesson {
+    color: var(--error-color);
+    font-size: 0.9rem;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.fa-locked-lesson i {
+    color: var(--error-color);
+}
+
+/* ============================================================
+   9. Grade Information Enhancements
+   ============================================================ */
+
+/* 9.1 Grade Information */
+.fa-grade-info {
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 2px 6px; /* Added padding for better spacing */
+    border-radius: var(--border-radius-sm); /* Rounded corners */
+    background-color: rgba(0, 0, 0, 0.05); /* Light background for contrast */
+}
+
+/* 9.2 Outstanding Grade */
+.fa-grade-outstanding .fa-grade-icon {
+    color: gold;
+}
+
+/* 9.3 Passed Grade */
+.fa-grade-passed .fa-grade-icon {
+    color: green;
+}
+
+/* 9.4 Failed Grade */
+.fa-grade-failed .fa-grade-icon {
+    color: red;
+}
+
+/* ============================================================
+   10. Lesson Content Area
+   ============================================================ */
+
+/* 10.1 Lesson Content Area */
+.fa-lesson-content {
+    flex: 2 1 700px;
+    padding: 2rem;
+    background-color: var(--card-background);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-light);
+    transition: box-shadow var(--transition-speed), transform var(--transition-speed);
+}
+
+.fa-lesson-content:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-dark);
+}
+
+.fa-lesson-content h2 {
+    margin-bottom: var(--spacing-lg);
+    font-size: 28px;
+    color: var(--primary-color);
+    letter-spacing: 0.5px;
+    text-transform: capitalize;
+}
+
+.fa-lesson-video {
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.fa-lesson-video video {
+    width: 100%;
+    max-width: 800px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-light);
+    transition: box-shadow var(--transition-speed);
+}
+
+.fa-lesson-video video:hover {
+    box-shadow: var(--shadow-dark);
+}
+
+.fa-lesson-content p {
+    font-size: 1rem;
+    color: #555555;
+    line-height: 1.8;
+    letter-spacing: 0.3px;
+}
+
+/* Updated Homework Submission Form Styles */
+
+/* 1. Form Wrapper */
+.fa-homework-form {
+    background: linear-gradient(135deg, #ffffff, #f8f8ff); /* Elegant white gradient */
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* Soft shadows */
+    max-width: 700px; /* Adjusted for better focus */
+    margin: 3rem auto;
+    transition: all 0.4s ease;
+    font-family: "Poppins", Arial, sans-serif; /* Modern typography */
+    border: 1px solid rgba(0, 0, 0, 0.05); /* Soft border for a luxury touch */
+}
+
+.fa-homework-form:hover {
+    transform: translateY(-5px); /* Lift animation */
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 2. Form Title (Optional for Branding or Context) */
+.fa-homework-form h1 {
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    color: #34495e; /* Softer tones for balance */
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 3. Form Labels */
+.fa-homework-form label {
     font-size: 14px;
-    color: var(--text-color);
-    transition: background-color var(--transition-speed);
+    font-weight: 600;
+    color: #6c757d; /* Neutral mid-grey */
+    margin-bottom: 0.5rem;
+    display: block;
+    text-transform: none; /* Simplicity over all-caps */
 }
 
-.fa-homework-form .fa-file-preview:hover {
-    background-color: #FFF2E0; /* Slight hover effect */
+/* 4. Input Fields: General */
+.fa-homework-form input[type="file"],
+.fa-homework-form textarea,
+.fa-homework-form input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 1.2rem;
+    border: 1px solid #ddd; /* Clean, minimal border */
+    border-radius: 10px; /* Softer feel */
+    font-family: "Roboto", sans-serif;
+    font-size: 14px;
+    background-color: #fdfdfd;
+    color: #333;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* Inner softness */
 }
 
+.fa-homework-form input[type="file"]:focus,
+.fa-homework-form textarea:focus,
+.fa-homework-form input[type="text"]:focus {
+    border-color: #3498db; /* Fashion blue focus */
+    box-shadow: 0 0 6px rgba(52, 152, 219, 0.4); /* Subtle glow on interaction */
+    outline: none;
+}
 
+/* 5. Textarea Styling */
+.fa-homework-form textarea {
+    min-height: 150px;
+    resize: vertical; /* User-friendly for mobile */
+}
 
-/* File Name */
-.fa-homework-form .fa-file-preview span {
-    flex: 1;
+/* 6. File Input */
+input[type="file"] {
+    background: #ffffff url('data:image/svg+xml;base64,...') no-repeat center;
+    padding: 1rem;
+    border: 2px dashed #cccccc;
+    border-radius: 16px;
+    color: #888888;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+}
+
+input[type="file"]:hover {
+    border-color: #3498db;
+    transform: scale(1.03); /* Enhance hover effect */
+}
+
+/* 7. File Preview Section */
+.fa-file-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f5f7fa;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Lift the element */
+}
+
+.fa-file-preview span {
+    font-size: 14px;
+    color: #333;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* 6.4 Remove File Button */
-.fa-homework-form .fa-remove-file {
-    background-color: #E74C3C;
-    color: #ffffff;
+.fa-remove-file {
+    background: linear-gradient(135deg, #ff6b6b, #e74c3c); /* Luxurious red gradient */
+    color: #fff;
     border: none;
-    padding: 6px 12px;
-    border-radius: var(--border-radius-sm);
-    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
     font-size: 12px;
-    transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.fa-homework-form .fa-remove-file:hover {
-    background-color: #C0392B;
-    transform: scale(1.1);
-    box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3); /* Glow on hover */
+.fa-remove-file:hover {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    transform: scale(1.1); /* Lift on hover */
 }
 
-/* 6.5 Spinner Section */
-.fa-spinner-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: var(--spacing-lg);
-    animation: fadeIn var(--transition-speed);
+/* 8. Submit Button */
+.fa-homework-form input[type="submit"] {
+    background: linear-gradient(to right, #27ae60, #2ecc71); /* Elegant green gradient */
+    color: #fff;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }
 
-.fa-spinner {
-    border: 6px solid #F3F3F3;
-    border-top: 6px solid var(--secondary-color);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: fa-spin 1s linear infinite;
+.fa-homework-form input[type="submit"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
 }
 
-@keyframes fa-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+/* 9. Success Message */
+.fa-success-message {
+    padding: 1rem;
+    background: #daf5e3;
+    color: #27ae60;
+    border: 1px solid #bbe5c3;
+    border-radius: 10px;
+    text-align: center;
+    margin-top: 1.5rem;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+/* Add subtle fade-in animation for success */
+.fa-success-message {
+    animation: fadeIn 0.5s ease-in-out;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
-/* 6.6 Waiting Message */
-.fa-waiting-msg {
-    margin-top: var(--spacing-sm);
-    color: var(--text-color);
-    font-style: italic;
-    font-size: 14px;
-    opacity: 0.85;
-    animation: fadeIn var(--transition-speed);
-}
+/* ============================================================
+   12. Notifications
+   ============================================================ */
 
-/* 6.7 Success Message */
-.fa-success-message {
-    padding: var(--spacing-sm) var(--spacing-md);
-    background-color: #D4EDDA;
-    color: #155724;
-    border: 1px solid #C3E6CB;
+/* 12.1 Success Messages */
+.notice-success {
+    background-color: #D4EDDA; /* Soft green background */
+    color: #155724; /* Dark green text */
+    border: 1px solid #C3E6CB; /* Greenish border */
     border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
     margin-bottom: var(--spacing-lg);
     text-align: center;
     font-weight: 700;
-    font-size: 16px;
-    box-shadow: var(--shadow-light);
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+    font-size: 16px; /* Ensure legibility */
+    line-height: 1.6;
+    box-shadow: var(--shadow-light); /* Add subtle depth */
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
 }
 
-.fa-success-message:hover {
-    transform: scale(1.05);
+.notice-success:hover {
+    transform: scale(1.02); /* Slight enlargement on hover */
+    background-color: #C9E8D3; /* Slightly darker green for hover */
+    box-shadow: var(--shadow-dark); /* Enhanced shadow on hover */
+}
+
+/* 12.2 Error Messages */
+.notice-error {
+    background-color: #F8D7DA; /* Soft red background */
+    color: #721C24; /* Dark red text */
+    border: 1px solid #F5C6CB; /* Reddish border */
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px; /* Ensure legibility */
+    line-height: 1.6;
+    box-shadow: var(--shadow-light); /* Add subtle depth */
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
+}
+
+.notice-error:hover {
+    transform: scale(1.02); /* Slight enlargement on hover */
+    background-color: #F4C3C8; /* Slightly darker red for hover */
+    box-shadow: var(--shadow-dark); /* Enhanced shadow on hover */
+}
+
+/* 12.3 Info Messages */
+.notice-info {
+    background-color: #D1ECF1; /* Soft blue background */
+    color: #0C5460; /* Dark blue text */
+    border: 1px solid #BEE5EB; /* Blue border */
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px; /* Ensure legibility */
+    line-height: 1.6;
+    box-shadow: var(--shadow-light);
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
+}
+
+.notice-info:hover {
+    transform: scale(1.02);
+    background-color: #BDE1E8; /* Slightly darker blue for hover */
     box-shadow: var(--shadow-dark);
 }
 
-/* ===================================================
-   Responsive Form Styling for Mobile
-   =================================================== */
-
-@media (max-width: 768px) {
-    /* 6.1 Registration & Login Forms */
-    #fa-register-form,
-    #fa-login-form,
-    .fa-homework-form {
-        max-width: 90%; /* Utilize full screen width */
-        padding: var(--spacing-md); /* Adjust padding for compact screens */
-        border-radius: var(--border-radius-sm); /* Softer corners */
-        box-shadow: none; /* Simplify shadow for mobile */
-        margin: var(--spacing-lg) auto; /* Center align forms */
-    }
-
-    #fa-register-form:hover,
-    #fa-login-form:hover,
-    .fa-homework-form:hover {
-        transform: none; /* Disable hover lift effect */
-        background-color: var(--card-background); /* Keep static background */
-        box-shadow: none;
-    }
-
-    /* 6.2 Form Headings with Underline */
-    #fa-register-form h3,
-    #fa-login-form h3,
-    .fa-homework-form h3 {
-        font-size: 22px; /* Scale down font size */
-        margin-bottom: var(--spacing-md);
-    }
-
-    #fa-register-form h3::after,
-    #fa-login-form h3::after,
-    .fa-homework-form h3::after {
-        width: 80px; /* Narrow underline for smaller screens */
-    }
-
-    /* 6.3 Homework Form File Preview */
-    .fa-homework-form .fa-file-preview {
-        padding: var(--spacing-xs) var(--spacing-xs); /* Compact padding */
-        font-size: 12px; /* Adjust font size for smaller screens */
-    }
-
-    .fa-homework-form .fa-file-preview:hover {
-        background-color: #FFF5E5; /* Minimal hover effect */
-    }
-
-    /* File Name */
-    .fa-homework-form .fa-file-preview span {
-        font-size: 12px; /* Scale font size for better readability */
-    }
-
-    /* 6.4 Remove File Button */
-    .fa-homework-form .fa-remove-file {
-        font-size: 10px; /* Smaller button text */
-        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
-        box-shadow: none; /* Remove shadow for mobile */
-    }
-
-    .fa-homework-form .fa-remove-file:hover {
-        transform: none; /* Simplify hover effects */
-        box-shadow: none;
-    }
-
-    /* 6.5 Spinner Section */
-    .fa-spinner-section {
-        margin-top: var(--spacing-md); /* Reduce margin for smaller screens */
-    }
-
-    .fa-spinner {
-        width: 40px; /* Smaller spinner size */
-        height: 40px;
-        border-width: 4px; /* Adjust border thickness */
-    }
-
-    /* 6.6 Waiting Message */
-    .fa-waiting-msg {
-        font-size: 12px; /* Compact font size */
-        opacity: 0.9; /* Slightly enhanced visibility */
-    }
-
-    /* 6.7 Success Message */
-    .fa-success-message {
-        font-size: 14px; /* Scale down font size */
-        padding: var(--spacing-sm); /* Adjust padding */
-        margin-bottom: var(--spacing-md); /* Reduce spacing for compact screens */
-    }
-
-    .fa-success-message:hover {
-        transform: none; /* Disable hover scaling */
-        box-shadow: none; /* Simplify hover effects */
-    }
+/* 12.4 Warning Messages */
+.notice-warning {
+    background-color: #FFF3CD; /* Soft yellow background */
+    color: #856404; /* Dark yellow text */
+    border: 1px solid #FFECB5; /* Yellow border */
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+    font-weight: 700;
+    font-size: 16px; /* Ensure legibility */
+    line-height: 1.6;
+    box-shadow: var(--shadow-light);
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
 }
 
+.notice-warning:hover {
+    transform: scale(1.02);
+    background-color: #FFE8A1; /* Slightly darker yellow for hover */
+    box-shadow: var(--shadow-dark);
+}
 
-/* ===================================================
-   7. Tables
-   =================================================== */
+/* 12.5 Dismissible Notices */
+.is-dismissible {
+    position: relative;
+    padding-right: 40px; /* Adjust space for dismiss icon */
+    border-radius: var(--border-radius-md);
+}
 
-/* 7.1 Widefat Tables */
+.is-dismissible::after {
+    content: '×';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 20px;
+    color: #aaa;
+    transition: color var(--transition-speed), transform var(--transition-speed);
+}
+
+.is-dismissible::after:hover {
+    color: #000; /* Highlight dismiss button on hover */
+    transform: scale(1.2); /* Slight enlargement for feedback */
+}
+
+/* ============================================================
+   13. Tables
+   ============================================================ */
+
+/* 13.1 Widefat Tables */
 .widefat {
     width: 100%;
     border-collapse: collapse;
@@ -891,11 +988,12 @@ input[type="submit"]:active {
 
 .widefat th,
 .widefat td {
+    /* Existing styles */
     padding: var(--spacing-sm) var(--spacing-md);
     border: 1px solid var(--border-color);
     text-align: right; /* Align text to the right for RTL */
-    vertical-align: middle; /* Center align content vertically */
-    font-size: 14px; /* Standardize font size */
+    vertical-align: middle;
+    font-size: 14px;
     line-height: 1.6;
 }
 
@@ -938,430 +1036,552 @@ input[type="submit"]:active {
     transform: scale(1.05); /* Subtle animation for links */
 }
 
-/* ===================================================
-   Responsive Table Styling for Mobile
-   =================================================== */
-
-@media (max-width: 768px) {
-    /* 7.1 Widefat Tables */
+/* Small and Medium Screens: Add scrolling */
+@media screen and (max-width: 768px) {
     .widefat {
-        border-collapse: separate; /* Allow space for better visibility */
-        border-spacing: 0;
-        margin-bottom: var(--spacing-lg);
-        border: none; /* Remove table border for cleaner mobile view */
-        box-shadow: none; /* Simplify for compact screens */
+        display: block; /* Make table display block */
         overflow-x: auto; /* Enable horizontal scrolling */
-        display: block; /* Convert table to block layout */
+        white-space: nowrap; /* Prevent wrapping */
+    }
+}
+
+/* Very Small Screens: Collapse table into block rows */
+@media screen and (max-width: 576px) {
+    .widefat {
+        border: 0; /* Remove table borders for a cleaner mobile view */
     }
 
-    .widefat th,
-    .widefat td {
-        padding: var(--spacing-xs) var(--spacing-sm); /* Adjust padding for mobile */
-        font-size: 12px; /* Compact font size */
-        text-align: left; /* Align text to the left for better readability */
-        border: none; /* Simplify styling */
-    }
-
-    .widefat th {
-        background-color: var(--primary-color);
-        color: #ffffff;
-        font-size: 14px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        padding: var(--spacing-sm); /* Smaller padding for compact layout */
-        display: block; /* Stack headers for accessibility */
-        text-align: left;
-    }
-
-    .widefat td {
-        display: flex; /* Flex layout for responsiveness */
-        justify-content: space-between; /* Align content neatly */
-        align-items: center;
-        border-bottom: 1px solid var(--border-color); /* Add subtle row separation */
-        padding: var(--spacing-xs) var(--spacing-md); /* Adjust padding */
-    }
-
-    .widefat td::before {
-        content: attr(data-label); /* Use data attributes for labels */
-        font-weight: 700;
-        color: var(--muted-text-color);
-        text-transform: capitalize;
-        margin-right: var(--spacing-sm);
-        flex-basis: 50%; /* Allocate space for labels */
-        text-align: left; /* Align labels */
-    }
-
-    .widefat td a {
-        color: var(--secondary-color);
-        font-weight: 600;
-        font-size: 12px;
-        text-decoration: none;
-        transition: color var(--transition-speed);
-    }
-
-    .widefat td a:hover {
-        color: var(--accent-color);
-        text-decoration: underline;
+    .widefat thead {
+        position: absolute; /* Hide table headers */
+        top: -9999px;
+        left: -9999px;
     }
 
     .widefat tr {
-        margin-bottom: var(--spacing-sm); /* Space between rows */
-        display: block; /* Convert rows to block for better stacking */
-        background-color: #ffffff; /* Retain a clean look */
-        box-shadow: var(--shadow-light); /* Subtle shadow for separation */
-        border-radius: var(--border-radius-sm);
+        display: block; /* Display each row as a block */
+        margin-bottom: 1rem; /* Add spacing between rows */
     }
 
-    .widefat tr:hover {
-        transform: none; /* Simplify hover effects */
-        background-color: var(--background-color); /* Subtle highlight */
+    .widefat td {
+        display: block; /* Stack table cells */
+        border: none; /* Remove inner borders */
+        position: relative;
+        padding: 0.5rem; /* Add padding */
+        text-align: left; /* Align text properly */
+    }
+
+    .widefat td::before {
+        content: attr(data-label); /* Use the attribute data-label for cell titles */
+        font-weight: bold;
+        color: var(--primary-color);
+        display: block;
+        margin-bottom: 0.5rem; /* Space between label and value */
     }
 }
 
+/* ============================================================
+   14. Retake Homework Button
+   ============================================================ */
 
-/* ===================================================
-   8. Dashboard Layout
-   =================================================== */
-
-/* 8.1 Student Dashboard Container */
-.fa-student-dashboard-container {
-    background-color: #ffffff;
-    padding: var(--spacing-lg);
-    border-radius: var(--border-radius-lg);
-    max-width: 1400px;
-    margin: var(--spacing-xl) auto;
-    box-shadow: var(--shadow-light);
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.fa-student-dashboard-container:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-dark); /* Subtle hover effect */
-}
-
-/* 8.2 Dashboard Heading with Underline */
-.fa-student-dashboard-container h2 {
-    text-align: center;
-    margin-bottom: var(--spacing-lg);
-    font-size: 36px;
-    color: var(--primary-color);
-    position: relative;
-    text-transform: uppercase; /* Emphasize headings */
-    letter-spacing: 1px;
-}
-
-
-/* 8.3 Dashboard Layout Flexbox */
-.fa-student-dashboard-layout {
-    display: flex;
-    gap: var(--spacing-lg);
-    flex-wrap: wrap;
-    align-items: flex-start; /* Ensure proper alignment */
-}
-
-/* 8.4 Lessons Sidebar */
-.fa-lessons-sidebar {
-    flex: 1 1 300px;
-    background-color: #F8F9FA;
-    padding: var(--spacing-lg);
-    border-radius: var(--border-radius-md);
-    max-height: 700px;
-    overflow-y: auto;
-    box-shadow: var(--shadow-light);
-    transition: box-shadow var(--transition-speed), transform var(--transition-speed);
-}
-
-.fa-lessons-sidebar:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-dark); /* Highlight on hover */
-}
-
-.fa-lessons-sidebar h3 {
-    margin-bottom: var(--spacing-md);
-    font-size: 22px;
-    color: var(--primary-color);
-    text-transform: capitalize;
-    letter-spacing: 0.5px;
-}
-
-.fa-lessons-sidebar ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.fa-lessons-sidebar > ul > li {
-    margin-bottom: var(--spacing-md);
-}
-
-.fa-lessons-sidebar > ul > li > strong {
-    display: block;
-    font-size: 18px;
-    color: var(--secondary-color);
-    margin-bottom: var(--spacing-sm);
-}
-
-.fa-lessons-sidebar ul ul {
-    list-style: none;
-    padding-left: var(--spacing-md);
-}
-
-.fa-lessons-sidebar ul ul li {
-    margin-bottom: var(--spacing-xs);
-}
-
-.fa-lessons-sidebar ul ul li a {
-    color: var(--primary-color);
-    font-size: 16px;
-    transition: color var(--transition-speed), transform var(--transition-speed);
-    text-decoration: none; /* Clean links */
-}
-
-.fa-lessons-sidebar ul ul li a:hover,
-.fa-lessons-sidebar ul ul li a.active-lesson {
-    color: var(--secondary-color);
-    font-weight: 700;
-    text-decoration: underline; /* Indicate hover state */
-    transform: scale(1.05); /* Subtle scaling on hover */
-}
-
-.fa-lessons-sidebar ul ul li span.locked-lesson {
-    color: #E74C3C;
-    font-size: 14px;
-    font-style: italic;
-    letter-spacing: 0.3px;
-}
-
-/* 8.5 Lesson Content Area */
-.fa-lesson-content {
-    flex: 2 1 700px;
-    padding: var(--spacing-lg);
-    background-color: #FDFDFD;
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-light);
-    transition: box-shadow var(--transition-speed), transform var(--transition-speed);
-}
-
-.fa-lesson-content:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-dark); /* Emphasize on hover */
-}
-
-.fa-lesson-content h2 {
-    margin-bottom: var(--spacing-lg);
-    font-size: 28px;
-    color: var(--primary-color);
-    letter-spacing: 0.5px;
-    text-transform: capitalize; /* Consistent styling */
-}
-
-.fa-lesson-video {
-    margin-bottom: var(--spacing-lg);
-    text-align: center;
-}
-
-.fa-lesson-video video {
-    width: 100%;
-    max-width: 800px;
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-light);
-    transition: box-shadow var(--transition-speed);
-}
-
-.fa-lesson-video video:hover {
-    box-shadow: var(--shadow-dark); /* Subtle effect for videos */
-}
-
-.fa-lesson-content p {
-    font-size: 16px;
-    color: #555555;
-    line-height: 1.8; /* Improve readability */
-    letter-spacing: 0.3px;
-}
-
-/* frontend.css */
-
-/* Student Dashboard Container */
-.fa-student-dashboard-container {
-    padding: 20px;
-}
-
-/* Layout Styling */
-.fa-student-dashboard-layout {
-    display: flex;
-}
-
-/* Lessons Sidebar */
-.fa-lessons-sidebar {
-    width: 25%;
-    margin-right: 20px;
-}
-
-.fa-lessons-sidebar h3 {
-    margin-bottom: 10px;
-}
-
-/* Modules List */
-.fa-modules-list {
-    list-style-type: none;
-    padding-left: 0;
-}
-
-.fa-module-item {
-    margin-bottom: 10px;
-}
-
-/* Module Toggle Button */
-.fa-module-toggle {
-    width: 100%;
-    text-align: left;
-    background: #f1f1f1;
+/* 14.1 Retake Homework Button */
+.fa-retake-button {
+    background-color: var(--secondary-color);
+    color: #fff;
     border: none;
-    padding: 10px;
+    padding: 10px 20px;
+    border-radius: var(--border-radius-sm);
     cursor: pointer;
-    font-size: 16px;
-    position: relative;
-    border-radius: 4px;
-    transition: background 0.3s;
+    transition: background-color var(--transition-speed);
+    margin-top: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center; /* Center align text and icon */
+    gap: var(--spacing-xs); /* Space between text and icon */
+    box-shadow: var(--shadow-light); /* Add slight depth */
 }
 
-.fa-module-toggle:hover {
-    background: #e2e2e2;
+.fa-retake-button:hover {
+    background-color: #D81B60; /* Darker shade on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+    box-shadow: var(--shadow-dark); /* Enhanced shadow on hover */
 }
 
-/* Toggle Icon */
-.fa-toggle-icon {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-weight: bold;
+.fa-retake-button:active {
+    transform: translateY(0); /* Reset transform on click */
+    box-shadow: var(--shadow-light); /* Reduce shadow for pressed state */
+    opacity: 0.9; /* Visual feedback on click */
+}
+
+.fa-retake-button .fa-icon {
+    font-size: 18px; /* Standardize icon size */
+    transition: transform var(--transition-speed); /* Add interactivity */
+}
+
+.fa-retake-button:hover .fa-icon {
+    transform: rotate(15deg); /* Subtle icon animation on hover */
+}
+
+/* ============================================================
+   14.2 Navigate to Next Lesson Button
+   ============================================================ */
+
+/* 14.2 Navigate to Next Lesson Button */
+.fa-next-lesson-button {
+    display: inline-block;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--success-color); /* Fresh green for success */
+    color: #fff;
+    border: none;
+    border-radius: var(--border-radius-md);
+    text-transform: uppercase;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+    box-shadow: var(--shadow-light);
+    margin-top: 15px;
+}
+
+.fa-next-lesson-button:hover {
+    background-color: #27AE60; /* Darker green on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+    box-shadow: var(--shadow-dark); /* Enhanced shadow on hover */
+}
+
+.fa-next-lesson-button:active {
+    transform: translateY(0); /* Reset transform on click */
+    box-shadow: var(--shadow-light); /* Reduce shadow for pressed state */
+    opacity: 0.95; /* Visual feedback on click */
+}
+
+/* Optional: Add specific icon styles if you include an icon in the next lesson button */
+.fa-next-lesson-button .fa-icon {
+    margin-left: var(--spacing-xs);
     font-size: 18px;
-    transition: transform 0.3s;
+    transition: transform var(--transition-speed);
 }
 
-/* Lessons Sublist */
-.fa-lessons-sublist {
-    list-style-type: none;
-    padding-left: 20px;
-    margin-top: 5px;
+.fa-next-lesson-button:hover .fa-icon {
+    transform: translateX(5px); /* Move icon slightly on hover */
 }
 
-/* Lesson Items */
-.fa-lesson-item {
-    margin-bottom: 5px;
+/* ============================================================
+   15. Loading Section
+   ============================================================ */
+
+/* ============================================================
+   19. Replace Spinner with Academy Logo
+   ============================================================ */
+.fa-spinner-section {
+    text-align: center;
+    margin: 20px 0;
 }
 
-.fa-lesson-item a {
-    text-decoration: none;
-    color: #0073aa;
-    transition: color 0.3s;
+.fa-academy-logo-spinner {
+    width: 100px; /* Adjust size as needed */
+    height: 100px; /* Adjust size as needed */
+    animation: spin 2s linear infinite;
 }
 
-.fa-lesson-item a:hover {
-    color: #005177;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-.fa-lesson-item a.active-lesson {
-    font-weight: bold;
-    color: #00a0d2;
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-/* Rotate Icon when Expanded */
-.fa-module-toggle[aria-expanded="true"] .fa-toggle-icon {
-    transform: translateY(-50%) rotate(45deg); /* Changes "+" to "x" */
+/* 15.2 Loading Container */
+.fa-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
 }
 
-/* Spinner Styling (if not already present) */
-.fa-spinner-img {
-    width: 50px;
-    height: 50px;
+/* 15.3 Loading Message */
+.fa-loading-message {
+    font-size: 14px;
+    color: var(--text-color);
+    font-style: italic;
+    opacity: 0.8; /* Subtle emphasis */
 }
 
-.fa-waiting-msg {
-    font-size: 16px;
-    margin-top: 10px;
+/* ============================================================
+   16. Payment Notice
+   ============================================================ */
+
+/* 16.1 Payment Notice */
+.fa-payment-notice {
+    display: flex;
+    align-items: center;
+    background-color: #FFF3CD;
+    border-left: 5px solid #FFECB5;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-light);
+    transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
+.fa-payment-notice:hover {
+    background-color: #FFE8A1;
+    box-shadow: var(--shadow-dark);
+}
 
-/* ===================================================
-   Responsive Dashboard Layout for Mobile
-   =================================================== */
+.fa-payment-notice i {
+    color: #856404;
+    margin-right: var(--spacing-sm);
+    font-size: 1.5rem;
+}
 
+/* Locked Lesson Icon */
+.fa-locked-lesson i {
+    color: var(--error-color);
+    margin-right: var(--spacing-xs);
+}
+
+/* Unlock Icon */
+.fa-unlock-icon {
+    color: var(--accent-color);
+}
+
+/* ============================================================
+   17. Responsive Styles - Enhanced for Student Dashboard
+   ============================================================ */
 @media (max-width: 768px) {
-    /* 8.1 Student Dashboard Container */
-    .fa-student-dashboard-container {
-        padding: var(--spacing-md); /* Adjust padding for smaller screens */
+    /* 17.1 Root Variable Adjustments for Mobile */
+    :root {
+        /* Adjust Font Sizes for Better Readability */
+        --base-font-size: 14px;
+        --line-height-base: 1.5;
+
+        /* Refine Spacing for Compact Layout */
+        --spacing-md: 12px;
+        --spacing-lg: 16px;
+        --spacing-xl: 24px;
+
+        /* Simplify Shadows for Lightweight Rendering */
+        --shadow-light: 0px 2px 8px rgba(0, 0, 0, 0.05);
+        --shadow-dark: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 17.2 Body Styling */
+    body {
+        background-attachment: scroll; /* Optimize for mobile */
+        font-size: var(--base-font-size);
+        line-height: var(--line-height-base);
+        padding: var(--spacing-sm);
+    }
+
+    /* 17.3 Link Styling */
+    a {
+        font-size: 14px; /* Adjust link size for small screens */
+    }
+
+    a:hover {
+        transform: none; /* Avoid hover animations on touch devices */
+    }
+
+    a::after {
+        height: 1px; /* Subtle underline for hover */
+    }
+
+    /* 17.4 Headings */
+    h1, h2, h3, h4, h5, h6 {
+        font-size: calc(var(--base-font-size) * 1.2); /* Slight scaling */
+        margin-bottom: var(--spacing-sm);
+        letter-spacing: 0.5px; /* Subtle adjustment for compact view */
+    }
+
+    h1 {
+        font-size: calc(var(--base-font-size) * 2); /* Scale main headings */
+    }
+
+    h2 {
+        font-size: calc(var(--base-font-size) * 1.8);
+    }
+
+    h3 {
+        font-size: calc(var(--base-font-size) * 1.6);
+    }
+
+    /* 17.5 Paragraphs */
+    p {
+        font-size: var(--base-font-size);
+        margin-bottom: var(--spacing-md); /* Reduce paragraph spacing */
+        line-height: 1.6; /* Enhance readability */
+    }
+
+    /* 17.6 Lists */
+    ul, ol {
+        margin-bottom: var(--spacing-md);
+        padding-right: var(--spacing-sm);
+    }
+
+    ul ul, ol ol {
+        margin-bottom: var(--spacing-xs);
+    }
+
+    /* 17.7 Container */
+    .container {
+        width: 95%; /* Use more screen space */
+        padding: var(--spacing-md) var(--spacing-sm);
+    }
+
+    /* 17.8 Button Adjustments */
+    button,
+    input[type="submit"] {
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact touch-friendly buttons */
+        font-size: 14px;
+        border-radius: var(--border-radius-md); /* Softer edges */
+        box-shadow: var(--shadow-light); /* Lightweight shadow */
+    }
+
+    button:hover,
+    input[type="submit"]:hover {
+        box-shadow: none; /* Remove shadow for better touch experience */
+    }
+
+    /* 17.9 Lists */
+    ul, ol {
+        list-style-position: outside; /* Align bullets */
+        padding-left: var(--spacing-sm);
+    }
+
+    /* 17.10 Retake Homework Button */
+    .fa-retake-button {
+        font-size: 14px; /* Slightly smaller font size */
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
+        margin-top: var(--spacing-sm); /* Adjust spacing */
+        gap: var(--spacing-xs); /* Maintain proportional spacing */
+        box-shadow: none; /* Simplify effects for better performance */
+        transform: none; /* Disable hover lift */
+        width: 100%; /* Full width on mobile */
+        justify-content: center; /* Center the content */
+    }
+
+    .fa-retake-button .fa-icon {
+        font-size: 16px; /* Adjust icon size */
+    }
+
+    .fa-retake-button:hover {
+        box-shadow: none; /* Remove hover shadows */
+        transform: none; /* Keep button static on hover */
+    }
+
+    /* 17.11 Loading Section */
+    .fa-loading-container {
+        gap: var(--spacing-xs); /* Reduce spacing between elements */
+        margin-top: var(--spacing-md); /* Compact top margin */
+    }
+
+    .fa-loading-message {
+        font-size: 12px; /* Reduce text size */
+        opacity: 0.7; /* Slightly enhanced visibility */
+        text-align: center; /* Center align text for better readability */
+    }
+
+    /* 17.12 Spinner Adjustments */
+    .fa-spin {
+        width: 40px; /* Reduce size for mobile */
+        height: 40px;
+        border-width: 4px; /* Adjust thickness */
+        margin: var(--spacing-md) auto; /* Add more spacing for mobile layout */
+    }
+
+    /* 17.13 File Preview Adjustments */
+    .fa-file-preview {
+        padding: var(--spacing-xs); /* Compact padding */
+        font-size: 12px; /* Smaller font for preview */
+    }
+
+    .fa-file-preview span {
+        white-space: normal; /* Allow wrapping for long file names */
+        word-break: break-word; /* Break words to avoid overflow */
+    }
+
+    /* 17.14 Remove File Button Adjustments */
+    .fa-remove-file {
+        font-size: 10px; /* Smaller button text */
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
+        box-shadow: none; /* Remove shadow for mobile */
+    }
+
+    .fa-remove-file:hover {
+        transform: none; /* Simplify hover effects */
+        box-shadow: none;
+    }
+
+    /* 17.15 Submit Button Adjustments */
+    .fa-homework-form input[type="submit"] {
+        font-size: 14px; /* Adjust font size */
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
+        box-shadow: none; /* Simplify shadow effects */
+        transform: none; /* Disable hover lift for consistency */
+    }
+
+    /* 17.16 Success Message Adjustments */
+    .fa-success-message {
+        font-size: 12px; /* Adjust font size */
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
+        margin-top: var(--spacing-md); /* Reduce spacing for compact screens */
+        box-shadow: none; /* Simplify shadow effects */
+        transform: none; /* Disable hover effects */
+    }
+
+    /* 17.17 Admin Dashboard Responsive Adjustments */
+    .fa-admin-dashboard-wrapper {
+        padding: var(--spacing-md); /* Compact padding for smaller screens */
         max-width: 100%; /* Utilize full width */
         margin: var(--spacing-md) auto;
-        box-shadow: none; /* Simplify for compact design */
+        box-shadow: none; /* Simplify shadows for mobile */
+        transform: none; /* Remove hover lift effect */
     }
 
-    /* 8.2 Dashboard Heading */
-    .fa-student-dashboard-container h2 {
-        font-size: 24px; /* Scale down heading size */
+    .fa-admin-dashboard-wrapper h2 {
+        font-size: 24px; /* Scale down font size */
         margin-bottom: var(--spacing-md);
     }
 
-    .fa-student-dashboard-container h2::after {
+    .fa-admin-dashboard-wrapper h2::after {
         width: 80px; /* Adjust underline width */
         height: 3px; /* Thinner underline */
     }
 
-    /* 8.3 Dashboard Layout Flexbox */
+    /* 17.18 Admin Navigation Responsive Adjustments */
+    .fa-admin-nav {
+        flex-direction: column; /* Stack navigation items vertically */
+        align-items: center; /* Center align items */
+        gap: var(--spacing-sm); /* Reduce gap for compact design */
+    }
+
+    .fa-admin-nav li a {
+        padding: var(--spacing-xs) var(--spacing-sm); /* Adjust padding */
+        font-size: 14px; /* Reduce font size */
+        transform: none; /* Remove hover movement */
+        box-shadow: none; /* Simplify shadow */
+    }
+
+    .fa-admin-nav li a.active-tab,
+    .fa-admin-nav li a:hover {
+        transform: none; /* No movement on hover */
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* Subtle shadow for emphasis */
+    }
+
+    .fa-admin-nav li a .fa-icon {
+        font-size: 16px; /* Adjust icon size */
+        transform: none; /* Disable rotation animation */
+    }
+
+    /* 17.19 Admin Content Area Adjustments */
+    .fa-admin-content {
+        padding: var(--spacing-md); /* Compact padding */
+        box-shadow: none; /* Simplify shadow */
+        transform: none; /* Remove hover effect */
+    }
+
+    .fa-admin-content:hover {
+        box-shadow: none; /* Remove hover shadow */
+    }
+
+    /* 17.20 Gallery Enhancements */
+    .fa-gallery {
+        justify-content: center; /* Center the gallery items */
+    }
+
+    .fa-gallery-item {
+        width: calc(50% - 8px); /* Two items per row with gap adjustment */
+        height: auto; /* Maintain aspect ratio */
+    }
+
+    .fa-gallery-item img {
+        width: 100%;
+        height: auto;
+        object-fit: cover; /* Scale image to fit container */
+        border-radius: var(--border-radius-md); /* Add rounded corners */
+    }
+
+    /* 17.21 Accordion Styling for Modules */
+    .fa-module-toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .fa-module-toggle[aria-expanded="true"] .fa-toggle-icon i {
+        transform: rotate(180deg); /* Rotate icon when expanded */
+    }
+
+    .fa-lessons-sublist {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition: max-height var(--transition-speed) ease-in-out, opacity var(--transition-speed) ease-in-out;
+    }
+
+    .fa-lessons-sublist[hidden] {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    .fa-lessons-sublist:not([hidden]) {
+        max-height: 1000px; /* Arbitrary large value to allow expansion */
+        opacity: 1;
+    }
+
+    /* 17.22 Student Dashboard Layout Adjustment */
     .fa-student-dashboard-layout {
-        flex-direction: column; /* Stack elements vertically */
-        gap: var(--spacing-md); /* Reduce gap for compact spacing */
+        flex-direction: column; /* Stack sidebar and content vertically */
     }
 
-    /* 8.4 Lessons Sidebar */
+    /* 17.23 Lessons Sidebar Adjustment */
     .fa-lessons-sidebar {
-        padding: var(--spacing-md); /* Compact padding */
-        max-height: none; /* Remove height restriction */
-        overflow: visible; /* Ensure full visibility */
-        box-shadow: none; /* Simplify design */
-    }
-
-    .fa-lessons-sidebar h3 {
-        font-size: 18px; /* Scale down font size */
-        margin-bottom: var(--spacing-sm);
-    }
-
-    .fa-lessons-sidebar ul ul li a {
-        font-size: 14px; /* Adjust font size for links */
-    }
-
-    /* 8.5 Lesson Content Area */
-    .fa-lesson-content {
-        padding: var(--spacing-md); /* Compact padding */
-        box-shadow: none; /* Simplify shadow for mobile */
-    }
-
-    .fa-lesson-content h2 {
-        font-size: 20px; /* Adjust heading size */
+        width: 100%;
+        max-height: none;
+        padding: var(--spacing-sm);
         margin-bottom: var(--spacing-md);
     }
 
-    .fa-lesson-video video {
-        max-width: 100%; /* Ensure video scales to fit screen */
-        border-radius: var(--border-radius-sm); /* Adjust border radius */
+    /* 17.24 Lesson Content Adjustment */
+    .fa-lesson-content {
+        width: 100%;
     }
 
-    .fa-lesson-content p {
-        font-size: 14px; /* Scale down font size */
-        line-height: 1.6; /* Adjust line height */
-        letter-spacing: 0.2px; /* Subtle spacing for readability */
+    /* 17.25 Enhanced Accordion Styles */
+    .fa-module-item {
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .fa-lessons-sublist li a {
+        padding: var(--spacing-xs) 0;
+        font-size: 0.9rem;
+    }
+
+    .fa-lessons-sublist li a.active-lesson {
+        font-weight: 700;
+    }
+
+    /* 17.26 Improve Accessibility */
+    .fa-module-toggle:focus {
+        outline: 2px solid var(--accent-color);
+    }
+
+    .fa-lesson-item a:focus {
+        outline: 2px solid var(--accent-color);
     }
 }
 
+/* ============================================================
+   18. Admin Dashboard
+   ============================================================ */
 
-/* ===================================================
-   9. Admin Dashboard
-   =================================================== */
-
-/* 9.1 Admin Dashboard Wrapper */
+/* 18.1 Admin Dashboard Wrapper */
 .fa-admin-dashboard-wrapper {
-    background-color: #ffffff;
+    background-color: var(--card-background);
     padding: var(--spacing-lg);
     border-radius: var(--border-radius-lg);
     max-width: 1600px;
@@ -1375,7 +1595,7 @@ input[type="submit"]:active {
     box-shadow: var(--shadow-dark); /* Slight lift on hover */
 }
 
-/* 9.2 Admin Dashboard Heading with Underline */
+/* 18.2 Admin Dashboard Heading */
 .fa-admin-dashboard-wrapper h2 {
     text-align: center;
     margin-bottom: var(--spacing-lg);
@@ -1386,7 +1606,7 @@ input[type="submit"]:active {
     letter-spacing: 1px;
 }
 
-/* 9.3 Admin Navigation */
+/* 18.3 Admin Navigation */
 .fa-admin-nav {
     list-style: none;
     padding-left: 0;
@@ -1427,10 +1647,10 @@ input[type="submit"]:active {
     transform: rotate(20deg); /* Add slight animation to icons */
 }
 
-/* 9.4 Admin Content Area */
+/* 18.4 Admin Content Area */
 .fa-admin-content {
     padding: var(--spacing-lg);
-    background-color: #FDFDFD;
+    background-color: var(--card-background);
     border-radius: var(--border-radius-md);
     box-shadow: var(--shadow-light);
     transition: box-shadow var(--transition-speed), transform var(--transition-speed);
@@ -1441,12 +1661,445 @@ input[type="submit"]:active {
     box-shadow: var(--shadow-dark); /* Emphasize content on hover */
 }
 
-/* ===================================================
-   Responsive Admin Dashboard for Mobile
-   =================================================== */
+/* ============================================================
+   19. Final Miscellaneous Styles
+   ============================================================ */
 
+/* 19.1 Dismissible Notices Enhancements */
+.is-dismissible {
+    position: relative;
+    padding-right: 40px; /* Adjust space for dismiss icon */
+    border-radius: var(--border-radius-md);
+}
+
+.is-dismissible::after {
+    content: '×';
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 20px;
+    color: #aaa;
+    transition: color var(--transition-speed), transform var(--transition-speed);
+}
+
+.is-dismissible::after:hover {
+    color: #000; /* Highlight dismiss button on hover */
+    transform: scale(1.2); /* Slight enlargement for feedback */
+}
+
+/* 19.2 Additional File Preview Styling */
+.fa-file-preview button.fa-remove-file {
+    background-color: #dc3232;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color var(--transition-speed), transform var(--transition-speed);
+}
+
+.fa-file-preview button.fa-remove-file:hover {
+    background-color: #a40e0e;
+}
+
+/* ============================================================
+   20. Gallery Enhancements
+   ============================================================ */
+
+/* 20.1 Gallery Styles */
+.fa-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.fa-gallery-item {
+    width: 100px; /* Exact or dynamic value */
+}
+
+.fa-gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fa-gallery-item:hover img {
+    transform: scale(1.1);
+}
+
+/* Gallery Modal */
+.fa-gallery-modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    padding-top: 60px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+}
+
+.fa-gallery-modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    border-radius: 8px;
+}
+
+.fa-gallery-caption {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    text-align: center;
+    color: #ccc;
+    padding: 10px 0;
+}
+
+.fa-close {
+    position: absolute;
+    top: 30px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: color 0.3s;
+    cursor: pointer;
+}
+
+.fa-close:hover,
+.fa-close:focus {
+    color: #bbb;
+}
+
+/* ============================================================
+   21. Mobile Overlay Menu Styles
+   ============================================================ */
+
+/* 21.1 Toggle Button */
+.fa-menu-toggle {
+    display: none; /* Hidden by default, shown on small screens */
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    background-color: var(--secondary-color);
+    color: #fff;
+    border: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1100; /* Above overlay */
+    box-shadow: var(--shadow-light);
+    transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.fa-menu-toggle:hover {
+    background-color: #D81B60; /* Darker shade on hover */
+    transform: translateY(-50%) scale(1.1); /* Slight enlargement */
+    box-shadow: var(--shadow-dark);
+}
+
+.fa-menu-toggle:active {
+    transform: translateY(-50%) scale(1);
+    box-shadow: var(--shadow-light);
+}
+
+/* 21.2 Overlay Menu */
+.fa-overlay-menu {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(44, 62, 80, 0.95); /* Semi-transparent dark background */
+    z-index: 1000; /* Below toggle button */
+    overflow-y: auto;
+    transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.fa-overlay-menu.active {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 21.3 Close Button */
+.fa-overlay-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 30px;
+    cursor: pointer;
+    transition: color var(--transition-speed), transform var(--transition-speed);
+}
+
+.fa-overlay-close:hover {
+    color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+.fa-overlay-close:active {
+    transform: scale(1);
+}
+
+/* 21.4 Overlay Content */
+.fa-overlay-content {
+    padding: var(--spacing-lg);
+    margin-top: 60px; /* Space for close button */
+}
+
+.fa-overlay-content h3 {
+    color: #fff;
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.fa-overlay-content .fa-modules-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.fa-overlay-content .fa-module-toggle {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 1px solid var(--input-border);
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: var(--border-radius-sm);
+    color: #fff;
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background var(--transition-speed), color var(--transition-speed), transform var(--transition-speed);
+}
+
+.fa-overlay-content .fa-module-toggle:hover {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.fa-overlay-content .fa-toggle-icon i {
+    color: #fff;
+}
+
+.fa-overlay-content .fa-lesson-item a {
+    color: #fff;
+    display: block;
+    padding: var(--spacing-xs) 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    transition: color var(--transition-speed), transform var(--transition-speed);
+}
+
+.fa-overlay-content .fa-lesson-item a:hover,
+.fa-overlay-content .fa-lesson-item a.active-lesson {
+    color: var(--secondary-color);
+    text-decoration: underline;
+    transform: translateX(5px);
+}
+
+
+/* ============================================================
+   17. Responsive Styles - Enhanced for Student Dashboard
+   ============================================================ */
 @media (max-width: 768px) {
-    /* 9.1 Admin Dashboard Wrapper */
+    /* 17.1 Root Variable Adjustments for Mobile */
+    :root {
+        /* Adjust Font Sizes for Better Readability */
+        --base-font-size: 14px;
+        --line-height-base: 1.5;
+
+        /* Refine Spacing for Compact Layout */
+        --spacing-md: 12px;
+        --spacing-lg: 16px;
+        --spacing-xl: 24px;
+
+        /* Simplify Shadows for Lightweight Rendering */
+        --shadow-light: 0px 2px 8px rgba(0, 0, 0, 0.05);
+        --shadow-dark: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 17.2 Body Styling */
+    body {
+        background-attachment: scroll; /* Optimize for mobile */
+        font-size: var(--base-font-size);
+        line-height: var(--line-height-base);
+        padding: var(--spacing-sm);
+    }
+
+    /* 17.3 Link Styling */
+    a {
+        font-size: 14px; /* Adjust link size for small screens */
+    }
+
+    a:hover {
+        transform: none; /* Avoid hover animations on touch devices */
+    }
+
+    a::after {
+        height: 1px; /* Subtle underline for hover */
+    }
+
+    /* 17.4 Headings */
+    h1, h2, h3, h4, h5, h6 {
+        font-size: calc(var(--base-font-size) * 1.2); /* Slight scaling */
+        margin-bottom: var(--spacing-sm);
+        letter-spacing: 0.5px; /* Subtle adjustment for compact view */
+    }
+
+    h1 {
+        font-size: calc(var(--base-font-size) * 2); /* Scale main headings */
+    }
+
+    h2 {
+        font-size: calc(var(--base-font-size) * 1.8);
+    }
+
+    h3 {
+        font-size: calc(var(--base-font-size) * 1.6);
+    }
+
+    /* 17.5 Paragraphs */
+    p {
+        font-size: var(--base-font-size);
+        margin-bottom: var(--spacing-md); /* Reduce paragraph spacing */
+        line-height: 1.6; /* Enhance readability */
+    }
+
+    /* 17.6 Lists */
+    ul, ol {
+        margin-bottom: var(--spacing-md);
+        padding-right: var(--spacing-sm);
+    }
+
+    ul ul, ol ol {
+        margin-bottom: var(--spacing-xs);
+    }
+
+    /* 17.7 Container */
+    .container {
+        width: 95%; /* Use more screen space */
+        padding: var(--spacing-md) var(--spacing-sm);
+    }
+
+    /* 17.8 Button Adjustments */
+    button,
+    input[type="submit"] {
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact touch-friendly buttons */
+        font-size: 14px;
+        border-radius: var(--border-radius-md); /* Softer edges */
+        box-shadow: var(--shadow-light); /* Lightweight shadow */
+    }
+
+    button:hover,
+    input[type="submit"]:hover {
+        box-shadow: none; /* Remove shadow for better touch experience */
+    }
+
+    /* 17.9 Lists */
+    ul, ol {
+        list-style-position: outside; /* Align bullets */
+        padding-left: var(--spacing-sm);
+    }
+
+    /* 17.10 Retake Homework Button */
+    .fa-retake-button {
+        font-size: 14px; /* Slightly smaller font size */
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
+        margin-top: var(--spacing-sm); /* Adjust spacing */
+        gap: var(--spacing-xs); /* Maintain proportional spacing */
+        box-shadow: none; /* Simplify effects for better performance */
+        transform: none; /* Disable hover lift */
+        width: 100%; /* Full width on mobile */
+        justify-content: center; /* Center the content */
+    }
+
+    .fa-retake-button .fa-icon {
+        font-size: 16px; /* Adjust icon size */
+    }
+
+    .fa-retake-button:hover {
+        box-shadow: none; /* Remove hover shadows */
+        transform: none; /* Keep button static on hover */
+    }
+
+    /* 17.11 Loading Section */
+    .fa-loading-container {
+        gap: var(--spacing-xs); /* Reduce spacing between elements */
+        margin-top: var(--spacing-md); /* Compact top margin */
+    }
+
+    .fa-loading-message {
+        font-size: 12px; /* Reduce text size */
+        opacity: 0.7; /* Slightly enhanced visibility */
+        text-align: center; /* Center align text for better readability */
+    }
+
+    /* 17.12 Spinner Adjustments */
+    .fa-spin {
+        width: 40px; /* Reduce size for mobile */
+        height: 40px;
+        border-width: 4px; /* Adjust thickness */
+        margin: var(--spacing-md) auto; /* Add more spacing for mobile layout */
+    }
+
+    /* 17.13 File Preview Adjustments */
+    .fa-file-preview {
+        padding: var(--spacing-xs); /* Compact padding */
+        font-size: 12px; /* Smaller font for preview */
+    }
+
+    .fa-file-preview span {
+        white-space: normal; /* Allow wrapping for long file names */
+        word-break: break-word; /* Break words to avoid overflow */
+    }
+
+    /* 17.14 Remove File Button Adjustments */
+    .fa-remove-file {
+        font-size: 10px; /* Smaller button text */
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
+        box-shadow: none; /* Remove shadow for mobile */
+    }
+
+    .fa-remove-file:hover {
+        transform: none; /* Simplify hover effects */
+        box-shadow: none;
+    }
+
+    /* 17.15 Submit Button Adjustments */
+    .fa-homework-form input[type="submit"] {
+        font-size: 14px; /* Adjust font size */
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
+        box-shadow: none; /* Simplify shadow effects */
+        transform: none; /* Disable hover lift for consistency */
+    }
+
+    /* 17.16 Success Message Adjustments */
+    .fa-success-message {
+        font-size: 12px; /* Adjust font size */
+        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
+        margin-top: var(--spacing-md); /* Reduce spacing for compact screens */
+        box-shadow: none; /* Simplify shadow effects */
+        transform: none; /* Disable hover effects */
+    }
+
+    /* 17.17 Admin Dashboard Responsive Adjustments */
     .fa-admin-dashboard-wrapper {
         padding: var(--spacing-md); /* Compact padding for smaller screens */
         max-width: 100%; /* Utilize full width */
@@ -1455,10 +2108,9 @@ input[type="submit"]:active {
         transform: none; /* Remove hover lift effect */
     }
 
-    /* 9.2 Admin Dashboard Heading */
     .fa-admin-dashboard-wrapper h2 {
         font-size: 24px; /* Scale down font size */
-        margin-bottom: var(--spacing-md); /* Adjust spacing */
+        margin-bottom: var(--spacing-md);
     }
 
     .fa-admin-dashboard-wrapper h2::after {
@@ -1466,7 +2118,7 @@ input[type="submit"]:active {
         height: 3px; /* Thinner underline */
     }
 
-    /* 9.3 Admin Navigation */
+    /* 17.18 Admin Navigation Responsive Adjustments */
     .fa-admin-nav {
         flex-direction: column; /* Stack navigation items vertically */
         align-items: center; /* Center align items */
@@ -1491,7 +2143,7 @@ input[type="submit"]:active {
         transform: none; /* Disable rotation animation */
     }
 
-    /* 9.4 Admin Content Area */
+    /* 17.19 Admin Content Area Adjustments */
     .fa-admin-content {
         padding: var(--spacing-md); /* Compact padding */
         box-shadow: none; /* Simplify shadow */
@@ -1501,579 +2153,236 @@ input[type="submit"]:active {
     .fa-admin-content:hover {
         box-shadow: none; /* Remove hover shadow */
     }
+
+    /* 17.20 Gallery Enhancements */
+    .fa-gallery {
+        justify-content: center; /* Center the gallery items */
+    }
+
+    .fa-gallery-item {
+        width: calc(50% - 8px); /* Two items per row with gap adjustment */
+        height: auto; /* Maintain aspect ratio */
+    }
+
+    .fa-gallery-item img {
+        width: 100%;
+        height: auto;
+    }
+
+    /* 17.21 Accordion Styling for Modules */
+    .fa-module-toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .fa-module-toggle[aria-expanded="true"] .fa-toggle-icon i {
+        transform: rotate(180deg); /* Rotate icon when expanded */
+    }
+
+    .fa-lessons-sublist {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        transition: max-height var(--transition-speed) ease-in-out, opacity var(--transition-speed) ease-in-out;
+    }
+
+    .fa-lessons-sublist[hidden] {
+        max-height: 0;
+        opacity: 0;
+    }
+
+    .fa-lessons-sublist:not([hidden]) {
+        max-height: 1000px; /* Arbitrary large value to allow expansion */
+        opacity: 1;
+    }
+
+    /* 17.22 Student Dashboard Layout Adjustment */
+    .fa-student-dashboard-layout {
+        flex-direction: column; /* Stack sidebar and content vertically */
+    }
+
+    /* 17.23 Lessons Sidebar Adjustment */
+    .fa-lessons-sidebar {
+        width: 100%;
+        max-height: none;
+        padding: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+    }
+
+    /* 17.24 Lesson Content Adjustment */
+    .fa-lesson-content {
+        width: 100%;
+    }
+
+    /* 17.25 Enhanced Accordion Styles */
+    .fa-module-item {
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .fa-lessons-sublist li a {
+        padding: var(--spacing-xs) 0;
+        font-size: 0.9rem;
+    }
+
+    .fa-lessons-sublist li a.active-lesson {
+        font-weight: 700;
+    }
+
+    /* 17.26 Improve Accessibility */
+    .fa-module-toggle:focus {
+        outline: 2px solid var(--accent-color);
+    }
+
+    .fa-lesson-item a:focus {
+        outline: 2px solid var(--accent-color);
+    }
+
+    /* 17.27 Icon Adjustments for Small Screens */
+    /* Adjust Grade Information Icon */
+    .fa-grade-info {
+        padding: 2px 4px; /* Reduced padding for smaller screens */
+        font-size: 0.8rem; /* Smaller font size */
+    }
+
+    /* Adjust Lesson Right Icon */
+    .fa-lesson-icon {
+        font-size: 0.8rem; /* Smaller icon size */
+        margin-left: var(--spacing-xs);
+    }
+
+    /* Ensure Icons Don't Overflow */
+    .fa-lesson-item a {
+    }
+
+    /* Stack Icons Below Lesson Title on Very Small Screens */
+    @media (max-width: 576px) {
+        .fa-lesson-item a {
+        }
+
+        .fa-grade-info,
+        .fa-lesson-icon {
+            margin-left: 0;
+            margin-top: 4px; /* Space between title and icons */
+        }
+    }
 }
 
+/* ============================================================
+   Responsive Media Query for Homework Form
+   ============================================================ */
 
-/* ===================================================
-   10. Notifications
-   =================================================== */
-
-/* 10.1 Success Messages */
-.notice-success {
-    background-color: #D4EDDA; /* Soft green background */
-    color: #155724; /* Dark green text */
-    border: 1px solid #C3E6CB; /* Greenish border */
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    text-align: center;
-    font-weight: 700;
-    font-size: 16px; /* Ensure legibility */
-    line-height: 1.6;
-    box-shadow: var(--shadow-light); /* Add subtle depth */
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
-}
-
-.notice-success:hover {
-    transform: scale(1.02); /* Slight enlargement on hover */
-    background-color: #C9E8D3; /* Slightly darker green for hover */
-    box-shadow: var(--shadow-dark); /* Enhanced shadow on hover */
-}
-
-/* 10.2 Error Messages */
-.notice-error {
-    background-color: #F8D7DA; /* Soft red background */
-    color: #721C24; /* Dark red text */
-    border: 1px solid #F5C6CB; /* Reddish border */
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    text-align: center;
-    font-weight: 700;
-    font-size: 16px; /* Ensure legibility */
-    line-height: 1.6;
-    box-shadow: var(--shadow-light); /* Add subtle depth */
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
-}
-
-.notice-error:hover {
-    transform: scale(1.02); /* Slight enlargement on hover */
-    background-color: #F4C3C8; /* Slightly darker red for hover */
-    box-shadow: var(--shadow-dark); /* Enhanced shadow on hover */
-}
-
-/* 10.3 Info Messages */
-.notice-info {
-    background-color: #D1ECF1; /* Soft blue background */
-    color: #0C5460; /* Dark blue text */
-    border: 1px solid #BEE5EB; /* Blue border */
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    text-align: center;
-    font-weight: 700;
-    font-size: 16px; /* Ensure legibility */
-    line-height: 1.6;
-    box-shadow: var(--shadow-light);
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
-}
-
-.notice-info:hover {
-    transform: scale(1.02);
-    background-color: #BDE1E8; /* Slightly darker blue for hover */
-    box-shadow: var(--shadow-dark);
-}
-
-/* 10.4 Warning Messages */
-.notice-warning {
-    background-color: #FFF3CD; /* Soft yellow background */
-    color: #856404; /* Dark yellow text */
-    border: 1px solid #FFECB5; /* Yellow border */
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    text-align: center;
-    font-weight: 700;
-    font-size: 16px; /* Ensure legibility */
-    line-height: 1.6;
-    box-shadow: var(--shadow-light);
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
-}
-
-.notice-warning:hover {
-    transform: scale(1.02);
-    background-color: #FFE8A1; /* Slightly darker yellow for hover */
-    box-shadow: var(--shadow-dark);
-}
-
-/* 10.5 Dismissible Notices */
-.is-dismissible {
-    position: relative;
-    padding-right: 40px; /* Adjust space for dismiss icon */
-    border-radius: var(--border-radius-md);
-}
-
-.is-dismissible::after {
-    content: '×';
-    position: absolute;
-    top: 50%;
-    right: 15px;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 20px;
-    color: #aaa;
-    transition: color var(--transition-speed), transform var(--transition-speed);
-}
-
-.is-dismissible::after:hover {
-    color: #000; /* Highlight dismiss button on hover */
-    transform: scale(1.2); /* Slight enlargement for feedback */
-}
-
-/* ===================================================
-   Responsive Notifications for Mobile
-   =================================================== */
-
+/* General Styles for Small Screens */
 @media (max-width: 768px) {
-    /* General Notifications */
-    .notice-success,
-    .notice-error,
-    .notice-info,
-    .notice-warning {
-        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding for smaller screens */
-        font-size: 14px; /* Scale down font size for readability */
-        line-height: 1.4; /* Adjust line height for better spacing */
-        margin-bottom: var(--spacing-md); /* Reduce margin */
-        box-shadow: none; /* Simplify shadow effects */
-        transform: none; /* Remove scaling effects for simplicity */
-    }
-
-    .notice-success:hover,
-    .notice-error:hover,
-    .notice-info:hover,
-    .notice-warning:hover {
-        box-shadow: none; /* Disable hover shadow */
-        transform: none; /* Disable scaling effect */
-    }
-
-    /* Dismissible Notices */
-    .is-dismissible {
-        padding-right: 30px; /* Adjust dismiss button spacing */
-    }
-
-    .is-dismissible::after {
-        font-size: 18px; /* Scale down dismiss button size */
-        right: 10px; /* Adjust position for smaller screens */
-    }
-
-    .is-dismissible::after:hover {
-        transform: none; /* Disable hover transform */
-    }
-}
-
-
-/* ===================================================
-   Homework Submission Form Styles
-   =================================================== */
-
-/* Form Wrapper */
-.fa-homework-form {
-    background-color: var(--card-background); /* Bright white for clarity */
-    padding: var(--spacing-lg);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-light);
-    max-width: 600px;
-    margin: var(--spacing-xl) auto;
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.fa-homework-form:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-dark); /* Elevation on hover */
-}
-
-/* Form Labels */
-.fa-homework-form label {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: var(--spacing-xs);
-    display: block;
-    text-transform: capitalize; /* Uniform label styling */
-}
-
-/* Form Inputs */
-.fa-homework-form input[type="file"],
-.fa-homework-form textarea,
-.fa-homework-form input[type="text"] {
-    width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    border: 1px solid var(--input-border);
-    border-radius: var(--border-radius-md);
-    font-family: var(--body-font);
-    font-size: 14px;
-    background-color: var(--input-background);
-    color: var(--text-color);
-    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.fa-homework-form input[type="file"]:focus,
-.fa-homework-form textarea:focus,
-.fa-homework-form input[type="text"]:focus {
-    border-color: var(--input-focus-border);
-    box-shadow: 0 0 8px rgba(33, 161, 121, 0.4); /* Emerald glow on focus */
-    outline: none;
-}
-
-/* Textarea */
-.fa-homework-form textarea {
-    min-height: 120px;
-    resize: vertical; /* Adjustable height */
-}
-
-/* File Input */
-input[type="file"] {
-    background-color: var(--card-background);
-    padding: var(--spacing-sm);
-    border: 2px dashed var(--input-border);
-    border-radius: var(--border-radius-sm);
-    font-family: var(--body-font);
-    color: var(--muted-text-color);
-    transition: border-color var(--transition-speed);
-}
-
-input[type="file"]:hover {
-    border-color: var(--accent-color); /* Interactive hover state */
-}
-
-/* File Preview Section */
-.fa-file-preview {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #F4F4F9; /* Subtle background */
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--spacing-sm);
-}
-
-.fa-file-preview span {
-    flex: 1;
-    font-size: 14px;
-    color: var(--text-color);
-    overflow: hidden;
-    text-overflow: ellipsis; /* Truncate long file names */
-    white-space: nowrap;
-}
-
-/* Remove File Button */
-.fa-remove-file {
-    background-color: var(--error-color); /* Red for remove action */
-    color: #FFFFFF;
-    border: none;
-    padding: 5px 10px;
-    border-radius: var(--border-radius-sm);
-    cursor: pointer;
-    font-size: 12px;
-    transition: background-color var(--transition-speed), transform var(--transition-speed);
-}
-
-.fa-remove-file:hover {
-    background-color: #C0392B; /* Darker red on hover */
-    transform: scale(1.1); /* Slight scale effect */
-}
-
-/* Submit Button */
-.fa-homework-form input[type="submit"] {
-    background-color: var(--button-background);
-    color: var(--button-color);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: none;
-    border-radius: var(--border-radius-md);
-    font-size: 16px;
-    font-weight: 700;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background-color var(--transition-speed), box-shadow var(--transition-speed), transform var(--transition-speed);
-    display: inline-block;
-    width: 100%;
-    text-align: center;
-    box-shadow: var(--shadow-light);
-}
-
-.fa-homework-form input[type="submit"]:hover {
-    background-color: var(--button-hover-background);
-    transform: translateY(-2px); /* Interactive lift */
-    box-shadow: var(--shadow-dark);
-}
-
-/* Success Message */
-.fa-success-message {
-    padding: var(--spacing-sm) var(--spacing-md);
-    background-color: #D4EDDA; /* Soft green */
-    color: #155724;
-    border: 1px solid #C3E6CB;
-    border-radius: var(--border-radius-md);
-    margin-top: var(--spacing-lg);
-    text-align: center;
-    font-weight: 700;
-    font-size: 14px;
-    box-shadow: var(--shadow-light);
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.fa-success-message:hover {
-    transform: scale(1.05); /* Enlarged focus on hover */
-    box-shadow: var(--shadow-dark);
-}
-
-@media (max-width: 768px) {
-    /* Form Wrapper */
+    /* Form Wrapper Adjustments */
     .fa-homework-form {
-        padding: var(--spacing-md); /* Compact padding for mobile */
-        max-width: 90%; /* Adjust width for smaller screens */
-        margin: var(--spacing-md) auto; /* Adjust margin for better spacing */
-        box-shadow: none; /* Simplify shadow effects */
-        transform: none; /* Disable hover lift effect for consistency */
+        padding: 1.5rem; /* Reduce padding for smaller screens */
+        max-width: 100%; /* Full width for small devices */
+        margin: 1.5rem auto; /* Less vertical spacing */
+        border-radius: 10px; /* Slightly smaller border radius */
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Softer shadow for smaller screens */
+    }
+
+    /* Form Title */
+    .fa-homework-form h1 {
+        font-size: 22px; /* Adjust heading size */
+        margin-bottom: 1rem; /* Less spacing below the title */
+        letter-spacing: 0.8px; /* Slightly tighter spacing */
     }
 
     /* Form Labels */
     .fa-homework-form label {
-        font-size: 14px; /* Slightly smaller font size */
-        margin-bottom: var(--spacing-xs); /* Compact spacing */
+        font-size: 14px; /* Slightly smaller font for consistency */
     }
 
-    /* Form Inputs */
+    /* Input Fields Adjustments */
     .fa-homework-form input[type="file"],
     .fa-homework-form textarea,
     .fa-homework-form input[type="text"] {
-        font-size: 14px; /* Adjust font size */
-        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
-        margin-bottom: var(--spacing-md); /* Reduce spacing */
+        padding: 10px 12px; /* Reduce paddings for better spacing */
+        font-size: 13px; /* Adjusted for smaller screens */
     }
 
-    /* File Input */
-    input[type="file"] {
-        padding: var(--spacing-xs); /* Compact padding */
+    /* Textarea Styling */
+    .fa-homework-form textarea {
+        min-height: 120px; /* Slightly smaller for mobile */
     }
 
     /* File Preview Section */
     .fa-file-preview {
-        padding: var(--spacing-xs); /* Compact padding */
-        font-size: 12px; /* Smaller font for preview */
+        flex-direction: column; /* Stack file name and buttons vertically */
+        align-items: flex-start; /* Align elements to the start for better readability */
+        padding: 8px 10px;
     }
 
     .fa-file-preview span {
-        white-space: normal; /* Allow wrapping for long file names */
-        word-break: break-word; /* Break words to avoid overflow */
+        font-size: 13px; /* Smaller font for file name */
+        margin-bottom: 6px; /* Add spacing between file name and button */
+        white-space: normal; /* Allow text wrapping */
     }
 
-    /* Remove File Button */
     .fa-remove-file {
-        font-size: 10px; /* Smaller button size */
-        padding: 4px 8px; /* Compact padding */
+        padding: 4px 8px; /* Smaller remove button size */
+        font-size: 12px;
     }
 
     /* Submit Button */
     .fa-homework-form input[type="submit"] {
-        font-size: 14px; /* Adjust font size */
-        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
-        box-shadow: none; /* Simplify shadow effects */
-        transform: none; /* Disable hover lift for consistency */
+        font-size: 15px; /* Slightly smaller font for the button */
+        padding: 10px 12px; /* Reduce padding for mobile */
+        border-radius: 8px; /* Slightly smaller radius for a more compact look */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Lighter box-shadow */
     }
 
     /* Success Message */
     .fa-success-message {
-        font-size: 12px; /* Adjust font size */
-        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
-        margin-top: var(--spacing-md); /* Adjust margin */
-        box-shadow: none; /* Simplify shadow effects */
-        transform: none; /* Disable hover effects */
+        font-size: 14px;
+        padding: 0.8rem; /* Adjust padding for better fit */
+    }
+}
+
+/* Styles for Ultra-Small Screens */
+@media (max-width: 480px) {
+    /* Form Wrapper Adjustments */
+    .fa-homework-form {
+        padding: 1rem; /* Reduce padding further for very small screens */
+        margin: 1rem auto; /* Less margin for compact devices */
+    }
+
+    /* Form Title */
+    .fa-homework-form h1 {
+        font-size: 20px; /* Shrink title for smaller screens */
+    }
+
+    /* Input Fields */
+    .fa-homework-form input[type="file"],
+    .fa-homework-form textarea,
+    .fa-homework-form input[type="text"] {
+        padding: 8px 10px; /* Tighter padding for limited space */
+        font-size: 12px; /* Keep fonts readable but small */
+    }
+
+    /* File Preview Section */
+    .fa-file-preview span {
+        font-size: 12px;
+    }
+
+    /* Submit Button */
+    .fa-homework-form input[type="submit"] {
+        font-size: 14px; /* Refine size for small touch targets */
+        padding: 8px 10px; /* Compact button */
+    }
+
+    /* Success Message */
+    .fa-success-message {
+        font-size: 13px; /* Size down success message text */
+        padding: 0.6rem; /* Even tighter padding */
     }
 }
 
 
-/* ===================================================
-   11. Miscellaneous
-   =================================================== */
+/* ============================================================
+   22. Admin Dashboard Responsive Adjustments
+   ============================================================ */
 
-/* 11.1 Spinner Animation */
-.fa-spin {
-    animation: fa-spin 1s linear infinite;
-    width: 50px; /* Standardize spinner size */
-    height: 50px;
-    border: 6px solid #F3F3F3; /* Base color */
-    border-top: 6px solid var(--secondary-color); /* Accent color */
-    border-radius: 50%; /* Circular spinner */
-    display: inline-block;
-    box-shadow: var(--shadow-light); /* Subtle shadow for depth */
-    margin: auto; /* Center the spinner */
-}
-
-@keyframes fa-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* 11.2 Retake Homework Button */
-.fa-retake-button {
-    background-color: #FFC107; /* Bright yellow */
-    color: #212529; /* Dark text for contrast */
-    border: none;
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius-sm);
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 700;
-    text-transform: uppercase; /* Emphasize button text */
-    transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease, box-shadow var(--transition-speed);
-    margin-top: var(--spacing-md);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center; /* Center align text and icon */
-    gap: var(--spacing-xs); /* Space between text and icon */
-    box-shadow: var(--shadow-light); /* Add slight depth */
-}
-
-.fa-retake-button:hover {
-    background-color: #E0A800; /* Darker yellow on hover */
-    transform: translateY(-2px); /* Lift effect */
-    box-shadow: var(--shadow-dark); /* Enhanced shadow on hover */
-}
-
-.fa-retake-button:active {
-    transform: translateY(0); /* Reset transform on click */
-    box-shadow: var(--shadow-light); /* Reduce shadow for pressed state */
-    opacity: 0.9; /* Visual feedback on click */
-}
-
-.fa-retake-button .fa-icon {
-    font-size: 18px; /* Standardize icon size */
-    transition: transform var(--transition-speed); /* Add interactivity */
-}
-
-.fa-retake-button:hover .fa-icon {
-    transform: rotate(15deg); /* Subtle icon animation on hover */
-}
-
-/* 11.3 Loading Section */
-.fa-loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-lg);
-}
-
-.fa-loading-message {
-    font-size: 14px;
-    color: var(--text-color);
-    font-style: italic;
-    opacity: 0.8; /* Subtle emphasis */
-}
-
-/* داخل ملف frontend.css */
-
-/* إشعار الدفع */
-.fa-payment-notice {
-    background-color: #fff3cd;
-    border-left: 5px solid #ffeeba;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 3px;
-    display: flex;
-    align-items: center;
-}
-
-.fa-payment-notice i {
-    color: #856404;
-    margin-right: 10px;
-    font-size: 1.5em;
-}
-
-.fa-locked-lesson i {
-    color: #dc3545;
-    margin-right: 5px;
-}
-
-.fa-unlock-icon {
-    color: #28a745;
-}
-
-
-@media (max-width: 768px) {
-    /* Spinner Animation */
-    .fa-spin {
-        width: 40px; /* Reduce size for mobile */
-        height: 40px;
-        border-width: 4px; /* Adjust thickness */
-        margin: var(--spacing-md) auto; /* Add more spacing for mobile layout */
-    }
-
-    /* Retake Homework Button */
-    .fa-retake-button {
-        font-size: 14px; /* Slightly smaller font size */
-        padding: var(--spacing-xs) var(--spacing-sm); /* Compact padding */
-        margin-top: var(--spacing-sm); /* Adjust spacing */
-        gap: var(--spacing-xs); /* Maintain proportional spacing */
-        box-shadow: none; /* Simplify effects for better performance */
-        transform: none; /* Disable hover lift */
-    }
-
-    .fa-retake-button .fa-icon {
-        font-size: 16px; /* Adjust icon size */
-    }
-
-    .fa-retake-button:hover {
-        box-shadow: none; /* Remove hover shadows */
-        transform: none; /* Keep button static on hover */
-    }
-
-    /* Loading Section */
-    .fa-loading-container {
-        gap: var(--spacing-xs); /* Reduce spacing between elements */
-        margin-top: var(--spacing-md); /* Compact top margin */
-    }
-
-    .fa-loading-message {
-        font-size: 12px; /* Reduce text size */
-        opacity: 0.7; /* Adjust emphasis */
-        text-align: center; /* Center align text for better readability */
-    }
-}
-
-/* frontend.css */
-
-/* File Preview Container */
-.fa-file-preview {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.fa-file-preview span {
-    flex-grow: 1;
-    word-break: break-all;
-}
-
-.fa-file-preview button.fa-remove-file {
-    background-color: #dc3232;
-    color: #fff;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 3px;
-    margin-left: 10px;
-}
-
-.fa-file-preview button.fa-remove-file:hover {
-    background-color: #a40e0e;
-}
-
-/* Spinner Styling */
-.fa-spinner-img {
-    width: 50px;
-    height: 50px;
-}
-
-.fa-waiting-msg {
-    font-size: 16px;
-    margin-top: 10px;
-}
-
-
-
-
-
+/* Add any additional responsive styles here if needed */

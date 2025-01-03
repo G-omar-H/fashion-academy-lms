@@ -168,34 +168,53 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    /**
-     * Add event listeners for module toggle buttons
-     */
-    var moduleToggles = document.querySelectorAll('.fa-module-toggle');
+        var moduleToggles = document.querySelectorAll('.fa-module-toggle');
 
-    moduleToggles.forEach(function(toggle) {
-        toggle.addEventListener('click', function() {
-            var isExpanded = this.getAttribute('aria-expanded') === 'true';
-            var targetId = this.getAttribute('aria-controls');
-            var target = document.getElementById(targetId);
+        console.log('Module Toggles Found:', moduleToggles.length); // Debugging
 
-            if (target) {
-                if (isExpanded) {
-                    // Collapse the module
-                    target.hidden = true;
-                    this.setAttribute('aria-expanded', 'false');
+        moduleToggles.forEach(function(toggle) {
+            toggle.addEventListener('click', function() {
+                console.log('Toggle Clicked:', this); // Debugging
+
+                var isExpanded = this.getAttribute('aria-expanded') === 'true';
+                var targetId = this.getAttribute('aria-controls');
+                var target = document.getElementById(targetId);
+
+                console.log('Module ID:', targetId, 'Is Expanded:', isExpanded); // Debugging
+
+                if (target) {
+                    if (isExpanded) {
+                        // Collapse the module
+                        target.hidden = true;
+                        this.setAttribute('aria-expanded', 'false');
+                        console.log('Collapsed Module:', targetId); // Debugging
+                    } else {
+                        // Expand the module
+                        target.hidden = false;
+                        this.setAttribute('aria-expanded', 'true');
+                        console.log('Expanded Module:', targetId); // Debugging
+                    }
                 } else {
-                    // Expand the module
-                    target.hidden = false;
-                    this.setAttribute('aria-expanded', 'true');
+                    console.warn('Target element not found for:', targetId); // Debugging
                 }
-            }
 
-            // Toggle the icon
-            var icon = this.querySelector('.fa-toggle-icon');
-            if (icon) {
-                icon.textContent = isExpanded ? '+' : '-';
-            }
+                // Toggle the icon only if it's not locked
+                var icon = this.querySelector('.fa-toggle-icon i');
+                if (icon && !icon.classList.contains('fa-lock')) {
+                    if (isExpanded) {
+                        // Change to plus icon when collapsing
+                        icon.classList.remove('fa-minus');
+                        icon.classList.add('fa-plus');
+                        console.log('Changed icon to plus for:', targetId); // Debugging
+                    } else {
+                        // Change to minus icon when expanding
+                        icon.classList.remove('fa-plus');
+                        icon.classList.add('fa-minus');
+                        console.log('Changed icon to minus for:', targetId); // Debugging
+                    }
+                } else if (icon && icon.classList.contains('fa-lock')) {
+                    console.log('Module is locked; icon remains unchanged.'); // Debugging
+                }
+            });
         });
-    });
 });
