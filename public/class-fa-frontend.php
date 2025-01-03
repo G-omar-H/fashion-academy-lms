@@ -59,6 +59,10 @@ class FA_Frontend
             'all'
         );
 
+        wp_enqueue_style('font-awesome',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css
+            ');
+
         // Enqueue the frontend JavaScript
         wp_enqueue_script(
             'fa-frontend-script',
@@ -134,34 +138,46 @@ class FA_Frontend
     public function render_registration_form()
     {
         if (is_user_logged_in()) {
-            return '<p>' . __('أنت مسجل دخول بالفعل', 'fashion-academy-lms') . '</p>';
+            return '<p class="fa-form-message">' . __('أنت مسجل دخول بالفعل', 'fashion-academy-lms') . '</p>';
         }
 
         ob_start(); ?>
-        <form method="post" id="fa-register-form">
-            <p>
-                <label for="reg_name"><?php _e('اسم المستخدم', 'fashion-academy-lms'); ?></label><br/>
-                <input type="text" name="reg_name" id="reg_name" required/>
-            </p>
-            <p>
-                <label for="reg_email"><?php _e('البريد الإلكتروني', 'fashion-academy-lms'); ?></label><br/>
-                <input type="email" name="reg_email" id="reg_email" required/>
-            </p>
-            <p>
-                <label for="reg_password"><?php _e('كلمة المرور', 'fashion-academy-lms'); ?></label><br/>
-                <input type="password" name="reg_password" id="reg_password" required/>
-            </p>
-            <p>
-                <label for="reg_whatsapp"><?php _e('رقم واتساب', 'fashion-academy-lms'); ?></label><br/>
-                <input type="tel" name="reg_whatsapp" id="reg_whatsapp" required
-                       pattern="[0-9]+" title="<?php esc_attr_e('يرجى إدخال رقم صحيح بدون أي أحرف.', 'fashion-academy-lms'); ?>"/>
+        <form method="post" id="fa-register-form" class="fa-styled-form">
+            <h2 class="fa-form-title">
+                <?php _e('تسجيل حساب', 'fashion-academy-lms'); ?>
+            </h2>
+
+            <!-- Username Field -->
+            <p class="fa-input-wrapper">
+                <span class="fa fa-user input-icon"></span>
+                <input type="text" name="reg_name" id="reg_name" placeholder="<?php _e('اسم المستخدم', 'fashion-academy-lms'); ?>" required />
             </p>
 
+            <!-- Email Field -->
+            <p class="fa-input-wrapper">
+                <span class="fa fa-envelope input-icon"></span>
+                <input type="email" name="reg_email" id="reg_email" placeholder="<?php _e('البريد الإلكتروني', 'fashion-academy-lms'); ?>" required />
+            </p>
+
+            <!-- Password Field -->
+            <p class="fa-input-wrapper">
+                <span class="fa fa-lock input-icon"></span>
+                <input type="password" name="reg_password" id="reg_password" placeholder="<?php _e('كلمة المرور', 'fashion-academy-lms'); ?>" required />
+            </p>
+
+            <!-- WhatsApp Field -->
+            <p class="fa-input-wrapper">
+                <span class="fa fa-whatsapp input-icon"></span>
+                <input type="tel" name="reg_whatsapp" id="reg_whatsapp" placeholder="<?php _e('رقم واتساب', 'fashion-academy-lms'); ?>" required
+                       pattern="[0-9]+" title="<?php esc_attr_e('يرجى إدخال رقم صحيح بدون أي أحرف.', 'fashion-academy-lms'); ?>" />
+            </p>
+
+            <!-- Security & Submit -->
             <input type="hidden" name="fa_registration_action" value="fa_register_user"/>
             <?php wp_nonce_field('fa_register_nonce', 'fa_register_nonce_field'); ?>
 
             <p>
-                <input type="submit" value="<?php esc_attr_e('تسجيل حساب', 'fashion-academy-lms'); ?>"/>
+                <input type="submit" value="<?php esc_attr_e('تسجيل الحساب', 'fashion-academy-lms'); ?>" />
             </p>
         </form>
         <?php
@@ -366,25 +382,33 @@ class FA_Frontend
     public function render_login_form()
     {
         if (is_user_logged_in()) {
-            return '<p>' . __('أنت مسجل دخول بالفعل', 'fashion-academy-lms') . '</p>';
+            return '<p class="fa-form-message">' . __('أنت مسجل دخول بالفعل', 'fashion-academy-lms') . '</p>';
         }
 
         ob_start(); ?>
-        <form method="post" id="fa-login-form">
-            <p>
-                <label for="fa_user_login"><?php _e('اسم المستخدم أو البريد الإلكتروني', 'fashion-academy-lms'); ?></label><br/>
-                <input type="text" name="fa_user_login" id="fa_user_login" required/>
-            </p>
-            <p>
-                <label for="fa_user_pass"><?php _e('كلمة المرور', 'fashion-academy-lms'); ?></label><br/>
-                <input type="password" name="fa_user_pass" id="fa_user_pass" required/>
+        <form method="post" id="fa-login-form" class="fa-styled-form">
+            <h2 class="fa-form-title">
+                <?php _e('تسجيل الدخول', 'fashion-academy-lms'); ?>
+            </h2>
+
+            <!-- Username/Email Field -->
+            <p class="fa-input-wrapper">
+                <span class="fa fa-user input-icon"></span>
+                <input type="text" name="fa_user_login" id="fa_user_login" placeholder="<?php _e('البريد الإلكتروني أو اسم المستخدم', 'fashion-academy-lms'); ?>" required />
             </p>
 
+            <!-- Password Field -->
+            <p class="fa-input-wrapper">
+                <span class="fa fa-lock input-icon"></span>
+                <input type="password" name="fa_user_pass" id="fa_user_pass" placeholder="<?php _e('كلمة المرور', 'fashion-academy-lms'); ?>" required />
+            </p>
+
+            <!-- Security & Submit -->
             <input type="hidden" name="fa_login_action" value="fa_do_login"/>
             <?php wp_nonce_field('fa_login_nonce', 'fa_login_nonce_field'); ?>
 
             <p>
-                <input type="submit" value="<?php esc_attr_e('دخول', 'fashion-academy-lms'); ?>"/>
+                <input type="submit" value="<?php esc_attr_e('دخول', 'fashion-academy-lms'); ?>" />
             </p>
         </form>
         <?php

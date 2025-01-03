@@ -365,6 +365,105 @@ textarea::-webkit-scrollbar-thumb:hover {
 }
 
 /* ============================================================
+    5. Registration and login layout
+   ============================================================ */
+/* General Styling */
+.fa-styled-form {
+    max-width: 400px;
+    margin: 30px auto;
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+}
+
+.fa-form-title {
+    text-align: center;
+    color: #444;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.fa-form-message {
+    text-align: center;
+    color: #333;
+    font-size: 16px;
+}
+
+.fa-input-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.fa-input-wrapper input[type="text"],
+.fa-input-wrapper input[type="email"],
+.fa-input-wrapper input[type="password"],
+.fa-input-wrapper input[type="tel"] {
+    padding: 10px 10px 10px 40px;
+    width: 100%;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 25px;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    transition: all 0.3s ease-in-out;
+}
+
+.fa-input-wrapper input[type="text"]:focus,
+.fa-input-wrapper input[type="email"]:focus,
+.fa-input-wrapper input[type="password"]:focus,
+.fa-input-wrapper input[type="tel"]:focus {
+    border-color: #f39c12;
+    box-shadow: 0 0 8px rgba(243, 156, 18, 0.5);
+}
+
+/* Icon Styling */
+.input-icon {
+    position: absolute;
+    top: 50%;
+    left: 15px;
+    transform: translateY(-50%);
+    color: #aaa;
+    font-size: 18px;
+}
+
+/* Submit Button */
+.fa-styled-form input[type="submit"] {
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    background: linear-gradient(90deg, #f39c12, #e74c3c);
+    color: white;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.fa-styled-form input[type="submit"]:hover {
+    background: linear-gradient(90deg, #e67e22, #d35400);
+}
+
+/* Responsive Design */
+@media (max-width: 500px) {
+    .fa-styled-form {
+        margin: 20px;
+        padding: 15px;
+    }
+
+    .fa-form-title {
+        font-size: 20px;
+    }
+}
+
+/* ============================================================
    6. Dashboard Layout
    ============================================================ */
 
